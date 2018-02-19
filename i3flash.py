@@ -11,7 +11,6 @@ import sys
 from time import sleep
 
 import click
-from click_default_group import DefaultGroup
 import i3ipc
 
 # 0xffffffff
@@ -24,45 +23,63 @@ i3 = i3ipc.Connection()
 log.info('Connection established')
 
 
-@click.group(cls=DefaultGroup, default='flash_focus', default_if_no_args=True)
-@click.option('--opacity', '-o', default=0.2,
+@click.command()
+@click.option('--opacity', '-o', default=0.9,
               help='Opacity of the window during a flash')
-@click.option('--time', '-t', default=200, help='Flash time interval (in ms)')
-@click.pass_context
-def cli(context, opacity, time):
+@click.option('--time', '-t', default=150, help='Flash time interval (in ms)')
+@click.option('--flash_current', '-f', is_flag=True, required=False,
+              help='Just flash the current window and quit')
+def cli(opacity, time, flash_current):
     '''Click command line interface group'''
-    context.obj['opacity'] = format_opacity(opacity)
-    context.obj['time'] = time / 1000
+    opacity = format_opacity(opacity)
+    if flash_current:
+        flash_current_window(opacity, time)
+    else:
+        monitor_focus(opacity, time)
 
 
-@cli.command()
-@click.pass_context
-def flash(context):
+def flash_current_window(opacity, time):
     '''Flash the currently focused window'''
     focused_window_id = str(i3.get_tree().find_focused().window)
-    flash_window(focused_window_id,
-                 flash_opacity=context.obj['opacity'],
-                 time=context.obj['time'])
+    log.info('Flashing the current window (id: %s)', focused_window_id)
+    flash_window(focused_window_id, flash_opacity=opacity, time=time)
 
 
-@cli.command()
-@click.pass_context
-def flash_focus(context):
+def flash_window(x_window_id, flash_opacity, time):
+    '''Briefly decrease the opacity of a Xorg window'''
+    seconds = time / 1000
+
+    log.info('Flashing window %s...', x_window_id)
+    default_opacity = get_window_opacity(x_window_id)
+
+    set_opacity(x_window_id, opacity=flash_opacity)
+
+    log.info('Waiting %sms...', time)
+    sleep(seconds)
+
+    if default_opacity:
+        set_opacity(x_window_id, opacity=default_opacity)
+    else:
+        # Setting opacity to the max wouldn't work if the window has the
+        # _NET_WM_OPAQUE_REGION defined, so we just delete the
+        # _NET_WM_WINDOW_OPACITY property to return to the default
+        delete_opacity_property(x_window_id)
+
+
+def monitor_focus(opacity, time):
     '''Wait for changes in focus and flash windows'''
-
     def on_window_focus(_, event):
         '''Change in focus hook'''
         x_window_id = str(event.container.window)
         log.info('Flashing window')
-        flash_window(x_window_id,
-                     flash_opacity=context.obj['opacity'],
-                     time=context.obj['time'])
+        flash_window(x_window_id, flash_opacity=opacity, time=time)
 
         log.info('Waiting for focus event...')
 
     i3.on('window::focus', on_window_focus)
 
     log.info('Waiting for focus event...')
+
     i3.main()
 
 
@@ -91,6 +108,8 @@ def get_window_opacity(x_window_id):
 
 def set_opacity(x_window_id, opacity):
     '''Set the opacity of a Xorg window'''
+    # If opacity already defined we need to unset it first
+    call(['xprop', '-id', x_window_id, '-remove', '_NET_WM_WINDOW_OPACITY'])
     call(['xprop', '-id', x_window_id, '-f', '_NET_WM_WINDOW_OPACITY', '32c',
           '-set', '_NET_WM_WINDOW_OPACITY', str(opacity)])
 
@@ -98,26 +117,3 @@ def set_opacity(x_window_id, opacity):
 def delete_opacity_property(x_window_id):
     '''Delete the _NET_WM_WINDOW_OPACITY property of a Xorg window'''
     call(['xprop', '-id', x_window_id, '-remove', '_NET_WM_WINDOW_OPACITY'])
-
-
-def flash_window(x_window_id, flash_opacity, time):
-    '''Briefly decrease the opacity of a Xorg window'''
-    log.info('Flashing window %s...', x_window_id)
-    default_opacity = get_window_opacity(x_window_id)
-
-    set_opacity(x_window_id, opacity=flash_opacity)
-
-    log.info('Waiting %sms...', time)
-    sleep(time)
-
-    if default_opacity:
-        set_opacity(x_window_id, opacity=default_opacity)
-    else:
-        # Setting opacity to the max wouldn't work if the window has the
-        # _NET_WM_OPAQUE_REGION defined, so we just delete the
-        # _NET_WM_WINDOW_OPACITY property to return to the default
-        delete_opacity_property(x_window_id)
-
-
-if __name__ == '__main__':
-    cli(obj={})
