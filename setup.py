@@ -16,7 +16,7 @@ README = 'README.md'
 USERNAME = 'fennerm'
 
 """Package name"""
-NAME = 'i3-flashfocus'
+NAME = 'i3flash'
 
 
 # =============================================================================
@@ -47,11 +47,14 @@ setup(name=NAME,
       description=long_description()[0],
       long_description=long_description(),
       url=url(),
-      py_modules=['i3-flashfocus'],
+      py_modules=['i3flash'],
+      install_requires=[
+          'Click',
+      ],
       license='MIT',
       packages=find_packages(exclude=["*test*"]),
       entry_points='''
             [console_scripts]
-            i3-flashfocus=i3-flashfocus:cli
+            i3flash=i3flash:cli
         ''',
       )
