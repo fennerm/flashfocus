@@ -4,4 +4,7 @@ rust:
   - beta
   - nightly
 cache: cargo
-script: xvfb-run make test
+env:
+  - DISPLAY=:99.0
+before_install:
+  - sh -e /etc/init.d/xvfb start
