@@ -4,8 +4,8 @@ import logging as log
 import os
 from subprocess import (
     call,
+    check_output,
     PIPE,
-    Popen,
 )
 import sys
 from time import sleep
@@ -19,8 +19,9 @@ MAX_OPACITY = 4294967295
 log.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 
 log.info('Establishing connection with i3...')
-i3 = i3ipc.Connection()
 log.info('Connection established')
+
+i3 = i3ipc.Connection()
 
 
 @click.command()
@@ -40,7 +41,7 @@ def cli(opacity, time, flash_current):
 
 def flash_current_window(opacity, time):
     '''Flash the currently focused window'''
-    focused_window_id = str(i3.get_tree().find_focused().window)
+    focused_window_id = i3.get_tree().find_focused().window
     log.info('Flashing the current window (id: %s)', focused_window_id)
     flash_window(focused_window_id, flash_opacity=opacity, time=time)
 
@@ -50,20 +51,16 @@ def flash_window(x_window_id, flash_opacity, time):
     seconds = time / 1000
 
     log.info('Flashing window %s...', x_window_id)
-    default_opacity = get_window_opacity(x_window_id)
 
     set_opacity(x_window_id, opacity=flash_opacity)
 
     log.info('Waiting %sms...', time)
     sleep(seconds)
 
-    if default_opacity:
-        set_opacity(x_window_id, opacity=default_opacity)
-    else:
-        # Setting opacity to the max wouldn't work if the window has the
-        # _NET_WM_OPAQUE_REGION defined, so we just delete the
-        # _NET_WM_WINDOW_OPACITY property to return to the default
-        delete_opacity_property(x_window_id)
+    # Setting opacity to the max wouldn't work if the window has the
+    # _NET_WM_OPAQUE_REGION defined, so we just delete the
+    # _NET_WM_WINDOW_OPACITY property to return to the default
+    delete_opacity_property(x_window_id)
 
 
 def monitor_focus(opacity, time):
@@ -93,27 +90,21 @@ def format_opacity(opacity):
 
 def get_window_opacity(x_window_id):
     '''Get the opacity of a window from its Xorg window id'''
-    p = Popen(['xprop', '-id', x_window_id], stdout=PIPE)
-
-    for line in p.stdout:
-        line = line.decode('utf-8').strip()
-        if line.startswith('_NET_WM_WINDOW_OPACITY'):
-            opacity = line.split(' ')[-1]
-            log.info('Window %s has opacity = %s', x_window_id, opacity)
-            return opacity
-
-    log.info('No opacity defined for window %s', x_window_id)
-    return None
+    opacity = check_output(
+        'xprop -id ' + str(x_window_id) +
+        ' | grep _NET_WM_WINDOW_OPACITY | sed -ne "s/^.*= //p"', shell=True)
+    opacity = opacity.decode('utf-8').strip()
+    return opacity
 
 
 def set_opacity(x_window_id, opacity):
     '''Set the opacity of a Xorg window'''
     # If opacity already defined we need to unset it first
-    call(['xprop', '-id', x_window_id, '-remove', '_NET_WM_WINDOW_OPACITY'])
-    call(['xprop', '-id', x_window_id, '-f', '_NET_WM_WINDOW_OPACITY', '32c',
+    call(['xprop', '-id', str(x_window_id), '-remove', '_NET_WM_WINDOW_OPACITY'])
+    call(['xprop', '-id', str(x_window_id), '-f', '_NET_WM_WINDOW_OPACITY', '32c',
           '-set', '_NET_WM_WINDOW_OPACITY', str(opacity)])
 
 
 def delete_opacity_property(x_window_id):
     '''Delete the _NET_WM_WINDOW_OPACITY property of a Xorg window'''
-    call(['xprop', '-id', x_window_id, '-remove', '_NET_WM_WINDOW_OPACITY'])
+    call(['xprop', '-id', str(x_window_id), '-remove', '_NET_WM_WINDOW_OPACITY'])
