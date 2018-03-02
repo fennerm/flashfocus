@@ -5,6 +5,10 @@ version = "0.0.1"
 authors = [ "Fenner Macrae <fmacrae.dev@gmail.com>" ]
 
 [dependencies]
-clap = "^2.0.0"
+error-chain = "^0.11.0"
 i3ipc = "^0.8.2"
-xcb = "^0.8"
+structopt = "^0.2.4"
+xcb = "^0.8.0"
+
+[dev-dependencies]
+stainless = "*"
