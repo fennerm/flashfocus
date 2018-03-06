@@ -5,7 +5,6 @@ import os
 from subprocess import (
     call,
     check_output,
-    PIPE,
 )
 import sys
 from time import sleep
@@ -13,33 +12,28 @@ from time import sleep
 import click
 import i3ipc
 
+
 # 0xffffffff
 MAX_OPACITY = 4294967295
 
 log.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
-
-log.info('Establishing connection with i3...')
-log.info('Connection established')
-
-i3 = i3ipc.Connection()
 
 
 @click.command()
 @click.option('--opacity', '-o', default=0.9,
               help='Opacity of the window during a flash')
 @click.option('--time', '-t', default=150, help='Flash time interval (in ms)')
-@click.option('--flash_current', '-f', is_flag=True, required=False,
-              help='Just flash the current window and quit')
-def cli(opacity, time, flash_current):
+@click.option('--current', '-c', help='Flash the currently focused window')
+def cli(opacity, time):
     '''Click command line interface group'''
     opacity = format_opacity(opacity)
-    if flash_current:
-        flash_current_window(opacity, time)
-    else:
-        monitor_focus(opacity, time)
+    log.info('Establishing connection with i3...')
+    i3 = i3ipc.Connection()
+    log.info('Connection established')
+    monitor_focus(i3, opacity, time)
 
 
-def flash_current_window(opacity, time):
+def flash_current_window(i3, opacity, time):
     '''Flash the currently focused window'''
     focused_window_id = i3.get_tree().find_focused().window
     log.info('Flashing the current window (id: %s)', focused_window_id)
@@ -63,7 +57,7 @@ def flash_window(x_window_id, flash_opacity, time):
     delete_opacity_property(x_window_id)
 
 
-def monitor_focus(opacity, time):
+def monitor_focus(i3, opacity, time):
     '''Wait for changes in focus and flash windows'''
     def on_window_focus(_, event):
         '''Change in focus hook'''
