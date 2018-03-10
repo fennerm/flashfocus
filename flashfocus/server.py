@@ -1,14 +1,14 @@
 from logging import info as log
 from multiprocessing.dummy import Pool
-from struct import unpack
-from time import sleep
-
-import i3ipc
 from socket import (
     AF_UNIX,
     socket,
     SOCK_STREAM,
 )
+from struct import unpack
+from time import sleep
+
+import i3ipc
 
 from i3flash.opacity import (
     delete_opacity_property,

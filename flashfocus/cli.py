@@ -3,15 +3,9 @@
 import logging
 from logging import info as log
 import os
-from subprocess import (
-    call,
-    check_output,
-)
 import sys
-from time import sleep
 
 import click
-import i3ipc
 
 from i3flash.client import FlashClient
 from i3flash.server import FlashServer
