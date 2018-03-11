@@ -21,11 +21,11 @@ class FlashServer(object):
         # TODO: Check for compton and issue warning
         self.opacity = opacity
         self.time = time
-        self.threads = Pool(2)
+        # self.threads = Pool(2)
 
-        log('Establishing connection with i3...')
-        self.i3 = i3ipc.Connection()
-        log('Connection established')
+        # log('Establishing connection with i3...')
+        # self.i3 = i3ipc.Connection()
+        # log('Connection established')
 
         self.focused_window = self.i3.get_tree().find_focused().window
 
@@ -35,8 +35,9 @@ class FlashServer(object):
         log('Socket initialized')
 
     def run(self):
-        self.threads.apply_async(self.monitor_focus)
-        self.threads.apply_async(self.monitor_client)
+        self.monitor_focus()
+        # self.threads.apply_async(self.monitor_focus)
+        # self.threads.apply_async(self.monitor_client)
 
     def flash_window(self, x_window_id):
         '''Briefly decrease the opacity of a Xorg window'''
@@ -64,21 +65,21 @@ class FlashServer(object):
         log('Waiting for focus shift...')
         self.i3.main()
 
-    def monitor_client(self):
-        self.socket.listen(True)
-        connection, _ = self.socket.accept()
-        log('Waiting for client requests...')
-        while True:
-            data = connection.recv(8)
-            if data == b'':
-                raise RuntimeError('The client shutdown unexpectedly')
-            log('Received a request from the focus client...')
-            request = unpack('<L', data)[0]
-            if request == 1:
-                log('Flashing current window at client\'s request...')
-                self.flash_window(self.focused_window)
-            else:
-                raise RuntimeError('Received an unexpected response from the '
-                                   'client \n'
-                                   'Expected: 1 or None \n'
-                                   'Received: {}'.format(str(request)))
+    # def monitor_client(self):
+    #     self.socket.listen(True)
+    #     connection, _ = self.socket.accept()
+    #     log('Waiting for client requests...')
+    #     while True:
+    #         data = connection.recv(8)
+    #         if data == b'':
+    #             raise RuntimeError('The client shutdown unexpectedly')
+    #         log('Received a request from the focus client...')
+    #         request = unpack('<L', data)[0]
+    #         if request == 1:
+    #             log('Flashing current window at client\'s request...')
+    #             self.flash_window(self.focused_window)
+    #         else:
+    #             raise RuntimeError('Received an unexpected response from the '
+    #                                'client \n'
+    #                                'Expected: 1 or None \n'
+    #                                'Received: {}'.format(str(request)))
