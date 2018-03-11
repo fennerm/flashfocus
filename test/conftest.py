@@ -1,3 +1,4 @@
+'''Unit test fixtures'''
 from pytest import fixture
 
 from test.helpers import WindowSession

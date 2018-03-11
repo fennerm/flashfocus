@@ -2,10 +2,6 @@
 from __future__ import division
 
 from struct import pack
-from subprocess import (
-    call,
-    check_output,
-)
 import xcffib as xcb
 import xcffib.xproto as xproto
 
@@ -22,6 +18,7 @@ MAX_OPACITY = 4294967295
 
 
 def get_opacity_atom(xcb_connection):
+    '''Get the _NET_WM_WINDOW_OPACITY atom from X'''
     atom_bytes = '_NET_WM_WINDOW_OPACITY'.encode('ascii')
     wm_opacity_atom_cookie = xcb_connection.core.InternAtom(
         False, len(atom_bytes), atom_bytes)
@@ -32,7 +29,9 @@ def get_opacity_atom(xcb_connection):
 CONN = xcb.connect()
 WM_OPACITY_ATOM = get_opacity_atom(CONN)
 
+
 def request_opacity(x_window_id):
+    '''Request the current _NET_WM_WINDOW_OPACITY property of a given window'''
     wm_opacity_cookie = CONN.core.GetProperty(
         delete=False,
         window=x_window_id,
@@ -43,7 +42,9 @@ def request_opacity(x_window_id):
     )
     return wm_opacity_cookie
 
+
 def unpack_cookie(opacity_cookie):
+    '''Convert an opacity request reply to a decimal opacity value'''
     try:
         reply = opacity_cookie.reply().value.to_atoms()[0]
         opacity = int(reply) / MAX_OPACITY
@@ -51,10 +52,20 @@ def unpack_cookie(opacity_cookie):
         opacity = 1
     return opacity
 
+
 def set_opacity(x_window_id, opacity):
+    '''Set the _NET_WM_WINDOW_OPACITY property of a window
+
+    Parameters
+    ----------
+    x_window_id: int
+        The X id of the window
+    opacity: float
+        Opacity as a decimal < 1
+    '''
     data = pack('I', int(opacity * MAX_OPACITY))
     # Add argument names
-    void_cookie = CONN.core.ChangeProperty(
+    CONN.core.ChangeProperty(
         mode=xproto.PropMode.Replace,
         window=x_window_id,
         property=WM_OPACITY_ATOM,
@@ -62,7 +73,6 @@ def set_opacity(x_window_id, opacity):
         format=32,
         data_len=1,
         data=data)
-    return void_cookie
 
 
 # def set_opacity(x_window_id, opacity):
