@@ -7,11 +7,8 @@ import sys
 
 import click
 
-from i3flash.client import FlashClient
+from flashfocus.Xutil import MAX_OPACITY
 from i3flash.server import FlashServer
-
-# 0xffffffff
-MAX_OPACITY = 4294967295
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 

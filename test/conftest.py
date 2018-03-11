@@ -1,7 +1,19 @@
-import i3ipc
 from pytest import fixture
+
+from test.helpers import WindowSession
 
 
 @fixture
-def i3():
-    return i3ipc.Connection()
+def windows():
+    '''A display session with multiple open windows'''
+    windows = WindowSession()
+    yield windows.ids
+    windows.destroy()
+
+
+@fixture
+def window():
+    '''A single blank window'''
+    windows = WindowSession()
+    yield windows.ids[0]
+    windows.destroy()
