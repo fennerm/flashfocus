@@ -1,12 +1,10 @@
 from pytest import approx
 
 from flashfocus.Xutil import *
-from test.helpers import change_focus
-
-def get_opacity(window_id):
-    cookie = request_opacity(window_id)
-    opacity = unpack_cookie(cookie)
-    return opacity
+from test.helpers import (
+    change_focus,
+    get_opacity,
+)
 
 
 def test_get_set_opacity(window):

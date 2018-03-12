@@ -1,5 +1,6 @@
 '''Manipulate Xorg window opacity'''
 from __future__ import division
+
 from struct import pack
 
 from plumbum.cmd import xdotool
@@ -58,7 +59,7 @@ def set_opacity(x_window_id, opacity):
     '''
     data = pack('I', int(opacity * MAX_OPACITY))
     # Add argument names
-    CONN.core.ChangeProperty(
+    void_cookie = CONN.core.ChangePropertyChecked(
         mode=xproto.PropMode.Replace,
         window=x_window_id,
         property=WM_OPACITY_ATOM,
@@ -66,6 +67,7 @@ def set_opacity(x_window_id, opacity):
         format=32,
         data_len=1,
         data=data)
+    void_cookie.check()
 
 
 def get_focused_window():

@@ -2,8 +2,16 @@
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+from plumbum import BG
+from plumbum.cmd import (
+    xdotool,
+    xprop,
+)
 
-from plumbum.cmd import xdotool
+from flashfocus.Xutil import (
+    request_opacity,
+    unpack_cookie,
+)
 
 class WindowSession(object):
     '''A session of blank windows for testing'''
@@ -26,3 +34,13 @@ class WindowSession(object):
 def change_focus(window_id):
     '''Change the active window'''
     xdotool('windowactivate', window_id)
+
+
+def get_opacity(window_id):
+    cookie = request_opacity(window_id)
+    opacity = unpack_cookie(cookie)
+    return opacity
+
+
+def watch_window(window, logfile):
+    (xprop['-spy', '-id', window] > logfile) & BG
