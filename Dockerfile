@@ -7,7 +7,9 @@ RUN pacman -S --noconfirm \
         python-gobject \
         python2-gobject \
         python-pip \
-        python2-pip
+        python2-pip \
+        xdotool \
+        xorg-xprop
 
 USER user
 

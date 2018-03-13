@@ -3,7 +3,6 @@ from __future__ import division
 
 from struct import pack
 
-from plumbum.cmd import xdotool
 import xcffib as xcb
 import xcffib.xproto as xproto
 
@@ -21,39 +20,67 @@ def get_opacity_atom(xcb_connection):
 
 
 CONN = xcb.connect()
+ROOT = CONN.get_setup().roots[0].root
 WM_OPACITY_ATOM = get_opacity_atom(CONN)
 
 
-def request_opacity(x_window_id):
-    '''Request the current _NET_WM_WINDOW_OPACITY property of a given window'''
-    wm_opacity_cookie = CONN.core.GetProperty(
-        delete=False,
-        window=x_window_id,
-        property=WM_OPACITY_ATOM,
-        type=xproto.GetPropertyType.Any,
-        long_offset=0,
-        long_length=63
-    )
-    return wm_opacity_cookie
+class OpacityRequest:
+    '''A request for the current _NET_WM_WINDOW_OPACITY property of a window'''
+    def __init__(self, window):
+        self.cookie = CONN.core.GetProperty(
+            delete=False,
+            window=window,
+            property=WM_OPACITY_ATOM,
+            type=xproto.GetPropertyType.Any,
+            long_offset=0,
+            long_length=63
+        )
+        self.response = None
+
+    def unpack(self):
+        '''
+        Returns
+        -------
+        float
+            Opacity as a decimal. Returns None if _NET_WM_WINDOW_OPACITY is
+            unset.
+        '''
+        try:
+            reply = self.cookie.reply().value.to_atoms()[0]
+            self.response = int(reply) / MAX_OPACITY
+        except IndexError:
+            self.response = None
+        return self.response
 
 
-def unpack_cookie(opacity_cookie):
-    '''Convert an opacity request reply to a decimal opacity value'''
-    try:
-        reply = opacity_cookie.reply().value.to_atoms()[0]
-        opacity = int(reply) / MAX_OPACITY
-    except IndexError:
-        opacity = 1
-    return opacity
+class FocusRequest:
+    '''A request for the currently focused window'''
+    def __init__(self):
+        self.cookie = CONN.core.GetInputFocus()
+        self.response = None
+
+    def unpack(self):
+        self.response = int(self.cookie.reply().focus)
+        return self.response
 
 
-def set_opacity(x_window_id, opacity):
+def request_opacity(window):
+    '''Request the opacity of a window'''
+    return OpacityRequest(window)
+
+
+def request_focus():
+    '''Request the currently focused window'''
+    return FocusRequest()
+
+
+def set_opacity(window, opacity):
     '''Set the _NET_WM_WINDOW_OPACITY property of a window
 
     Parameters
     ----------
-    x_window_id: int
-        The X id of the window
+    window: int
+        The X id of a window
     opacity: float
         Opacity as a decimal < 1
     '''
@@ -61,20 +88,10 @@ def set_opacity(x_window_id, opacity):
     # Add argument names
     void_cookie = CONN.core.ChangePropertyChecked(
         mode=xproto.PropMode.Replace,
-        window=x_window_id,
+        window=window,
         property=WM_OPACITY_ATOM,
         type=xproto.Atom.CARDINAL,
         format=32,
         data_len=1,
         data=data)
     void_cookie.check()
-
-
-def get_focused_window():
-    '''Get the currently focused window'''
-    return int(xdotool('getactivewindow'))
-
-# def delete_opacity_property(x_window_id):
-#     '''Delete the _NET_WM_WINDOW_OPACITY property of a Xorg window'''
-#     call(['xprop', '-id', str(x_window_id), '-remove',
-#           '_NET_WM_WINDOW_OPACITY'])

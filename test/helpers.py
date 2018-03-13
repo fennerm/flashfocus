@@ -1,27 +1,29 @@
 '''Helper functions/classes for unit tests'''
+from subprocess import PIPE
+from time import sleep
+
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
-from plumbum import BG
 from plumbum.cmd import (
     xdotool,
     xprop,
 )
 
-from flashfocus.Xutil import (
-    request_opacity,
-    unpack_cookie,
-)
+from flashfocus.Xutil import MAX_OPACITY
 
-class WindowSession(object):
+
+class WindowSession:
     '''A session of blank windows for testing'''
     def __init__(self):
         window1 = Gtk.Window(title='window1')
         window1.show()
         window2 = Gtk.Window(title='window2')
         window2.show()
+        window3 = Gtk.Window(title='window3')
+        window3.show()
 
-        self.windows = [window1, window2]
+        self.windows = [window1, window2, window3]
         self.ids = [
             w.get_property('window').get_xid() for w in self.windows]
 
@@ -36,11 +38,20 @@ def change_focus(window_id):
     xdotool('windowactivate', window_id)
 
 
-def get_opacity(window_id):
-    cookie = request_opacity(window_id)
-    opacity = unpack_cookie(cookie)
-    return opacity
+class WindowWatcher:
+    '''Watch a window for changes in opacity'''
+    def __init__(self, window):
+        self.process = xprop.popen(['-spy', '-id', window], stdout=PIPE)
+        sleep(0.05)
+        self.raw_log = None
+        self.opacity_events = []
 
+    def report(self):
+        self.process.kill()
+        self.raw_log = self.process.communicate()[0].decode('utf-8').split('\n')
 
-def watch_window(window, logfile):
-    (xprop['-spy', '-id', window] > logfile) & BG
+        for line in self.raw_log:
+            if line.startswith('_NET_WM_WINDOW_OPACITY'):
+                opacity = int(line.split(' ')[-1]) / MAX_OPACITY
+                self.opacity_events.append(opacity)
+        return self.opacity_events

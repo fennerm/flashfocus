@@ -1,18 +1,16 @@
+'''Testsuite for flashfocus.Xutil'''
 from pytest import approx
 
 from flashfocus.Xutil import *
-from test.helpers import (
-    change_focus,
-    get_opacity,
-)
+from test.helpers import change_focus
 
 
 def test_get_set_opacity(window):
-    assert get_opacity(window) == 1
+    assert not request_opacity(window).unpack()
     set_opacity(window, 0.5)
-    assert get_opacity(window) == approx(0.5, 0.00001)
+    assert request_opacity(window).unpack() == approx(0.5, 0.00001)
 
 
-def test_get_focused_window(window):
+def test_focus_request(window):
     change_focus(window)
-    assert get_focused_window() == window
+    assert request_focus().unpack() == window
