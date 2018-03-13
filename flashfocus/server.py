@@ -5,11 +5,11 @@ from time import sleep
 from warnings import warn
 
 from flashfocus.Xutil import (
-    get_focused_window,
+    delete_opacity_property,
     get_opacity_atom,
+    request_focus,
     request_opacity,
     set_opacity,
-    unpack_cookie
 )
 
 class FlashServer(object):
@@ -17,15 +17,10 @@ class FlashServer(object):
         self.flash_opacity = opacity
         self.time = time
 
-        self.focused_window = get_focused_window()
-
-    def run(self):
-        self.monitor_focus()
-
     def flash_window(self, x_window_id):
         '''Briefly change the opacity of a Xorg window'''
         log('Flashing window %s', str(x_window_id))
-        opacity = unpack_cookie(request_opacity(x_window_id))
+        opacity = request_opacity(x_window_id).unpack()
 
         if opacity != self.flash_opacity:
             log('Current opacity = %s', str(opacity))
@@ -33,13 +28,24 @@ class FlashServer(object):
             set_opacity(x_window_id, opacity=self.flash_opacity)
             log('Waiting %ss...', self.time)
             sleep(self.time)
-            set_opacity(x_window_id, opacity=opacity)
+            if opacity:
+                set_opacity(x_window_id, opacity=opacity)
+            else:
+                delete_opacity_property(x_window_id)
         else:
             log('Window opacity is already %s, won\'t bother flashing...',
                 str(opacity))
 
     def monitor_focus(self):
         '''Wait for changes in focus and flash windows'''
+        # Add enterwindow/active window mask then wait for events
+        # NEVERMIND MONITOR _NET_ACTIVE_WINDOW on the ROOT window
+        #xprop -spy -root _NET_ACTIVE_WINDOW
+        # mask = getattr(xproto.EventMask, 'PropertyChange')
+        # CONN.core.ChangeWindowAttributesChecked(
+        #     ROOT,
+        #     xproto.CW.EventMask,
+        #     mask).check()
         def on_window_focus(_, event):
             '''Change in focus hook'''
             x_window_id = str(event.container.window)

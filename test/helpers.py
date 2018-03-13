@@ -52,6 +52,9 @@ class WindowWatcher:
 
         for line in self.raw_log:
             if line.startswith('_NET_WM_WINDOW_OPACITY'):
-                opacity = int(line.split(' ')[-1]) / MAX_OPACITY
+                if 'not found' in line:
+                    opacity = None
+                else:
+                    opacity = round(int(line.split(' ')[-1]) / MAX_OPACITY, 1)
                 self.opacity_events.append(opacity)
         return self.opacity_events
