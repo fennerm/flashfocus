@@ -5,15 +5,13 @@ from time import sleep
 from mock import (
     call,
     MagicMock,
-    Mock,
-    patch,
 )
 from pytest import (
+    approx,
     mark,
-    raises,
 )
 
-from flashfocus.xutil import CONN, set_opacity
+import flashfocus.xutil as xutil
 from test.helpers import (
     change_focus,
     ExitAfter,
@@ -30,11 +28,15 @@ from test.helpers import (
 def test_flash_window(monitor, window, pre_opacity,
                       expected_opacity_over_time):
     if pre_opacity:
-        set_opacity(window, pre_opacity)
+        xutil.set_opacity(window, pre_opacity)
     watcher = WindowWatcher(window)
     watcher.start()
     monitor.flash_window(window)
-    assert watcher.report() == expected_opacity_over_time
+    assert watcher.report() == approx(expected_opacity_over_time, 0.01)
+
+
+def test_flash_nonexistant_window_ignored(monitor):
+    monitor.flash_window(0)
 
 
 def test_two_quick_calls_just_flashes_once(monitor, window):
@@ -44,7 +46,7 @@ def test_two_quick_calls_just_flashes_once(monitor, window):
     p.start()
     monitor.flash_window(window)
     p.join()
-    assert watcher.report() == [None, 0.8, None]
+    assert watcher.report() == approx([None, 0.8, None], 0.01)
 
 
 def test_monitor_focus(monitor, windows):

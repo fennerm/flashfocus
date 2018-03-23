@@ -3,6 +3,7 @@ from __future__ import division
 
 from threading import Thread
 import sys
+from time import sleep
 
 from gi.repository import Gtk
 from plumbum.cmd import xdotool
@@ -36,34 +37,19 @@ def change_focus(window):
     xdotool('windowactivate', window)
 
 
-def get_approx_opacity(window):
-    """Get the _NET_WM_WINDOW_OPACITY property of a window"""
-    try:
-        opacity = round(xutil.request_opacity(window).unpack(), 2)
-    except TypeError:
-        opacity = None
-    return opacity
-
 class WindowWatcher(Thread):
-    """Watch a window for changes in opacity"""
+    """Watch a window for changes in opacity."""
     def __init__(self, window):
         super(WindowWatcher, self).__init__()
         self.window = window
-        self.opacity_events = [get_approx_opacity(window)]
+        self.opacity_events = [xutil.request_opacity(self.window).unpack()]
         self.keep_going = True
         self.done = False
 
-        mask = getattr(xproto.EventMask, 'PropertyChange')
-        xutil.CONN.core.ChangeWindowAttributesChecked(
-            self.window,
-            xproto.CW.EventMask,
-            [mask]).check()
-        xutil.CONN.flush()
-
     def run(self):
-        """Record opacity changes until stop signal received"""
+        """Record opacity changes until stop signal received."""
         while self.keep_going:
-            opacity = get_approx_opacity(self.window)
+            opacity = xutil.request_opacity(self.window).unpack()
             if opacity != self.opacity_events[-1]:
                 self.opacity_events.append(opacity)
         self.done = True
@@ -74,8 +60,6 @@ class WindowWatcher(Thread):
         _NET_WM_WINDOW_OPACITY
         """
         self.keep_going = False
-
-        # Wait until the loop in run has terminated
         while not self.done:
             pass
         return self.opacity_events
