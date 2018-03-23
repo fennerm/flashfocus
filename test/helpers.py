@@ -13,7 +13,7 @@ import flashfocus.xutil as xutil
 
 
 class WindowSession:
-    '''A session of blank windows for testing'''
+    """A session of blank windows for testing"""
     def __init__(self):
         window1 = Gtk.Window(title='window1')
         window1.show()
@@ -27,13 +27,13 @@ class WindowSession:
             w.get_property('window').get_xid() for w in self.windows]
 
     def destroy(self):
-        '''Tear down the window session'''
+        """Tear down the window session"""
         for window in self.windows:
             window.destroy()
 
 
 def change_focus(window):
-    '''Change the active window'''
+    """Change the active window"""
     xdotool('windowactivate', window)
 
 
@@ -56,8 +56,7 @@ class WindowWatcher(Thread):
 
     def report(self):
         """
-        Send the stop signal and return all changes in
-        _NET_WM_WINDOW_OPACITY
+        Send the stop signal and return all changes in _NET_WM_WINDOW_OPACITY.
         """
         self.keep_going = False
         while not self.done:
@@ -66,14 +65,15 @@ class WindowWatcher(Thread):
 
 
 class ExitAfter(object):
-    '''
+    """
     Callable that will exits the entire thread after `limit` calls
-    '''
+    """
     def __init__(self, limit):
         self.limit = limit
         self.calls = 0
 
     def __call__(self, window):
+        """Increment the call count and exit if > `limit`"""
         self.calls += 1
         if self.calls > self.limit:
             sys.exit()
