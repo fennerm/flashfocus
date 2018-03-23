@@ -1,16 +1,14 @@
-'''Helper functions/classes for unit tests'''
-from subprocess import PIPE
-from time import sleep
+"""Helper functions/classes for unit tests"""
+from __future__ import division
 
-import gi
-gi.require_version('Gtk', '3.0')
+from threading import Thread
+import sys
+
 from gi.repository import Gtk
-from plumbum.cmd import (
-    xdotool,
-    xprop,
-)
+from plumbum.cmd import xdotool
+from xcffib import xproto
 
-from flashfocus.Xutil import MAX_OPACITY
+import flashfocus.xutil as xutil
 
 
 class WindowSession:
@@ -33,28 +31,65 @@ class WindowSession:
             window.destroy()
 
 
-def change_focus(window_id):
+def change_focus(window):
     '''Change the active window'''
-    xdotool('windowactivate', window_id)
+    xdotool('windowactivate', window)
 
 
-class WindowWatcher:
-    '''Watch a window for changes in opacity'''
+def get_approx_opacity(window):
+    """Get the _NET_WM_WINDOW_OPACITY property of a window"""
+    try:
+        opacity = round(xutil.request_opacity(window).unpack(), 2)
+    except TypeError:
+        opacity = None
+    return opacity
+
+class WindowWatcher(Thread):
+    """Watch a window for changes in opacity"""
     def __init__(self, window):
-        self.process = xprop.popen(['-spy', '-id', window], stdout=PIPE)
-        sleep(0.05)
-        self.raw_log = None
-        self.opacity_events = []
+        super(WindowWatcher, self).__init__()
+        self.window = window
+        self.opacity_events = [get_approx_opacity(window)]
+        self.keep_going = True
+        self.done = False
+
+        mask = getattr(xproto.EventMask, 'PropertyChange')
+        xutil.CONN.core.ChangeWindowAttributesChecked(
+            self.window,
+            xproto.CW.EventMask,
+            [mask]).check()
+        xutil.CONN.flush()
+
+    def run(self):
+        """Record opacity changes until stop signal received"""
+        while self.keep_going:
+            opacity = get_approx_opacity(self.window)
+            if opacity != self.opacity_events[-1]:
+                self.opacity_events.append(opacity)
+        self.done = True
 
     def report(self):
-        self.process.kill()
-        self.raw_log = self.process.communicate()[0].decode('utf-8').split('\n')
+        """
+        Send the stop signal and return all changes in
+        _NET_WM_WINDOW_OPACITY
+        """
+        self.keep_going = False
 
-        for line in self.raw_log:
-            if line.startswith('_NET_WM_WINDOW_OPACITY'):
-                if 'not found' in line:
-                    opacity = None
-                else:
-                    opacity = round(int(line.split(' ')[-1]) / MAX_OPACITY, 1)
-                self.opacity_events.append(opacity)
+        # Wait until the loop in run has terminated
+        while not self.done:
+            pass
         return self.opacity_events
+
+
+class ExitAfter(object):
+    '''
+    Callable that will exits the entire thread after `limit` calls
+    '''
+    def __init__(self, limit):
+        self.limit = limit
+        self.calls = 0
+
+    def __call__(self, window):
+        self.calls += 1
+        if self.calls > self.limit:
+            sys.exit()

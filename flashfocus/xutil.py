@@ -3,39 +3,32 @@ from __future__ import division
 
 from struct import pack
 
-from plumbum.cmd import xprop
-import xcffib as xcb
+import xcffib
 import xcffib.xproto as xproto
 
 # 0xffffffff
 MAX_OPACITY = 4294967295
 
-def get_opacity_atom(xcb_connection):
-    '''Get the _NET_WM_WINDOW_OPACITY atom from X'''
-    atom_bytes = '_NET_WM_WINDOW_OPACITY'.encode('ascii')
-    wm_opacity_atom_cookie = xcb_connection.core.InternAtom(
+
+def intern_atom(xcb_connection, atom_name):
+    '''Get the id of an atom from X given its name'''
+    atom_bytes = atom_name.encode('ascii')
+    cookie = xcb_connection.core.InternAtom(
         False, len(atom_bytes), atom_bytes)
-    wm_opacity_atom = wm_opacity_atom_cookie.reply().atom
-    return wm_opacity_atom
+    atom = cookie.reply().atom
+    return atom
 
 
-CONN = xcb.connect()
+CONN = xcffib.connect()
 ROOT = CONN.get_setup().roots[0].root
-WM_OPACITY_ATOM = get_opacity_atom(CONN)
+WM_OPACITY_ATOM = intern_atom(CONN, '_NET_WM_WINDOW_OPACITY')
+ACTIVE_WINDOW_ATOM = intern_atom(CONN, '_NET_ACTIVE_WINDOW')
+
 
 class OpacityCookie(object):
     '''A request for the current _NET_WM_WINDOW_OPACITY property of a window'''
-    def __init__(self, window):
-        self.cookie = None
-        self.response = None
-        self.cookie = CONN.core.GetProperty(
-            delete=False,
-            window=window,
-            property=WM_OPACITY_ATOM,
-            type=xproto.GetPropertyType.Any,
-            long_offset=0,
-            long_length=63
-        )
+    def __init__(self, cookie):
+        self.cookie = cookie
         self.response = None
 
     def unpack(self):
@@ -57,8 +50,8 @@ class OpacityCookie(object):
 
 class ActiveWindowCookie(object):
     '''A request for the currently focused window'''
-    def __init__(self):
-        self.cookie = CONN.core.GetInputFocus()
+    def __init__(self, cookie):
+        self.cookie = cookie
         self.response = None
 
     def unpack(self):
@@ -70,17 +63,27 @@ class ActiveWindowCookie(object):
             The X window id of the active window
         '''
         self.response = int(self.cookie.reply().focus)
+
         return self.response
 
 
 def request_opacity(window):
     '''Request the opacity of a window'''
-    return OpacityCookie(window)
+    cookie = CONN.core.GetProperty(
+        delete=False,
+        window=window,
+        property=WM_OPACITY_ATOM,
+        type=xproto.GetPropertyType.Any,
+        long_offset=0,
+        long_length=63
+    )
+    return OpacityCookie(cookie)
 
 
 def request_focus():
     '''Request the currently focused window'''
-    return ActiveWindowCookie()
+    cookie = CONN.core.GetInputFocus()
+    return ActiveWindowCookie(cookie)
 
 
 def set_opacity(window, opacity):
@@ -106,8 +109,22 @@ def set_opacity(window, opacity):
     void_cookie.check()
 
 
-def delete_opacity_property(window):
+def delete_opacity(window):
     '''Delete the _NET_WM_WINDOW_OPACITY property from a window'''
-    # I can't for the life of me figure out how to do this with xcffib and Xlib
-    # is way too slow. We'll have to require xprop at least for now.
-    xprop('-id', window, '-remove', '_NET_WM_WINDOW_OPACITY')
+    cookie = CONN.core.GetProperty(
+        delete=True,
+        window=window,
+        property=WM_OPACITY_ATOM,
+        type=xproto.GetPropertyType.Any,
+        long_offset=0,
+        long_length=63
+    )
+    cookie.reply()
+
+
+def watch_properties(xcb_connection):
+    mask = getattr(xproto.EventMask, 'PropertyChange')
+    xcb_connection.core.ChangeWindowAttributesChecked(
+        ROOT,
+        xproto.CW.EventMask,
+        [mask]).check()

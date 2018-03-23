@@ -1,2 +1,12 @@
-Cargo.lock
-target
+\#*
+*.swp
+*.coverage
+*.pyc
+*.egg-info
+*.fai
+*.bt2
+*.cache
+*.python-version
+.mypy_cache
+Makefile
+.prospector.yaml

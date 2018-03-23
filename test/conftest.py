@@ -1,27 +1,30 @@
 '''Unit test fixtures'''
 from pytest import fixture
 
-from flashfocus.server import FlashServer
+from flashfocus.monitor import FocusMonitor
+from flashfocus.xutil import request_focus
 
-from test.helpers import WindowSession
+from test.helpers import (
+    change_focus,
+    WindowSession,
+)
 
 
 @fixture
 def windows():
     '''A display session with multiple open windows'''
     windows = WindowSession()
+    change_focus(windows.ids[0])
     yield windows.ids
     windows.destroy()
 
 
 @fixture
-def window():
+def window(windows):
     '''A single blank window'''
-    windows = WindowSession()
-    yield windows.ids[0]
-    windows.destroy()
+    return windows[0]
 
 
 @fixture
-def server():
-    return FlashServer(opacity=0.8, time=0.05)
+def monitor():
+    return FocusMonitor(flash_opacity=0.8, time=200)
