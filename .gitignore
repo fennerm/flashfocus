@@ -8,6 +8,7 @@
 *.cache
 *.python-version
 .mypy_cache
+.eggs
 __LAST__
 Makefile
 .prospector.yaml
