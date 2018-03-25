@@ -1,8 +1,7 @@
-"""Unit test fixtures"""
+"""Unit test fixtures."""
 from pytest import fixture
 
 from flashfocus.monitor import FocusMonitor
-from flashfocus.xutil import request_focus
 
 from test.helpers import (
     change_focus,
@@ -27,5 +26,5 @@ def window(windows):
 
 @fixture
 def monitor():
-    """A FocusMonitor instance"""
-    return FocusMonitor(flash_opacity=0.8, time=200)
+    """FocusMonitor instance"""
+    return FocusMonitor(flash_opacity=0.8, time=0.2)
