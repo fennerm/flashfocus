@@ -1,6 +1,4 @@
-"""Setup script"""
-from glob import glob
-import os
+"""Setup script."""
 from setuptools import (
     find_packages,
     setup,
@@ -25,7 +23,7 @@ NAME = 'flashfocus'
 
 
 def long_description(readme=README):
-    """Extract the long description from the README"""
+    """Extract the long description from the README."""
     try:
         from pypandoc import convert
         long_description = convert(str(readme), 'md', 'rst')
@@ -36,7 +34,7 @@ def long_description(readme=README):
 
 
 def url(name=NAME, username=USERNAME):
-    """Generate the package url from the package name"""
+    """Generate the package url from the package name."""
     return '/'.join(['http://github.com', username, name])
 
 
@@ -46,15 +44,14 @@ setup(name=NAME,
       author_email='fmacrae.dev@gmail.com',
       description=long_description()[0],
       long_description=long_description(),
-      url=url(),
-      py_modules=['flashfocus'],
-      install_requires=[
-          'Click',
-      ],
       license='MIT',
+      py_modules=['flashfocus'],
+      setup_requires=['pytest-runner'],
+      tests_require=['pytest'],
+      install_requires=['Click'],
       packages=find_packages(exclude=["*test*"]),
       entry_points='''
             [console_scripts]
-            flashfocus=cli:cli
+            flashfocus=flashfocus.cli:cli
         ''',
       )
