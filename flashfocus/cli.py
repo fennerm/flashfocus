@@ -1,42 +1,37 @@
-#!/usr/bin/env python
-'''Flash i3 windows on focus'''
+"""Command line interface."""
 import logging
 from logging import info as log
 import os
-import sys
 
 import click
 
-from flashfocus.Xutil import MAX_OPACITY
-from i3flash.server import FlashServer
+from flashfocus.monitor import FocusMonitor
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 
 
+def validate_opacity(ctx, param, value):
+    """Validate the opacity command line argument."""
+    if not 0 <= value <= 1:
+        raise ValueError(
+            "Opacity not in valid range, should be between 0 and 1")
+    return value
+
+
+def format_time(ctx, param, value):
+    """Validate the time command line argument and convert to seconds."""
+    if value < 0:
+        raise ValueError("Time parameter cannot be negative")
+    return value / 1000
+
+
 @click.command()
-@click.option('--opacity', '-o', default=0.9,
+@click.option('--opacity', '-o', default=0.9, callback=validate_opacity,
               help='Opacity of the window during a flash')
-@click.option('--time', '-t', default=150, help='Flash time interval (in ms)')
-@click.option('--current', '-c', help='Flash the currently focused window')
-def cli(opacity, time, current):
-    '''Click command line interface group'''
-    # TODO: set logging parameters based on args
-    log('Checking command-line arguments...')
-    opacity = format_opacity(opacity)
-    time = time / 1000
+@click.option('--time', '-t', default=200, callback=format_time,
+              help='Flash time interval (in ms)')
+def cli(opacity, time):
+    """Click command line interface group."""
     log('Arguments are valid')
-
-    if current:
-        log('Initializing a client...')
-        FlashClient(opacity, time).run()
-    else:
-        log('Initializing the server...')
-        FlashServer(opacity, time).run()
-
-
-def format_opacity(opacity):
-    '''Convert the opacity paramater from decimal to int'''
-    if opacity > 1 or opacity < 0:
-        sys.exit("Invalid opacity argument, expected a decimal")
-
-    return int(opacity * MAX_OPACITY)
+    log('Initializing the daemon...')
+    FocusMonitor(opacity, time).monitor_focus()

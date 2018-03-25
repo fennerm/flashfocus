@@ -1,4 +1,4 @@
-"""Manipulate Xorg window opacity"""
+"""Manipulate Xorg window opacity."""
 from __future__ import division
 
 from struct import pack
@@ -92,7 +92,7 @@ def request_opacity(window):
 
 
 def request_focus():
-    """Request the currently focused window
+    """Request the currently focused window.
 
     Returns
     -------
