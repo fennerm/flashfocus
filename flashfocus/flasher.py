@@ -97,7 +97,7 @@ class Flasher:
                 p = Thread(target=self.flash_window, args=[focused])
                 p.daemon = True
                 p.start()
-            elif focused in self.locked_windows:
-                log("Window %s is locked, ignoring...", focused)
             elif focused == prev_focus:
                 log("Window %s was just flashed, ignoring...", focused)
+            elif focused in self.locked_windows:
+                log("Window %s is locked, ignoring...", focused)
