@@ -1,7 +1,7 @@
 """Unit test fixtures."""
 from pytest import fixture
 
-from flashfocus.monitor import FocusMonitor
+from flashfocus.flasher import Flasher
 
 from test.helpers import (
     change_focus,
@@ -25,6 +25,6 @@ def window(windows):
 
 
 @fixture
-def monitor():
-    """FocusMonitor instance"""
-    return FocusMonitor(flash_opacity=0.8, time=0.2)
+def flasher():
+    """Flasher instance"""
+    return Flasher(flash_opacity=0.8, time=0.2)

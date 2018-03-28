@@ -1,12 +1,18 @@
 """Helper functions/classes for unit tests."""
 from __future__ import division
 
+import sys
 from threading import Thread
 from time import sleep
-import sys
 
+import gi
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
-from plumbum.cmd import xdotool
+from plumbum.cmd import (
+    xdotool,
+    xkill,
+)
+from xcffib import xproto
 
 import flashfocus.xutil as xutil
 
@@ -36,6 +42,11 @@ def change_focus(window):
     xdotool('windowactivate', window)
 
 
+def close_window(window):
+    """Close an X window."""
+    xkill('-id', window)
+
+
 class WindowWatcher(Thread):
     """Watch a window for changes in opacity."""
     def __init__(self, window):
@@ -63,6 +74,30 @@ class WindowWatcher(Thread):
         return self.opacity_events
 
 
+class SelfDestructingFocusWait:
+    """Class for terminating the main Flasher loop.
+
+    It is used as a drop in replacement for xutil.wait_for_focus_shift. When
+    it is called > `limit` times, the Flasher is terminated
+    """
+    def __init__(self, limit):
+        self.limit = limit
+        self.calls = 0
+
+    def __call__(self):
+        """Terminate after call limit reached."""
+        self.calls += 1
+        if self.calls == self.limit - 1:
+            sys.exit()
+        else:
+            while True:
+                event = xutil.CONN.wait_for_event()
+
+                if isinstance(event, xproto.PropertyNotifyEvent):
+                    if event.atom == xutil.ACTIVE_WINDOW_ATOM:
+                        break
+
+
 class ExitAfter(object):
     """Callable that will exits the entire thread after `limit` calls."""
     def __init__(self, limit):
@@ -72,5 +107,5 @@ class ExitAfter(object):
     def __call__(self, window):
         """Increment the call count and exit if > `limit`."""
         self.calls += 1
-        if self.calls > self.limit:
+        if self.calls == self.limit + 1:
             sys.exit()

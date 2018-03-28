@@ -15,8 +15,8 @@ USER user
 
 COPY --chown=user . flashfocus
 WORKDIR flashfocus
-RUN pip3 install --user pytest pytest-cov
-RUN pip2 install --user pytest pytest-cov
+RUN pip3 install --user pytest pytest-cov pytest-runner plumbum
+RUN pip2 install --user pytest pytest-cov pytest-runner plumbum
 RUN pip3 install --user -r requirements.txt --user .
 RUN pip2 install --user -r requirements.txt --user .
 
