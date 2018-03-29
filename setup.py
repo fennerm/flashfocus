@@ -21,6 +21,11 @@ NAME = 'flashfocus'
 # Helpers
 # =============================================================================
 
+def parse_requirements():
+    """Parse the list of requirements from requirements.txt."""
+    with open('requirements.txt') as f:
+        requirements = f.read().splitlines()
+    return requirements
 
 def long_description(readme=README):
     """Extract the long description from the README."""
@@ -38,20 +43,21 @@ def url(name=NAME, username=USERNAME):
     return '/'.join(['http://github.com', username, name])
 
 
-setup(name=NAME,
-      version='0.1.0',
-      author='Fenner Macrae',
-      author_email='fmacrae.dev@gmail.com',
-      description=long_description()[0],
-      long_description=long_description(),
-      license='MIT',
-      py_modules=['flashfocus'],
-      setup_requires=['pytest-runner'],
-      tests_require=['pytest'],
-      install_requires=['Click'],
-      packages=find_packages(exclude=["*test*"]),
-      entry_points='''
-            [console_scripts]
-            flashfocus=flashfocus.cli:cli
-        ''',
-      )
+setup(
+    name=NAME,
+    version='0.1.0',
+    author='Fenner Macrae',
+    author_email='fmacrae.dev@gmail.com',
+    description=long_description()[0],
+    long_description=long_description(),
+    license='MIT',
+    py_modules=['flashfocus'],
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest'],
+    install_requires=parse_requirements(),
+    packages=find_packages(exclude=["*test*"]),
+    entry_points='''
+        [console_scripts]
+        flashfocus=flashfocus.cli:cli
+    ''',
+)
