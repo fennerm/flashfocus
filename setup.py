@@ -39,7 +39,7 @@ def url(name=NAME, username=USERNAME):
 
 
 setup(name=NAME,
-      version='0.0.1',
+      version='0.1.0',
       author='Fenner Macrae',
       author_email='fmacrae.dev@gmail.com',
       description=long_description()[0],
