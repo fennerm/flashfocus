@@ -1,6 +1,4 @@
-'''Testsuite for flashfocus.Xutil'''
-from threading import Thread
-
+"""Testsuite for flashfocus.xutil."""
 from pytest import approx
 
 import flashfocus.xutil as xutil
@@ -25,11 +23,7 @@ def test_delete_opacity(window):
     assert not xutil.request_opacity(window).unpack()
 
 
-def test_wait_for_focus_event(windows):
+def test_start_watching_properties():
     xutil.start_watching_properties(xutil.ROOT_WINDOW)
     xutil.CONN.flush()
-    p = Thread(target=xutil.wait_for_focus_shift)
-    p.start()
-    assert p.is_alive()
-    change_focus(windows[0])
-    p.join()
+    xutil.CONN.poll_for_event()

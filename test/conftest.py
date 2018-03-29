@@ -26,5 +26,5 @@ def window(windows):
 
 @fixture
 def flasher():
-    """Flasher instance"""
-    return Flasher(flash_opacity=0.8, time=0.2)
+    """Flasher instance."""
+    return Flasher(flash_opacity=0.8, time=0.2, ntimepoints=10, simple=False)
