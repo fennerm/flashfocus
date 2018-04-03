@@ -1,31 +1,20 @@
-"""Setup script."""
+import os
 from setuptools import (
     find_packages,
     setup,
 )
 
-# =============================================================================
-# Globals
-# =============================================================================
 """Location of the README file"""
 README = 'README.md'
+
 
 """Github username"""
 USERNAME = 'fennerm'
 
+
 """Package name"""
 NAME = 'flashfocus'
 
-
-# =============================================================================
-# Helpers
-# =============================================================================
-
-def parse_requirements():
-    """Parse the list of requirements from requirements.txt."""
-    with open('requirements.txt') as f:
-        requirements = f.read().splitlines()
-    return requirements
 
 def long_description(readme=README):
     """Extract the long description from the README."""
@@ -45,17 +34,20 @@ def url(name=NAME, username=USERNAME):
 
 setup(
     name=NAME,
-    version='0.1.0',
+    version='0.1.3',
     author='Fenner Macrae',
     author_email='fmacrae.dev@gmail.com',
-    description=long_description()[0],
+    description=(
+        "Simple Xorg window focus anaimations for tiling window managers"),
     long_description=long_description(),
     license='MIT',
+    url='https://www.github.com/fennerm/flashfocus',
     py_modules=['flashfocus'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
-    install_requires=parse_requirements(),
+    install_requires=['xcffib', 'tendo', 'click', 'cffi'],
     packages=find_packages(exclude=["*test*"]),
+    keywords='xorg flash focus i3 bpswm awesomewm',
     entry_points='''
         [console_scripts]
         flashfocus=flashfocus.cli:cli
