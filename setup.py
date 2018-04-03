@@ -34,7 +34,7 @@ def url(name=NAME, username=USERNAME):
 
 setup(
     name=NAME,
-    version='0.1.3',
+    version='0.1.4',
     author='Fenner Macrae',
     author_email='fmacrae.dev@gmail.com',
     description=(
