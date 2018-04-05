@@ -21,8 +21,8 @@ ENV PATH="/home/user/.local/bin:${PATH}"
 ENV LC_ALL=en_US.utf8
 ENV LANG=en_US.utf8
 
-RUN pip3 install --user pytest pytest-cov pytest-runner plumbum
-RUN pip2 install --user pytest pytest-cov pytest-runner plumbum mock
+RUN pip3 install --no-cache-dir --user pytest pytest-cov pytest-runner plumbum
+RUN pip2 install --no-cache-dir --user pytest pytest-cov pytest-runner plumbum mock
 
 COPY --chown=user . flashfocus
 WORKDIR flashfocus
@@ -30,4 +30,3 @@ RUN pip3 install --user -r requirements.txt --user .
 RUN pip2 install --user -r requirements.txt --user .
 
 CMD test/docker_startup.sh
-
