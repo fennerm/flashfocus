@@ -25,7 +25,7 @@ sudo apt-get install libxcb-render0-dev;
 pip install flashfocus
 ```
 
-## Configuration`
+## Configuration
 
 Flashfocus should be added to your startup programs. E.g for i3 put the
 following in your config:
