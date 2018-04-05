@@ -96,16 +96,3 @@ class SelfDestructingFocusWait:
                 if isinstance(event, xproto.PropertyNotifyEvent):
                     if event.atom == xutil.ACTIVE_WINDOW_ATOM:
                         break
-
-
-class ExitAfter(object):
-    """Callable that will exits the entire thread after `limit` calls."""
-    def __init__(self, limit):
-        self.limit = limit
-        self.calls = 0
-
-    def __call__(self, window):
-        """Increment the call count and exit if > `limit`."""
-        self.calls += 1
-        if self.calls == self.limit + 1:
-            sys.exit()

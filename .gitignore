@@ -9,6 +9,7 @@
 *.python-version
 .mypy_cache
 .eggs
+dist
 __LAST__
 Makefile
 .prospector.yaml
