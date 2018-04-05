@@ -30,11 +30,10 @@ def url(name=NAME, username=USERNAME):
 
 setup(
     name=NAME,
-    version='0.1.5',
+    version='0.1.6',
     author='Fenner Macrae',
     author_email='fmacrae.dev@gmail.com',
-    description=(
-        "Simple Xorg window focus anaimations for tiling window managers"),
+    description=("Simple focus animations for tiling window managers"),
     long_description=long_description(),
     license='MIT',
     url='https://www.github.com/fennerm/flashfocus',
