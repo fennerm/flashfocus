@@ -2,10 +2,7 @@
 
 Simple focus animations for tiling window managers.
 
-<video width="800" poster="demo/demo.jpg" height="450" controls preload>
-  <source src="demo/demo.mp4"></source>
-  <source src="demo/demo.webm"></source>
-</video>
+![Demo gif](demo/demo.gif)
 
 <br>
 
