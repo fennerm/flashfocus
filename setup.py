@@ -5,7 +5,7 @@ from setuptools import (
 )
 
 """Location of the README file"""
-README = 'README.md'
+README = 'README.txt'
 
 
 """Github username"""
@@ -18,12 +18,8 @@ NAME = 'flashfocus'
 
 def long_description(readme=README):
     """Extract the long description from the README."""
-    try:
-        from pypandoc import convert
-        long_description = convert(str(readme), 'md', 'rst')
-    except (ImportError, IOError, OSError):
-        with open(readme, 'r') as f:
-            long_description = f.read()
+    with open(readme, 'r') as f:
+        long_description = f.read()
     return long_description
 
 
