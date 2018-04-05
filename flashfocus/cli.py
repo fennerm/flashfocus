@@ -8,6 +8,8 @@ from tendo import singleton
 
 from flashfocus.flasher import Flasher
 
+# Set LOGLEVEL environment variable to DEBUG or WARNING to change logging
+# verbosity.
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 
 
@@ -40,7 +42,7 @@ def validate_positive_int(ctx, param, value):
               callback=validate_positive_decimal,
               help='Opacity of the window during a flash.')
 @click.option('--time', '-t',
-              default=400,
+              default=500,
               callback=format_time,
               help='Flash time interval (in milliseconds).')
 @click.option('--simple', '-s', is_flag=True,
@@ -54,7 +56,7 @@ def validate_positive_int(ctx, param, value):
                    'increased X server requests. Ignored if --simple is set.')
 @click.option('--debug', '-d', is_flag=True, help='Run in debug mode.')
 def cli(opacity, time, ntimepoints, simple, debug):
-    """Flash windows when focus is shifted to them."""
+    """Simple focus animations for tiling window managers."""
     params = locals()
     single_instance_lock = singleton.SingleInstance()
     log('Initializing with parameters:')

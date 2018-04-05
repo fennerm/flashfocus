@@ -6,21 +6,37 @@ from struct import pack
 import xcffib
 import xcffib.xproto as xproto
 
-# 0xffffffff
+# Decimal representation of maximum opacity value accepted by X: 0xffffffff
 MAX_OPACITY = 4294967295
 
+# X connection
 CONN = xcffib.connect()
 
 
 def intern_atom(atom_name):
-    """Get the id of an atom from X given its name."""
+    """Get the id of an atom (property) from X given its name.
+
+    Parameters
+    ----------
+    atom_name: str
+        The name of an X atom, e.g '_NET_WM_WINDOW_OPACITY'.
+
+    Returns
+    -------
+    int
+        The X server's internal ID for the atom.
+
+    """
     atom_bytes = atom_name.encode('ascii')
     cookie = CONN.core.InternAtom(
         False, len(atom_bytes), atom_bytes)
     atom = cookie.reply().atom
     return atom
 
+# The id of the root X window
 ROOT_WINDOW = CONN.get_setup().roots[0].root
+
+# X ids for relevant window properties
 WM_OPACITY_ATOM = intern_atom('_NET_WM_WINDOW_OPACITY')
 ACTIVE_WINDOW_ATOM = intern_atom('_NET_ACTIVE_WINDOW')
 
@@ -28,8 +44,8 @@ ACTIVE_WINDOW_ATOM = intern_atom('_NET_ACTIVE_WINDOW')
 class Cookie:
     """A response or event from the X server.
 
-    Subclasses which inherit from Cookie each implement their own unpack method
-    for extracting the useful information from the response.
+    Subclasses each implement their own unpack method for extracting the useful
+    information from the response.
     """
     def __init__(self, cookie):
         self.cookie = cookie
@@ -68,7 +84,6 @@ class ActiveWindowCookie(Cookie):
 
         """
         self.response = int(self.cookie.reply().focus)
-
         return self.response
 
 
@@ -105,6 +120,8 @@ def request_focus():
 
 def set_opacity(window, opacity):
     """Set the _NET_WM_WINDOW_OPACITY property of a window.
+
+    Blocks until the X session processes the request.
 
     Parameters
     ----------
@@ -150,7 +167,7 @@ def delete_opacity(window):
 def start_watching_properties(window):
     """Start monitoring property changes for a window."""
     # To handle events in xcb we need to add a 'mask' to the window, which
-    # informs the X server that we should notified when the masked event occurs
+    # informs the X server that we should notified when the masked event occurs.
     mask = getattr(xproto.EventMask, 'PropertyChange')
     CONN.core.ChangeWindowAttributesChecked(
         window,

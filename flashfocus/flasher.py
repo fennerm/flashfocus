@@ -11,11 +11,11 @@ from xcffib.xproto import WindowError
 
 import flashfocus.xutil as xutil
 
-logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
-
 
 class Flasher:
-    """Main flashfocus class in charge of flashing windows on focus shift.
+    """Main flashfocus class.
+
+    Waits for focused window to change then flashes it.
 
     Parameters
     ----------
@@ -25,7 +25,7 @@ class Flasher:
         Flash interval in seconds
     ntimepoints: int
         Number of timepoints in the flash animation. Higher values will lead to
-        smoother animations with the cost of increased X server requests.
+        smoother animations at the cost of increased X server requests.
         Ignored if simple is True.
     simple: bool
         If True, don't animate flashes. Setting this parameter improves
