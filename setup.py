@@ -30,7 +30,7 @@ def url(name=NAME, username=USERNAME):
 
 setup(
     name=NAME,
-    version='0.1.6',
+    version='0.1.7',
     author='Fenner Macrae',
     author_email='fmacrae.dev@gmail.com',
     description=("Simple focus animations for tiling window managers"),
