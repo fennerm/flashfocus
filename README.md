@@ -10,7 +10,7 @@ When the focused window changes, flashfocus briefly decreases the window
 opacity then slowly fades the window back to full opacity to create a flash
 effect.
 
-Compatible with all X based window managers (i3, bspwm, awesome-wm, xmonad).
+Compatible with all X based window managers (i3, bspwm, awesome-wm, xmonad...).
 
 ## Installation
 
@@ -38,5 +38,16 @@ following in your config:
 exec_always --no-startup-id flashfocus
 ```
 
-
 See `flashfocus --help` for extra configuration options.
+
+### Tabbed containers in i3
+
+The animations don't work well out of the box for i3 tabs. You'll need to add
+the following to your compton config:
+
+```
+opacity-rule = [
+    "0:_NET_WM_STATE@:32a *= '_NET_WM_STATE_HIDDEN'"
+];
+```
+
