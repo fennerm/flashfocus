@@ -7,7 +7,7 @@ from setuptools import (
 
 setup(
     name='flashfocus',
-    version='0.1.8',
+    version='0.1.9',
     author='Fenner Macrae',
     author_email='fmacrae.dev@gmail.com',
     description=("Simple focus animations for tiling window managers"),
