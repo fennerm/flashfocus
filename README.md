@@ -6,6 +6,10 @@ Simple focus animations for tiling window managers.
 
 <br>
 
+When the focused window changes, flashfocus briefly decreases the window
+opacity then slowly fades the window back to full opacity to create a flash
+effect.
+
 Compatible with all X based window managers (i3, bspwm, awesome-wm, xmonad).
 
 ## Installation
