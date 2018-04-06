@@ -1,3 +1,4 @@
+from io import open
 import os
 from setuptools import (
     find_packages,
@@ -18,7 +19,7 @@ NAME = 'flashfocus'
 
 def long_description(readme=README):
     """Extract the long description from the README."""
-    with open(readme, 'r') as f:
+    with open(readme, 'r', encoding='utf-8') as f:
         long_description = f.read()
     return long_description
 
