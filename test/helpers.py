@@ -96,3 +96,19 @@ class SelfDestructingFocusWait:
                 if isinstance(event, xproto.PropertyNotifyEvent):
                     if event.atom == xutil.ACTIVE_WINDOW_ATOM:
                         break
+
+
+class StubServer:
+    """A server socket which receives a hunk of data and stores it in a list.
+
+    Used to test that clients are making correct requests.
+    """
+
+    def __init__(self, socket):
+        self.socket = socket
+        self.data = []
+
+    def await_data(self):
+        """Wait for a single piece of data from a client and store it."""
+        connection = self.socket.accept()[0]
+        self.data.append(connection.recv(1))
