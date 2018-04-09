@@ -1,7 +1,10 @@
 """Unit test fixtures."""
 from pytest import fixture
 
-from flashfocus.server import FlashServer
+from flashfocus.flashfocus import (
+    Flasher,
+    FlashServer,
+)
 from flashfocus.sockets import (
     init_client_socket,
     init_server_socket,
@@ -37,6 +40,16 @@ def flash_server():
                        ntimepoints=10,
                        simple=False)
 
+@fixture
+def flasher():
+    """Flasher instance."""
+    return Flasher(
+        time=0.2,
+        flash_opacity=0.8,
+        default_opacity=1,
+        ntimepoints=10,
+        simple=False
+    )
 
 @fixture
 def server_socket():
