@@ -8,7 +8,11 @@ import socket
 import sys
 
 
+# Name for the flashfocus socket file.
 SOCKET_NAME = 'flashfocus_socket'
+
+# Where should the flashfocus socket_file be placed if XDG_RUNTIME_DIR is not
+# defined.
 NON_XDG_SOCKET_DIR = '/tmp'
 
 
