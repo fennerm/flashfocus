@@ -8,7 +8,7 @@ import socket
 import sys
 
 
-SOCKET_NAME = '.flashfocus_socket'
+SOCKET_NAME = 'flashfocus_socket'
 NON_XDG_SOCKET_DIR = '/tmp'
 
 

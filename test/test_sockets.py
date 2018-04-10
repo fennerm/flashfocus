@@ -8,12 +8,12 @@ from flashfocus.sockets import *
 
 def test_choose_socket_address_with_xdg():
     os.environ['XDG_RUNTIME_DIR'] = '/run/user/1000'
-    assert choose_socket_address() == '/run/user/1000/.flashfocus_socket'
+    assert choose_socket_address() == '/run/user/1000/flashfocus_socket'
 
 
 def test_choose_socket_address_without_xdg():
     del os.environ['XDG_RUNTIME_DIR']
-    assert choose_socket_address() == '/tmp/.flashfocus_socket'
+    assert choose_socket_address() == '/tmp/flashfocus_socket'
 
 
 def test_init_client_socket(client_socket):
