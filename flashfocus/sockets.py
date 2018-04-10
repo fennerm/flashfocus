@@ -1,10 +1,11 @@
-"""Testsuite for flashfocus.sockets."""
+"""Unix socket initialization.
+
+The flashfocus client and server communicate using a simple datagram unix
+socket.
+"""
 import os
-from socket import (
-    AF_UNIX,
-    SOCK_STREAM,
-    socket,
-)
+import socket
+import sys
 
 
 SOCKET_NAME = '.flashfocus_socket'
@@ -28,8 +29,12 @@ def choose_socket_address():
 def init_client_socket():
     """Initialize and connect the client unix socket."""
     socket_address = choose_socket_address()
-    sock = socket(family=AF_UNIX, type=SOCK_STREAM)
-    sock.connect(socket_address)
+    sock = socket.socket(family=socket.AF_UNIX, type=socket.SOCK_DGRAM)
+    try:
+        sock.connect(socket_address)
+    except socket.error:
+        sys.exit('Error: Couldn\'t connect to the flashfocus daemon!\n'
+                 '=> Please check that the flashfocus daemon is running.')
     return sock
 
 
@@ -41,7 +46,6 @@ def init_server_socket():
     except (OSError, EnvironmentError):
         if os.path.exists(socket_address):
             raise
-    sock = socket(family=AF_UNIX, type=SOCK_STREAM)
+    sock = socket.socket(family=socket.AF_UNIX, type=socket.SOCK_DGRAM)
     sock.bind(socket_address)
-    sock.listen(1)
     return sock
