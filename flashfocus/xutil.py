@@ -9,38 +9,6 @@ import xcffib.xproto as xproto
 # Decimal representation of maximum opacity value accepted by X: 0xffffffff
 MAX_OPACITY = 4294967295
 
-# X connection
-CONN = xcffib.connect()
-
-
-def intern_atom(atom_name):
-    """Get the id of an atom (property) from X given its name.
-
-    Parameters
-    ----------
-    atom_name: str
-        The name of an X atom, e.g '_NET_WM_WINDOW_OPACITY'.
-
-    Returns
-    -------
-    int
-        The X server's internal ID for the atom.
-
-    """
-    atom_bytes = atom_name.encode('ascii')
-    cookie = CONN.core.InternAtom(
-        False, len(atom_bytes), atom_bytes)
-    atom = cookie.reply().atom
-    return atom
-
-# The id of the root X window
-ROOT_WINDOW = CONN.get_setup().roots[0].root
-
-# X ids for relevant window properties
-WM_OPACITY_ATOM = intern_atom('_NET_WM_WINDOW_OPACITY')
-ACTIVE_WINDOW_ATOM = intern_atom('_NET_ACTIVE_WINDOW')
-
-
 class Cookie:
     """A response or event from the X server.
 
@@ -87,99 +55,125 @@ class ActiveWindowCookie(Cookie):
         return self.response
 
 
-def request_opacity(window):
-    """Request the opacity of a window.
+class XConnection:
+    def __init__(self):
+        self.conn = xcffib.connect()
+        # The id of the root X window
+        self.root_window = self.conn.get_setup().roots[0].root
+        # X ids for relevant window properties
+        self.wm_opacity_atom = self.intern_atom('_NET_WM_WINDOW_OPACITY')
+        self.active_window_atom = self.intern_atom('_NET_ACTIVE_WINDOW')
 
-    Returns
-    -------
-    OpacityCookie
+    def intern_atom(self, atom_name):
+        """Get the id of an atom (property) from X given its name.
 
-    """
-    cookie = CONN.core.GetProperty(
-        delete=False,
-        window=window,
-        property=WM_OPACITY_ATOM,
-        type=xproto.GetPropertyType.Any,
-        long_offset=0,
-        long_length=63
-    )
-    return OpacityCookie(cookie)
+        Parameters
+        ----------
+        atom_name: str
+            The name of an X atom, e.g '_NET_WM_WINDOW_OPACITY'.
 
+        Returns
+        -------
+        int
+            The X server's internal ID for the atom.
 
-def request_focus():
-    """Request the currently focused window.
+        """
+        atom_bytes = atom_name.encode('ascii')
+        cookie = self.conn.core.InternAtom(
+            False, len(atom_bytes), atom_bytes)
+        atom = cookie.reply().atom
+        return atom
 
-    Returns
-    -------
-    ActiveWindowCookie
+    def request_opacity(self, window):
+        """Request the opacity of a window.
 
-    """
-    cookie = CONN.core.GetInputFocus()
-    return ActiveWindowCookie(cookie)
+        Returns
+        -------
+        OpacityCookie
 
+        """
+        cookie = self.conn.core.GetProperty(
+            delete=False,
+            window=window,
+            property=self.wm_opacity_atom,
+            type=xproto.GetPropertyType.Any,
+            long_offset=0,
+            long_length=63
+        )
+        return OpacityCookie(cookie)
 
-def set_opacity(window, opacity):
-    """Set the _NET_WM_WINDOW_OPACITY property of a window.
+    def request_focus(self):
+        """Request the currently focused window.
 
-    Blocks until the X session processes the request.
+        Returns
+        -------
+        ActiveWindowCookie
 
-    Parameters
-    ----------
-    window: int
-        The X id of a window
-    opacity: float
-        Opacity as a decimal < 1
+        """
+        cookie = self.conn.core.GetInputFocus()
+        return ActiveWindowCookie(cookie)
 
-    """
-    data = pack('I', int(opacity * MAX_OPACITY))
-    # Add argument names
-    void_cookie = CONN.core.ChangePropertyChecked(
-        mode=xproto.PropMode.Replace,
-        window=window,
-        property=WM_OPACITY_ATOM,
-        type=xproto.Atom.CARDINAL,
-        format=32,
-        data_len=1,
-        data=data)
-    void_cookie.check()
+    def set_opacity(self, window, opacity):
+        """Set the _NET_WM_WINDOW_OPACITY property of a window.
 
+        Blocks until the X session processes the request.
 
-def delete_opacity(window):
-    """Delete the _NET_WM_WINDOW_OPACITY property from a window.
+        Parameters
+        ----------
+        window: int
+            The X id of a window
+        opacity: float
+            Opacity as a decimal < 1
 
-    Parameters
-    ----------
-    window: int
-        The X id of a window
+        """
+        data = pack('I', int(opacity * MAX_OPACITY))
+        # Add argument names
+        void_cookie = self.conn.core.ChangePropertyChecked(
+            mode=xproto.PropMode.Replace,
+            window=window,
+            property=self.wm_opacity_atom,
+            type=xproto.Atom.CARDINAL,
+            format=32,
+            data_len=1,
+            data=data)
+        void_cookie.check()
 
-    """
-    cookie = CONN.core.GetProperty(
-        delete=True,
-        window=window,
-        property=WM_OPACITY_ATOM,
-        type=xproto.GetPropertyType.Any,
-        long_offset=0,
-        long_length=63
-    )
-    cookie.reply()
+    def delete_opacity(self, window):
+        """Delete the _NET_WM_WINDOW_OPACITY property from a window.
 
+        Parameters
+        ----------
+        window: int
+            The X id of a window
 
-def start_watching_properties(window):
-    """Start monitoring property changes for a window."""
-    # To handle events in xcb we need to add a 'mask' to the window, which
-    # informs the X server that we should notified when the masked event occurs.
-    mask = getattr(xproto.EventMask, 'PropertyChange')
-    CONN.core.ChangeWindowAttributesChecked(
-        window,
-        xproto.CW.EventMask,
-        [mask]).check()
+        """
+        cookie = self.conn.core.GetProperty(
+            delete=True,
+            window=window,
+            property=self.wm_opacity_atom,
+            type=xproto.GetPropertyType.Any,
+            long_offset=0,
+            long_length=63
+        )
+        cookie.reply()
 
+    def start_watching_properties(self, window):
+        """Start monitoring property changes for a window."""
+        # To handle events in xcb we need to add a 'mask' to the window, which
+        # informs the X server that we should notified when the masked event
+        # occurs.
+        mask = getattr(xproto.EventMask, 'PropertyChange')
+        self.conn.core.ChangeWindowAttributesChecked(
+            window,
+            xproto.CW.EventMask,
+            [mask]).check()
 
-def wait_for_focus_shift():
-    """Block until the focused window changes."""
-    while True:
-        event = CONN.wait_for_event()
+    def wait_for_focus_shift(self):
+        """Block until the focused window changes."""
+        while True:
+            event = self.conn.wait_for_event()
+            self.conn.poll_for_event
 
-        if isinstance(event, xproto.PropertyNotifyEvent):
-            if event.atom == ACTIVE_WINDOW_ATOM:
-                break
+            if isinstance(event, xproto.PropertyNotifyEvent):
+                if event.atom == self.active_window_atom:
+                    break

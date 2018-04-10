@@ -81,4 +81,4 @@ def xconnection():
     """XConnection instance."""
     xconn = XConnection()
     yield xconn
-    xconn.close()
+    xconn.conn.disconnect()
