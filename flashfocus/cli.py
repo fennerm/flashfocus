@@ -6,7 +6,7 @@ import os
 import click
 from tendo import singleton
 
-from flashfocus.flasher import Flasher
+from flashfocus.server import FlashServer
 
 # Set LOGLEVEL environment variable to DEBUG or WARNING to change logging
 # verbosity.
@@ -41,6 +41,11 @@ def validate_positive_int(ctx, param, value):
               default=0.8,
               callback=validate_positive_decimal,
               help='Opacity of the window during a flash.')
+@click.option('--default-opacity', '-e',
+              default=1.0,
+              callback=validate_positive_decimal,
+              help=('Default window opacity. flashfocus will reset the window '
+                    'opacity to this value post-flash.'))
 @click.option('--time', '-t',
               default=500,
               callback=format_time,
@@ -55,14 +60,19 @@ def validate_positive_int(ctx, param, value):
                    'will lead to smoother animations with the cost of '
                    'increased X server requests. Ignored if --simple is set.')
 @click.option('--debug', '-d', is_flag=True, help='Run in debug mode.')
-def cli(opacity, time, ntimepoints, simple, debug):
+def cli(opacity, default_opacity, time, ntimepoints, simple, debug):
     """Simple focus animations for tiling window managers."""
     params = locals()
     single_instance_lock = singleton.SingleInstance()
     log('Initializing with parameters:')
     log('%s', params)
-    flasher = Flasher(opacity, time, ntimepoints, simple)
+    server = FlashServer(
+        default_opacity=default_opacity,
+        flash_opacity=opacity,
+        time=time,
+        ntimepoints=ntimepoints,
+        simple=simple)
     if debug:
-        log('Flasher attributes: %s', flasher.__dict__)
+        log('FlashServer attributes: %s', server.__dict__)
     else:
-        flasher.monitor_focus()
+        server.event_loop()
