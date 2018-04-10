@@ -1,4 +1,6 @@
 """Testsuite for flashfocus.xutil."""
+from threading import Thread
+
 from pytest import approx
 
 from test.helpers import change_focus
@@ -26,3 +28,10 @@ def test_start_watching_properties(xconnection):
     xconnection.start_watching_properties(xconnection.root_window)
     xconnection.conn.flush()
     xconnection.conn.poll_for_event()
+
+
+def test_wait_for_focus_shift(xconnection, windows):
+    p = Thread(target=xconnection.wait_for_focus_shift)
+    p.start()
+    change_focus(windows[1])
+    p.join()

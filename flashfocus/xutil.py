@@ -162,7 +162,12 @@ class XConnection:
         # To handle events in xcb we need to add a 'mask' to the window, which
         # informs the X server that we should notified when the masked event
         # occurs.
-        mask = getattr(xproto.EventMask, 'PropertyChange')
+        property_mask = getattr(xproto.EventMask, 'PropertyChange')
+
+        # We also check for KeyPress events so that the program shuts down
+        # immediately when Ctrl-C is pressed.
+        keyboard_mask = getattr(xproto.EventMask, 'KeyPress')
+        mask = property_mask | keyboard_mask
         self.conn.core.ChangeWindowAttributesChecked(
             window,
             xproto.CW.EventMask,
@@ -172,7 +177,6 @@ class XConnection:
         """Block until the focused window changes."""
         while True:
             event = self.conn.wait_for_event()
-            self.conn.poll_for_event
 
             if isinstance(event, xproto.PropertyNotifyEvent):
                 if event.atom == self.active_window_atom:
