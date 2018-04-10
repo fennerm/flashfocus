@@ -5,6 +5,8 @@ from setuptools import (
     setup,
 )
 
+import fastentrypoints
+
 setup(
     name='flashfocus',
     version='0.1.9',
@@ -24,5 +26,6 @@ setup(
     entry_points='''
         [console_scripts]
         flashfocus=flashfocus.cli:cli
+        flash_window=flashfocus.client:client_request_flash
     ''',
 )
