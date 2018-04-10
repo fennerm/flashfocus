@@ -1,7 +1,7 @@
 """Unit test fixtures."""
 from pytest import fixture
 
-from flashfocus.flashfocus import (
+from flashfocus.server import (
     Flasher,
     FlashServer,
 )
@@ -9,6 +9,7 @@ from flashfocus.sockets import (
     init_client_socket,
     init_server_socket,
 )
+from flashfocus.xutil import XConnection
 
 from test.helpers import (
     change_focus,
@@ -35,10 +36,13 @@ def window(windows):
 @fixture
 def flash_server():
     """FlashServer instance."""
-    return FlashServer(flash_opacity=0.8,
-                       time=0.2,
-                       ntimepoints=10,
-                       simple=False)
+    return FlashServer(
+        default_opacity=1,
+        flash_opacity=0.8,
+        time=0.2,
+        ntimepoints=10,
+        simple=False)
+
 
 @fixture
 def flasher():
@@ -51,9 +55,10 @@ def flasher():
         simple=False
     )
 
+
 @fixture
 def server_socket():
-    """Bound, listening server socket."""
+    """Server socket instance."""
     socket = init_server_socket()
     yield socket
     socket.close()
@@ -61,7 +66,7 @@ def server_socket():
 
 @fixture
 def client_socket(server_socket):
-    """Client socket."""
+    """Client socket instance."""
     return init_client_socket()
 
 
@@ -69,3 +74,11 @@ def client_socket(server_socket):
 def stub_server(server_socket):
     """StubServer instance."""
     return StubServer(server_socket)
+
+
+@fixture(scope='session')
+def xconnection():
+    """XConnection instance."""
+    xconn = XConnection()
+    yield xconn
+    xconn.close()

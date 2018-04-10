@@ -14,7 +14,7 @@ from plumbum.cmd import (
 )
 from xcffib import xproto
 
-import flashfocus.xutil as xutil
+from flashfocus.xutil import XConnection
 
 
 class WindowSession:
@@ -82,6 +82,7 @@ class SelfDestructingFocusWait:
     """
     def __init__(self, limit):
         self.limit = limit
+        self.conn = XConnection()
         self.calls = 0
 
     def __call__(self):
@@ -91,10 +92,10 @@ class SelfDestructingFocusWait:
             sys.exit()
         else:
             while True:
-                event = xutil.CONN.wait_for_event()
+                event = self.conn.wait_for_event()
 
                 if isinstance(event, xproto.PropertyNotifyEvent):
-                    if event.atom == xutil.ACTIVE_WINDOW_ATOM:
+                    if event.atom == self.conn.active_window_atom:
                         break
 
 
@@ -103,12 +104,18 @@ class StubServer:
 
     Used to test that clients are making correct requests.
     """
-
     def __init__(self, socket):
         self.socket = socket
         self.data = []
 
     def await_data(self):
         """Wait for a single piece of data from a client and store it."""
-        connection = self.socket.accept()[0]
-        self.data.append(connection.recv(1))
+        self.data.append(self.socket.recv(1))
+
+
+def queue_to_list(queue):
+    """Convert a Queue to a list."""
+    result = []
+    while queue.qsize() != 0:
+        result.append(queue.get())
+    return result
