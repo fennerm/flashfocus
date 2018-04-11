@@ -1,4 +1,6 @@
 """flashfocus command line interface."""
+from __future__ import division
+
 import logging
 from logging import info as log
 import os

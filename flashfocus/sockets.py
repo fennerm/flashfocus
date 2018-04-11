@@ -52,4 +52,5 @@ def init_server_socket():
             raise
     sock = socket.socket(family=socket.AF_UNIX, type=socket.SOCK_DGRAM)
     sock.bind(socket_address)
+    sock.settimeout(1)
     return sock

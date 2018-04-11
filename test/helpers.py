@@ -1,7 +1,6 @@
 """Helper functions/classes for unit tests."""
 from __future__ import division
 
-import sys
 from threading import Thread
 from time import sleep
 
@@ -15,8 +14,6 @@ from plumbum.cmd import (
 from xcffib import xproto
 
 from flashfocus.xutil import XConnection
-
-
 class WindowSession:
     """A session of blank windows for testing."""
     def __init__(self):
@@ -30,6 +27,7 @@ class WindowSession:
         self.windows = [window1, window2, window3]
         self.ids = [
             w.get_property('window').get_xid() for w in self.windows]
+        change_focus(self.ids[0])
 
     def destroy(self):
         """Tear down the window session."""
@@ -51,18 +49,20 @@ class WindowWatcher(Thread):
     """Watch a window for changes in opacity."""
     def __init__(self, window):
         super(WindowWatcher, self).__init__()
+        self.xconn = XConnection()
         self.window = window
-        self.opacity_events = [xutil.request_opacity(self.window).unpack()]
+        self.opacity_events = [self.xconn.request_opacity(self.window).unpack()]
         self.keep_going = True
         self.done = False
 
     def run(self):
         """Record opacity changes until stop signal received."""
         while self.keep_going:
-            opacity = xutil.request_opacity(self.window).unpack()
+            opacity = self.xconn.request_opacity(self.window).unpack()
             if opacity != self.opacity_events[-1]:
                 self.opacity_events.append(opacity)
         self.done = True
+        self.xconn.conn.disconnect()
 
     def report(self):
         """Send the stop signal and report changes in _NET_WM_WINDOW_OPACITY."""
@@ -72,31 +72,6 @@ class WindowWatcher(Thread):
         while not self.done:
             pass
         return self.opacity_events
-
-
-class SelfDestructingFocusWait:
-    """Class for terminating the main Flasher loop.
-
-    It is used as a drop in replacement for xutil.wait_for_focus_shift. When
-    it is called > `limit` times, the Flasher is terminated
-    """
-    def __init__(self, limit):
-        self.limit = limit
-        self.conn = XConnection()
-        self.calls = 0
-
-    def __call__(self):
-        """Terminate after call limit reached."""
-        self.calls += 1
-        if self.calls == self.limit - 1:
-            sys.exit()
-        else:
-            while True:
-                event = self.conn.wait_for_event()
-
-                if isinstance(event, xproto.PropertyNotifyEvent):
-                    if event.atom == self.conn.active_window_atom:
-                        break
 
 
 class StubServer:

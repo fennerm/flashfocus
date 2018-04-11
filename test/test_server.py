@@ -18,17 +18,18 @@ from pytest import (
     mark,
 )
 
-from flashfocus.flashfocus import Flasher
-import flashfocus.xutil as xutil
+from flashfocus.client import client_request_flash
+from flashfocus.server import Flasher
 from test.helpers import (
     change_focus,
-    SelfDestructingFocusWait,
+    queue_to_list,
     WindowWatcher,
 )
 
 
 def test_flash_window(flasher, window):
-    expected_opacity = [None] + flasher.flash_series
+    change_focus(window)
+    expected_opacity = [None] + flasher.flash_series + [None]
     watcher = WindowWatcher(window)
     watcher.start()
     flasher.flash_window(window)
@@ -40,8 +41,8 @@ def test_flash_window_stress_test(flasher, window):
         flasher.flash_window(window)
 
 
-def test_flash_nonexistant_window_ignored(flash_server):
-    flash_server.flash_window(0)
+def test_flash_nonexistant_window_ignored(flasher):
+    flasher.flash_window(0)
 
 
 @mark.parametrize(
@@ -72,7 +73,37 @@ def test_compute_flash_series(flash_opacity, default_opacity, ntimepoints,
             assert not expected
 
 
-def test_event_loop(flash_server):
+def test_queue_focus_shift_tasks(flash_server, windows):
+    p = Thread(target=flash_server.queue_focus_shift_tasks)
+    p.start()
+    sleep(0.1)
+    # When queue_focus_shift_tasks starts up it already has some focus shift
+    # tasks to get through. We have to clear these out first
+    while flash_server.target_windows.qsize() != 0:
+        flash_server.target_windows.get()
+    change_focus(windows[1])
+    sleep(0.1)
+    flash_server.keep_going = False
+    change_focus(windows[0])
+    sleep(0.1)
+    assert (queue_to_list(flash_server.target_windows) ==
+            [(windows[1], 'focus_shift'), (windows[0], 'focus_shift')])
+
+
+@mark.parametrize('cooldown,nqueued', [
+    (0.3, 2)
+])
+def test_queue_client_tasks(cooldown, nqueued, flash_server, windows):
+    p = Thread(target=flash_server.queue_client_tasks)
+    p.start()
+    sleep(0.2)
+    client_request_flash()
+    sleep(cooldown)
+    client_request_flash()
+    sleep(0.2)
+    flash_server.keep_going = False
+    expected_queue = [(windows[0], 'client_request') for _ in range(nqueued)]
+    assert queue_to_list(flash_server.target_windows) == expected_queue
 
 
 @mark.parametrize('focus_indices,flash_indices', [
@@ -81,22 +112,24 @@ def test_event_loop(flash_server):
     # Test that focusing on same window twice only flashes once
     ([0, 0], [0])
 ])
-def test_monitor_focus(flash_server, windows, focus_indices, flash_indices,
-                       monkeypatch):
+def test_event_loop(flash_server, windows, focus_indices, flash_indices,
+                    monkeypatch):
+    # Shift focus as specified by parameters then throw in a client request for
+    # good measure
     focus_shifts = [windows[i] for i in focus_indices]
-    expected_calls = [call(windows[i]) for i in flash_indices]
-    flash_server.flash_window = MagicMock()
-    monkeypatch.setattr(
-        xutil, 'wait_for_focus_shift',
-        SelfDestructingFocusWait(len(focus_indices) + 2))
-    p = Thread(target=flash_server.monitor_focus)
+    expected_calls = ([call(windows[i]) for i in flash_indices] +
+                      [call(focus_shifts[-1])])
+    flash_server.flasher.flash_window = MagicMock()
+    p = Thread(target=flash_server.event_loop)
     p.start()
+    sleep(0.5)
 
     for window in focus_shifts:
         change_focus(window)
         sleep(0.2)
-        # This would normally be done by the flash_window method
-        flash_server.locked_windows.discard(window)
+    client_request_flash()
+    sleep(0.3)
+    flash_server.keep_going = False
 
     p.join()
-    assert flash_server.flash_window.call_args_list == expected_calls
+    assert flash_server.flasher.flash_window.call_args_list == expected_calls
