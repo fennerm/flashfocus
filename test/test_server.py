@@ -121,8 +121,6 @@ def test_queue_client_tasks(flash_server, windows):
 @mark.parametrize('focus_indices,flash_indices', [
     # Test normal usage
     ([1, 0, 1], [1, 0, 1]),
-    # Test that focusing on same window twice only flashes once
-    ([0, 0], [0])
 ])
 def test_event_loop(flash_server, windows, focus_indices, flash_indices,
                     monkeypatch):
