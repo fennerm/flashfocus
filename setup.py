@@ -20,7 +20,7 @@ setup(
     py_modules=['flashfocus'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
-    install_requires=['xcffib', 'tendo', 'click', 'cffi'],
+    install_requires=['xcffib', 'click', 'cffi'],
     packages=find_packages(exclude=["*test*"]),
     keywords='xorg flash focus i3 bpswm awesomewm',
     entry_points='''

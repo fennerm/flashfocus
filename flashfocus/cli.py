@@ -1,18 +1,31 @@
 """flashfocus command line interface."""
 from __future__ import division
 
+import fcntl
 import logging
-from logging import info as log
+from logging import info
 import os
+import sys
 
 import click
-from tendo import singleton
 
 from flashfocus.server import FlashServer
+from flashfocus.syspaths import RUNTIME_DIR
 
 # Set LOGLEVEL environment variable to DEBUG or WARNING to change logging
 # verbosity.
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
+
+# The pid file for flashfocus. Used to ensure that only one instance is active.
+PID = open(os.path.join(RUNTIME_DIR, 'flashfocus.pid'), 'a')
+
+
+def ensure_single_instance():
+    """Ensure that no other flashfocus instances are running."""
+    try:
+        fcntl.lockf(PID, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        sys.exit('Another flashfocus instance is running.')
 
 
 def validate_positive_decimal(ctx, param, value):
@@ -65,9 +78,9 @@ def validate_positive_int(ctx, param, value):
 def cli(opacity, default_opacity, time, ntimepoints, simple, debug):
     """Simple focus animations for tiling window managers."""
     params = locals()
-    single_instance_lock = singleton.SingleInstance()
-    log('Initializing with parameters:')
-    log('%s', params)
+    ensure_single_instance()
+    info('Initializing with parameters:')
+    info('%s', params)
     server = FlashServer(
         default_opacity=default_opacity,
         flash_opacity=opacity,
@@ -75,6 +88,6 @@ def cli(opacity, default_opacity, time, ntimepoints, simple, debug):
         ntimepoints=ntimepoints,
         simple=simple)
     if debug:
-        log('FlashServer attributes: %s', server.__dict__)
+        info('FlashServer attributes: %s', server.__dict__)
     else:
         server.event_loop()

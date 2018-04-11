@@ -7,35 +7,16 @@ import os
 import socket
 import sys
 
+from flashfocus.syspaths import RUNTIME_DIR
 
-# Name for the flashfocus socket file.
-SOCKET_NAME = 'flashfocus_socket'
-
-# Where should the flashfocus socket_file be placed if XDG_RUNTIME_DIR is not
-# defined.
-NON_XDG_SOCKET_DIR = '/tmp'
-
-
-def choose_socket_address():
-    """Choose the socket address for the server/client to bind to.
-
-    Tries to use XDG_RUNTIME_DIR if it is defined, otherwise uses /tmp.
-    """
-    xdg_runtime_dir = os.environ.get('XDG_RUNTIME_DIR')
-    if xdg_runtime_dir:
-        socket_dir = xdg_runtime_dir
-    else:
-        socket_dir = NON_XDG_SOCKET_DIR
-    socket_address = os.path.join(socket_dir, SOCKET_NAME)
-    return socket_address
+SOCKET_ADDRESS = os.path.join(RUNTIME_DIR, 'flashfocus_socket')
 
 
 def init_client_socket():
     """Initialize and connect the client unix socket."""
-    socket_address = choose_socket_address()
     sock = socket.socket(family=socket.AF_UNIX, type=socket.SOCK_DGRAM)
     try:
-        sock.connect(socket_address)
+        sock.connect(SOCKET_ADDRESS)
     except socket.error:
         sys.exit('Error: Couldn\'t connect to the flashfocus daemon!\n'
                  '=> Please check that the flashfocus daemon is running.')
@@ -44,13 +25,12 @@ def init_client_socket():
 
 def init_server_socket():
     """Initialize and bind the server unix socket."""
-    socket_address = choose_socket_address()
     try:
-        os.unlink(socket_address)
+        os.unlink(SOCKET_ADDRESS)
     except (OSError, EnvironmentError):
-        if os.path.exists(socket_address):
+        if os.path.exists(SOCKET_ADDRESS):
             raise
     sock = socket.socket(family=socket.AF_UNIX, type=socket.SOCK_DGRAM)
-    sock.bind(socket_address)
+    sock.bind(SOCKET_ADDRESS)
     sock.settimeout(1)
     return sock
