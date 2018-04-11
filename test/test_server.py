@@ -33,6 +33,7 @@ def test_flash_window(flasher, window):
     watcher = WindowWatcher(window)
     watcher.start()
     flasher.flash_window(window)
+    sleep(0.3)
     assert watcher.report() == approx(expected_opacity, 0.01)
 
 
@@ -43,6 +44,19 @@ def test_flash_window_stress_test(flasher, window):
 
 def test_flash_nonexistant_window_ignored(flasher):
     flasher.flash_window(0)
+
+
+def test_flash_window_conflicts_are_restarted(flasher, window):
+    watcher = WindowWatcher(window)
+    watcher.start()
+    flasher.flash_window(window)
+    sleep(0.05)
+    flasher.flash_window(window)
+    sleep(0.2)
+    num_none = sum([x is None for x in watcher.report()])
+    # If the flasher restarts a flash, we should expect the default opacity to
+    # only be present at the start and the end of the watcher report.
+    assert num_none == 2
 
 
 @mark.parametrize(
@@ -74,7 +88,7 @@ def test_compute_flash_series(flash_opacity, default_opacity, ntimepoints,
 
 
 def test_queue_focus_shift_tasks(flash_server, windows):
-    p = Thread(target=flash_server.queue_focus_shift_tasks)
+    p = Thread(target=flash_server._queue_focus_shift_tasks)
     p.start()
     sleep(0.1)
     # When queue_focus_shift_tasks starts up it already has some focus shift
@@ -90,19 +104,17 @@ def test_queue_focus_shift_tasks(flash_server, windows):
             [(windows[1], 'focus_shift'), (windows[0], 'focus_shift')])
 
 
-@mark.parametrize('cooldown,nqueued', [
-    (0.3, 2)
-])
-def test_queue_client_tasks(cooldown, nqueued, flash_server, windows):
-    p = Thread(target=flash_server.queue_client_tasks)
+def test_queue_client_tasks(flash_server, windows):
+    p = Thread(target=flash_server._queue_client_tasks)
     p.start()
     sleep(0.2)
     client_request_flash()
-    sleep(cooldown)
+    sleep(0.2)
     client_request_flash()
     sleep(0.2)
     flash_server.keep_going = False
-    expected_queue = [(windows[0], 'client_request') for _ in range(nqueued)]
+    expected_queue = [(windows[0], 'client_request'),
+                      (windows[0], 'client_request')]
     assert queue_to_list(flash_server.target_windows) == expected_queue
 
 
@@ -122,14 +134,12 @@ def test_event_loop(flash_server, windows, focus_indices, flash_indices,
     flash_server.flasher.flash_window = MagicMock()
     p = Thread(target=flash_server.event_loop)
     p.start()
-    sleep(0.5)
+    sleep(0.1)
 
     for window in focus_shifts:
         change_focus(window)
-        sleep(0.2)
     client_request_flash()
-    sleep(0.3)
+    sleep(0.1)
     flash_server.keep_going = False
-
     p.join()
     assert flash_server.flasher.flash_window.call_args_list == expected_calls

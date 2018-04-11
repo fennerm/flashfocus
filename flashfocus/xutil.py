@@ -1,6 +1,7 @@
 """Manipulate Xorg window opacity."""
 from __future__ import division
 
+from select import select
 from struct import pack
 
 import xcffib
@@ -56,8 +57,10 @@ class ActiveWindowCookie(Cookie):
 
 
 class XConnection:
-    def __init__(self):
+    def __init__(self, timeout=0):
         self.conn = xcffib.connect()
+        self.timeout = timeout
+        self.file_descriptor = self.conn.get_file_descriptor()
         # The id of the root X window
         self.root_window = self.conn.get_setup().roots[0].root
         # X ids for relevant window properties
@@ -173,11 +176,16 @@ class XConnection:
             xproto.CW.EventMask,
             [mask]).check()
 
-    def wait_for_focus_shift(self):
-        """Block until the focused window changes."""
-        while True:
-            event = self.conn.wait_for_event()
+    def has_events(self):
+        """True if the X connection has events which have not been processed."""
+        return select([self.file_descriptor], [], [], self.timeout)[0]
 
+    def focus_shifted(self):
+        """Return True if the last subscribed X event was a focus shift."""
+        event = self.conn.poll_for_event()
+
+        if event:
             if isinstance(event, xproto.PropertyNotifyEvent):
                 if event.atom == self.active_window_atom:
-                    break
+                    return True
+        return False

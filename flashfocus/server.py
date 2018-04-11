@@ -19,12 +19,8 @@ from signal import (
 )
 import socket
 from threading import Thread
-from time import (
-    sleep,
-    time,
-)
+from time import sleep
 
-import xcffib
 from xcffib.xproto import WindowError
 
 from flashfocus.sockets import init_server_socket
@@ -32,10 +28,11 @@ from flashfocus.xutil import XConnection
 
 
 class Flasher:
-    """Object which handles the actual flashing of windows.
+    """Creates smooth window flash animations.
 
-    It receives jobs from the FlashServer without worrying about scheduling or
-    conflicts.
+    If a flash is requested on an already flashing window, the first request is
+    restarted and the second request is ignored. This ensures that Flasher
+    threads do not try to draw to the same window at the same time.
 
     Parameters
     ----------
@@ -54,11 +51,25 @@ class Flasher:
         If True, don't animate flashes. Setting this parameter improves
         performance but causes rougher opacity transitions.
 
+    Attributes
+    ----------
+    xconn: flashfocus.xutil.XConnection
+        The connection to the X server.
+    flash_series: List[float]
+        The series of opacity transitions during a flash.
+    progress: Dict[int, int]
+        Keys are window ids for windows that are currently being flashed. Values
+        are indices in the flash_series which define the progress in the flash
+        animation.
+    timechunk: float
+        Number of seconds between opacity transitions.
+
     """
     def __init__(self, time, flash_opacity, default_opacity,
                  simple, ntimepoints):
         self.xconn = XConnection()
         self.default_opacity = default_opacity
+        self.flash_opacity = flash_opacity
         if simple:
             self.ntimepoints = 1
             self.timechunk = time
@@ -66,45 +77,59 @@ class Flasher:
         else:
             self.ntimepoints = ntimepoints
             self.timechunk = time / self.ntimepoints
-            self.flash_series = self.compute_flash_series(
-                default_opacity,
-                flash_opacity)
+            self.flash_series = self._compute_flash_series()
+        self.progress = dict()
 
-        self.flashtracker = dict()
+    def already_flashing(self, window):
+        """Return True if the flasher is already flashing a given window."""
+        return window in self.progress
 
-    def compute_flash_series(self, default_opacity, flash_opacity):
+    def flash_window(self, window):
+        """Flash a window."""
+        info('Flashing window %s', str(window))
+        if window in self.progress:
+            try:
+                self.progress[window] = 0
+            except KeyError:
+                # This occurs when a flash terminates just as we're trying to
+                # restart it. In this case we just start over.
+                self.flash_window(window)
+        else:
+            p = Thread(target=self._flash, args=[window])
+            p.daemon = True
+            p.start()
+
+    def _compute_flash_series(self):
         """Calculate the series of opacity values for the flash animation.
 
         Given the default window opacity, and the flash opacity, this method
         calculates a smooth series of intermediate opacity values.
         """
         info('Computing flash series from %s to %s',
-             flash_opacity,
-             default_opacity)
-        opacity_diff = default_opacity - flash_opacity
+             self.flash_opacity,
+             self.default_opacity)
+        opacity_diff = self.default_opacity - self.flash_opacity
 
-        flash_series = [flash_opacity +
+        flash_series = [self.flash_opacity +
                         ((x / self.ntimepoints) * opacity_diff)
                         for x in range(self.ntimepoints)]
         info('Computed flash series = %s', flash_series)
         return flash_series
 
-    def flash_window(self, window):
+    def _flash(self, window):
         """Flash a window.
 
         This function just iterates across `self.flash_series` and modifies the
         window opacity accordingly. It waits `self.timechunk` between
         modifications.
-
         """
-        info('Flashing window %s', str(window))
-        self.flashtracker[window] = 0
         try:
-            while self.flashtracker[window] < self.ntimepoints:
+            self.progress[window] = 0
+            while self.progress[window] < self.ntimepoints:
                 self.xconn.set_opacity(
-                    window, self.flash_series[self.flashtracker[window]])
+                    window, self.flash_series[self.progress[window]])
                 sleep(self.timechunk)
-                self.flashtracker[window] += 1
+                self.progress[window] += 1
         except WindowError:
             info('Attempted to flash a nonexistant window %s, ignoring...',
                  str(window))
@@ -115,11 +140,12 @@ class Flasher:
             else:
                 self.xconn.set_opacity(window, self.default_opacity)
         finally:
-            del self.flashtracker[window]
+            # The window is no longer being flashed.
+            del self.progress[window]
 
 
 class FlashServer:
-    """Handles `flash_window` requests and focus shifts.
+    """Monitor focus shifts and handle `flash_window` requests.
 
     Parameters
     ----------
@@ -156,13 +182,13 @@ class FlashServer:
         # requests. On i3 when a window is closed, the next window is flashed
         # three times without this guard.
         self.prev_focus = None
-        self.producers = [Thread(target=self.queue_focus_shift_tasks),
-                          Thread(target=self.queue_client_tasks)]
+        self.producers = [Thread(target=self._queue_focus_shift_tasks),
+                          Thread(target=self._queue_client_tasks)]
 
         # Ensure that SIGINTs are handled correctly
         signal(SIGINT, default_int_handler)
         self.target_windows = Queue()
-        self.xconn = XConnection()
+        self.xconn = XConnection(timeout=1)
         self.sock = init_server_socket()
         self.keep_going = True
 
@@ -170,34 +196,32 @@ class FlashServer:
         """Wait for changes in focus and flash windows."""
         try:
             for producer in self.producers:
-                producer.daemon = True
                 producer.start()
             while self.keep_going:
-                self.flash_queued_window()
+                self._flash_queued_window()
         except (KeyboardInterrupt, SystemExit):
             info('Interrupt received, shutting down...')
         finally:
             info('Killing threads...')
             self.keep_going = False
+            for producer in self.producers:
+                producer.join()
             info('Disconnecting from X session...')
             self.xconn.conn.disconnect()
             info('Disconnecting socket...')
             self.sock.close()
 
-    def queue_focus_shift_tasks(self):
+    def _queue_focus_shift_tasks(self):
         """Wait for the focused window to change and queue it for flashing."""
         self.xconn.start_watching_properties(self.xconn.root_window)
-        try:
-            while self.keep_going:
-                self.xconn.wait_for_focus_shift()
-                info('Focus shifted...')
-                focused = self.xconn.request_focus().unpack()
-                self.target_windows.put(tuple([focused, 'focus_shift']))
-        except xcffib.ConnectionException:
-            # Thrown when the event_loop closes the X connection during shutdown
-            pass
+        while self.keep_going:
+            if self.xconn.has_events():
+                if self.xconn.focus_shifted():
+                    info('Focus shifted...')
+                    focused = self.xconn.request_focus().unpack()
+                    self.target_windows.put(tuple([focused, 'focus_shift']))
 
-    def queue_client_tasks(self):
+    def _queue_client_tasks(self):
         """Wait for flash_window calls and queue window for flashing."""
         while self.keep_going:
             try:
@@ -209,7 +233,7 @@ class FlashServer:
                 focused = self.xconn.request_focus().unpack()
                 self.target_windows.put(tuple([focused, 'client_request']))
 
-    def flash_queued_window(self):
+    def _flash_queued_window(self):
         """Pop a window from the target_windows queue and initiate flash."""
         try:
             window, request_type = self.target_windows.get(timeout=1)
@@ -217,16 +241,9 @@ class FlashServer:
             pass
         else:
             if window != self.prev_focus or request_type == 'client_request':
-                # Further flash requests are ignored for the window until
-                # the thread completes.
-                if window in self.flasher.flashtracker:
-                    self.flasher.flashtracker[window] = 0
-                else:
-                    p = Thread(target=self.flasher.flash_window, args=[window])
-                    p.daemon = True
-                    p.start()
+                self.flasher.flash_window(window)
 
-            elif window == self.prev_focus:
+            else:
                 info("Window %s was just flashed, ignoring...", window)
 
             self.prev_focus = window
