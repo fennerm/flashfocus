@@ -8,6 +8,11 @@
 - More finetuned control over flash animation
 - Better support for using flashfocus as a library to produce custom animation scripts.
 
+## [0.2.1] - April 14th, 2018
+
+### Fixed
+- Uncaught WindowError when window closed during flash.
+
 ## [0.2.0] - April 11th, 2018
 
 ### Added

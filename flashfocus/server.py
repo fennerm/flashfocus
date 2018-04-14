@@ -130,15 +130,16 @@ class Flasher:
                     window, self.flash_series[self.progress[window]])
                 sleep(self.timechunk)
                 self.progress[window] += 1
-        except WindowError:
-            info('Attempted to flash a nonexistant window %s, ignoring...',
-                 str(window))
-        else:
+
             info('Resetting opacity to default')
             if self.default_opacity == 1:
                 self.xconn.delete_opacity(window)
             else:
                 self.xconn.set_opacity(window, self.default_opacity)
+
+        except WindowError:
+            info('Attempted to draw to nonexistant window %s, ignoring...',
+                 str(window))
         finally:
             # The window is no longer being flashed.
             del self.progress[window]
@@ -221,7 +222,7 @@ class FlashServer:
                     self.target_windows.put(tuple([focused, 'focus_shift']))
 
     def _queue_client_tasks(self):
-        """Queue flashes resultant """
+        """Queue flashes resultant from client requests."""
         while self.keep_going:
             try:
                 self.sock.recv(1)
@@ -241,7 +242,6 @@ class FlashServer:
         else:
             if window != self.prev_focus or request_type == 'client_request':
                 self.flasher.flash_window(window)
-
             else:
                 info("Window %s was just flashed, ignoring...", window)
 
