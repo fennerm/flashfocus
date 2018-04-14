@@ -145,24 +145,23 @@ class Flasher:
 
 
 class FlashServer:
-    """Monitor focus shifts and handle `flash_window` requests.
+    """Handle focus shifts and client (flash_window) requests.
 
     Parameters
     ----------
-    flash_opacity: float
-        Flash opacity as a decimal between 0 and 1
-    default_opacity: float
-        Default opacity for windows as a decimal between 0 and 1. Windows are
-        restored to this opacity after a flash.
-    time: float
-        Flash interval in seconds
+    flash_opacity: float (between 0 and 1)
+        Flash opacity.
+    default_opacity: float (between 0 and 1)
+        Windows are restored to this opacity post-flash.
+    time: float > 0
+        Flash interval in seconds.
     ntimepoints: int
         Number of timepoints in the flash animation. Higher values will lead to
         smoother animations at the cost of increased X server requests.
         Ignored if simple is True.
     simple: bool
         If True, don't animate flashes. Setting this parameter improves
-        performance but causes rougher opacity transitions.
+        performance but opacity transitions are less smooth.
 
     """
     def __init__(self,
@@ -179,7 +178,7 @@ class FlashServer:
                                ntimepoints=ntimepoints)
         # We keep track of the previously focused window so that the same
         # window is never flashed twice in a row (except for `flash_window`
-        # requests. On i3 when a window is closed, the next window is flashed
+        # requests). On i3 when a window is closed, the next window is flashed
         # three times without this guard.
         self.prev_focus = None
         self.producers = [Thread(target=self._queue_focus_shift_tasks),
@@ -193,7 +192,7 @@ class FlashServer:
         self.keep_going = True
 
     def event_loop(self):
-        """Wait for changes in focus and flash windows."""
+        """Wait for changes in focus or client requests and queues flashes."""
         try:
             for producer in self.producers:
                 producer.start()
@@ -212,7 +211,7 @@ class FlashServer:
             self.sock.close()
 
     def _queue_focus_shift_tasks(self):
-        """Wait for the focused window to change and queue it for flashing."""
+        """Queue flashes resultant from focus shifts."""
         self.xconn.start_watching_properties(self.xconn.root_window)
         while self.keep_going:
             if self.xconn.has_events():
@@ -222,7 +221,7 @@ class FlashServer:
                     self.target_windows.put(tuple([focused, 'focus_shift']))
 
     def _queue_client_tasks(self):
-        """Wait for flash_window calls and queue window for flashing."""
+        """Queue flashes resultant """
         while self.keep_going:
             try:
                 self.sock.recv(1)
