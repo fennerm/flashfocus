@@ -1,10 +1,10 @@
 from io import open
-import os
 from setuptools import (
     find_packages,
     setup,
 )
 
+# This
 import fastentrypoints
 
 setup(
@@ -22,7 +22,7 @@ setup(
     tests_require=['pytest'],
     install_requires=['xcffib', 'click', 'cffi'],
     packages=find_packages(exclude=["*test*"]),
-    keywords='xorg flash focus i3 bpswm awesomewm',
+    keywords='xorg flash focus i3 bspwm awesomewm herbsluftwm',
     entry_points='''
         [console_scripts]
         flashfocus=flashfocus.cli:cli
