@@ -10,6 +10,7 @@ import xcffib.xproto as xproto
 # Decimal representation of maximum opacity value accepted by X: 0xffffffff
 MAX_OPACITY = 4294967295
 
+
 class Cookie:
     """A response or event from the X server.
 
@@ -19,6 +20,15 @@ class Cookie:
     def __init__(self, cookie):
         self.cookie = cookie
         self.response = None
+
+    def extract_data(self):
+        try:
+            reply = self.cookie.reply().value.to_atoms()[0]
+            self.response = int(reply) / MAX_OPACITY
+        except IndexError:
+            self.response = None
+        return self.response
+
 
 
 class OpacityCookie(Cookie):
@@ -52,11 +62,36 @@ class ActiveWindowCookie(Cookie):
             The X window id of the active window
 
         """
-        self.response = int(self.cookie.reply().focus)
+        try:
+            reply = self.cookie.reply().value.to_atoms()[0]
+            self.response = int(reply)
+        except IndexError:
+            self.response = None
         return self.response
 
 
 class XConnection:
+    """Connection to the X server.
+
+    Parameters
+    ----------
+    timeout: float
+        Timout in seconds for X server requests.
+
+    Attributes
+    ----------
+    conn: xcffib.Connection
+        The lower level xcb connection to the X server.
+    timeout: float
+        Same as parameter
+    file_descriptor: int
+        File descriptor for the X server socket.
+    root_window: int
+        ID of the root window.
+    atoms: Dict[str, int]
+        Dictionary of internal X ids for relevant window properties.
+
+    """
     def __init__(self, timeout=0):
         self.conn = xcffib.connect()
         self.timeout = timeout
@@ -64,8 +99,13 @@ class XConnection:
         # The id of the root X window
         self.root_window = self.conn.get_setup().roots[0].root
         # X ids for relevant window properties
-        self.wm_opacity_atom = self.intern_atom('_NET_WM_WINDOW_OPACITY')
-        self.active_window_atom = self.intern_atom('_NET_ACTIVE_WINDOW')
+        self.atoms = {
+            '_NET_WM_WINDOW_OPACITY': self.intern_atom(
+                '_NET_WM_WINDOW_OPACITY'),
+            '_NET_ACTIVE_WINDOW': self.intern_atom(
+                '_NET_ACTIVE_WINDOW'
+            )
+        }
 
     def intern_atom(self, atom_name):
         """Get the id of an atom (property) from X given its name.
@@ -95,14 +135,7 @@ class XConnection:
         OpacityCookie
 
         """
-        cookie = self.conn.core.GetProperty(
-            delete=False,
-            window=window,
-            property=self.wm_opacity_atom,
-            type=xproto.GetPropertyType.Any,
-            long_offset=0,
-            long_length=63
-        )
+        cookie = self._request_property(window, '_NET_WM_WINDOW_OPACITY')
         return OpacityCookie(cookie)
 
     def request_focus(self):
@@ -113,7 +146,7 @@ class XConnection:
         ActiveWindowCookie
 
         """
-        cookie = self.conn.core.GetInputFocus()
+        cookie = self._request_property(self.root_window, '_NET_ACTIVE_WINDOW')
         return ActiveWindowCookie(cookie)
 
     def set_opacity(self, window, opacity):
@@ -134,7 +167,7 @@ class XConnection:
         void_cookie = self.conn.core.ChangePropertyChecked(
             mode=xproto.PropMode.Replace,
             window=window,
-            property=self.wm_opacity_atom,
+            property=self.atoms['_NET_WM_WINDOW_OPACITY'],
             type=xproto.Atom.CARDINAL,
             format=32,
             data_len=1,
@@ -150,14 +183,10 @@ class XConnection:
             The X id of a window
 
         """
-        cookie = self.conn.core.GetProperty(
-            delete=True,
+        cookie = self._request_property(
             window=window,
-            property=self.wm_opacity_atom,
-            type=xproto.GetPropertyType.Any,
-            long_offset=0,
-            long_length=63
-        )
+            atom_name='_NET_WM_WINDOW_OPACITY',
+            delete=True)
         cookie.reply()
 
     def start_watching_properties(self, window):
@@ -186,6 +215,16 @@ class XConnection:
 
         if event:
             if isinstance(event, xproto.PropertyNotifyEvent):
-                if event.atom == self.active_window_atom:
+                if event.atom == self.atoms['_NET_ACTIVE_WINDOW']:
                     return True
         return False
+
+    def _request_property(self, window, atom_name, delete=False):
+        return self.conn.core.GetProperty(
+            delete=delete,
+            window=window,
+            property=self.atoms[atom_name],
+            type=xproto.GetPropertyType.Any,
+            long_offset=0,
+            long_length=63
+        )
