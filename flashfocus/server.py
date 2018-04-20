@@ -12,6 +12,7 @@ except ImportError:
         Empty,
         Queue,
     )
+from select import select
 from signal import (
     default_int_handler,
     SIGINT,
@@ -21,10 +22,14 @@ import socket
 from threading import Thread
 from time import sleep
 
+from xcffib import ConnectionException
 from xcffib.xproto import WindowError
+import xpybutil
+import xpybutil.ewmh
+import xpybutil.window
 
+from flashfocus.xutil import focus_shifted
 from flashfocus.sockets import init_server_socket
-from flashfocus.xutil import XConnection
 
 
 class Flasher:
@@ -53,8 +58,6 @@ class Flasher:
 
     Attributes
     ----------
-    xconn: flashfocus.xutil.XConnection
-        The connection to the X server.
     flash_series: List[float]
         The series of opacity transitions during a flash.
     progress: Dict[int, int]
@@ -67,7 +70,6 @@ class Flasher:
     """
     def __init__(self, time, flash_opacity, default_opacity,
                  simple, ntimepoints):
-        self.xconn = XConnection()
         self.default_opacity = default_opacity
         self.flash_opacity = flash_opacity
         if simple:
@@ -126,16 +128,14 @@ class Flasher:
         try:
             self.progress[window] = 0
             while self.progress[window] < self.ntimepoints:
-                self.xconn.set_opacity(
-                    window, self.flash_series[self.progress[window]])
+                xpybutil.ewmh.set_wm_window_opacity_checked(
+                    window, self.flash_series[self.progress[window]]).check()
                 sleep(self.timechunk)
                 self.progress[window] += 1
 
             info('Resetting opacity to default')
-            if self.default_opacity == 1:
-                self.xconn.delete_opacity(window)
-            else:
-                self.xconn.set_opacity(window, self.default_opacity)
+            xpybutil.ewmh.set_wm_window_opacity_checked(
+                window, self.default_opacity).check()
 
         except WindowError:
             info('Attempted to draw to nonexistant window %s, ignoring...',
@@ -143,6 +143,9 @@ class Flasher:
         finally:
             # The window is no longer being flashed.
             del self.progress[window]
+
+
+TIMEOUT = 1
 
 
 class FlashServer:
@@ -181,14 +184,13 @@ class FlashServer:
         # window is never flashed twice in a row (except for `flash_window`
         # requests). On i3 when a window is closed, the next window is flashed
         # three times without this guard.
-        self.prev_focus = None
+        self.prev_focus = 0
         self.producers = [Thread(target=self._queue_focus_shift_tasks),
                           Thread(target=self._queue_client_tasks)]
 
         # Ensure that SIGINTs are handled correctly
         signal(SIGINT, default_int_handler)
         self.target_windows = Queue()
-        self.xconn = XConnection(timeout=1)
         self.sock = init_server_socket()
         self.keep_going = True
 
@@ -202,27 +204,30 @@ class FlashServer:
         except (KeyboardInterrupt, SystemExit):
             info('Interrupt received, shutting down...')
         finally:
+            info('Disconnecting from X session...')
+            xpybutil.conn.disconnect()
             info('Killing threads...')
             self.keep_going = False
             for producer in self.producers:
                 producer.join()
-            info('Disconnecting from X session...')
-            self.xconn.conn.disconnect()
             info('Disconnecting socket...')
             self.sock.close()
 
     def _queue_focus_shift_tasks(self):
-        """Queue flashes resultant from focus shifts."""
-        self.xconn.start_watching_properties(self.xconn.root_window)
+        """Queue focus shift flashes."""
+        xpybutil.window.listen(xpybutil.root, 'PropertyChange', 'KeyPress')
+
         while self.keep_going:
-            if self.xconn.has_events():
-                if self.xconn.focus_shifted():
+            try:
+                if focus_shifted():
                     info('Focus shifted...')
-                    focused = self.xconn.request_focus().unpack()
+                    focused = xpybutil.ewmh.get_active_window().reply()
                     self.target_windows.put(tuple([focused, 'focus_shift']))
+            except ConnectionException:
+                pass
 
     def _queue_client_tasks(self):
-        """Queue flashes resultant from client requests."""
+        """Queue client request flashes."""
         while self.keep_going:
             try:
                 self.sock.recv(1)
@@ -230,7 +235,7 @@ class FlashServer:
                 pass
             else:
                 info('Received a flash request from client...')
-                focused = self.xconn.request_focus().unpack()
+                focused = xpybutil.ewmh.get_active_window().reply()
                 self.target_windows.put(tuple([focused, 'client_request']))
 
     def _flash_queued_window(self):

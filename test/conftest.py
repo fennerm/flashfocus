@@ -9,7 +9,6 @@ from flashfocus.sockets import (
     init_client_socket,
     init_server_socket,
 )
-from flashfocus.xutil import XConnection
 
 from test.helpers import (
     change_focus,
@@ -74,11 +73,3 @@ def client_socket(server_socket):
 def stub_server(server_socket):
     """StubServer instance."""
     return StubServer(server_socket)
-
-
-@fixture(scope='session')
-def xconnection():
-    """XConnection instance."""
-    xconn = XConnection()
-    yield xconn
-    xconn.conn.disconnect()
