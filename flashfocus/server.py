@@ -82,10 +82,6 @@ class Flasher:
             self.flash_series = self._compute_flash_series()
         self.progress = dict()
 
-    def already_flashing(self, window):
-        """Return True if the flasher is already flashing a given window."""
-        return window in self.progress
-
     def flash_window(self, window):
         """Flash a window."""
         info('Flashing window %s', str(window))
@@ -215,7 +211,7 @@ class FlashServer:
 
     def _queue_focus_shift_tasks(self):
         """Queue focus shift flashes."""
-        xpybutil.window.listen(xpybutil.root, 'PropertyChange', 'KeyPress')
+        xpybutil.window.listen(xpybutil.root, 'PropertyChange')
 
         while self.keep_going:
             try:

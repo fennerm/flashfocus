@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """flashfocus command line interface."""
 from __future__ import division
 
@@ -46,8 +47,6 @@ def validate_positive_int(ctx, param, value):
     """Check that a command line argument is a positive integer."""
     if value < 1:
         raise ValueError("%s parameter cannot be < 1", param)
-    if int(value) != value:
-        raise ValueError("%s parameter must be an int, not a float", param)
     return value
 
 
@@ -91,3 +90,7 @@ def cli(opacity, default_opacity, time, ntimepoints, simple, debug):
         info('FlashServer attributes: %s', server.__dict__)
     else:
         server.event_loop()
+
+
+if __name__ == '__main__':
+    cli()

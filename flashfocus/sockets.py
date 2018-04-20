@@ -28,8 +28,7 @@ def init_server_socket():
     try:
         os.unlink(SOCKET_ADDRESS)
     except (OSError, EnvironmentError):
-        if os.path.exists(SOCKET_ADDRESS):
-            raise
+        pass
     sock = socket.socket(family=socket.AF_UNIX, type=socket.SOCK_DGRAM)
     sock.bind(SOCKET_ADDRESS)
     sock.settimeout(1)

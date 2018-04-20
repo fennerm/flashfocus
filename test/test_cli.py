@@ -1,11 +1,19 @@
 """Testsuite for the flashfocus CLI."""
+from os import kill
+from signal import SIGINT
+from subprocess import (
+    PIPE,
+    Popen,
+)
+from time import sleep
+
 from click.testing import CliRunner
 from pytest import (
     fixture,
     mark,
 )
 
-from flashfocus.cli import cli
+from flashfocus.cli import *
 
 
 @fixture

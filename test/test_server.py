@@ -81,10 +81,7 @@ def test_compute_flash_series(flash_opacity, default_opacity, ntimepoints,
         time=0.2
     )
     for actual, expected in zip(flasher.flash_series, expected_result):
-        if actual:
-            assert actual == approx(expected)
-        else:
-            assert not expected
+        assert actual == approx(expected)
 
 
 def test_queue_focus_shift_tasks(flash_server, windows):
@@ -106,11 +103,10 @@ def test_queue_focus_shift_tasks(flash_server, windows):
 def test_queue_client_tasks(flash_server, windows):
     p = Thread(target=flash_server._queue_client_tasks)
     p.start()
-    sleep(0.2)
+    sleep(0.05)
     client_request_flash()
-    sleep(0.2)
     client_request_flash()
-    sleep(0.2)
+    sleep(0.1)
     flash_server.keep_going = False
     expected_queue = [(windows[0], 'client_request'),
                       (windows[0], 'client_request')]

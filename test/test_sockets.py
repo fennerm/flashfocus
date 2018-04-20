@@ -8,6 +8,11 @@ def test_init_client_socket(client_socket):
     client_socket.sendall('test'.encode('UTF-8'))
 
 
+def test_first_init_server_socket():
+    os.unlink(SOCKET_ADDRESS)
+    init_server_socket()
+
+
 def test_init_server_socket(server_socket):
     assert server_socket.getsockname()
 
