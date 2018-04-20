@@ -1,6 +1,4 @@
 """Test suite for the flashfocus.sockets module."""
-import os
-
 from pytest import raises
 
 from flashfocus.sockets import *

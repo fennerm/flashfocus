@@ -1,19 +1,16 @@
 """Helper functions/classes for unit tests."""
 from __future__ import division
 
+import os
 from threading import Thread
 from time import sleep
 
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
-from plumbum.cmd import (
-    xdotool,
-    xkill,
-)
-from xcffib import xproto
+import xpybutil.ewmh
 
-from flashfocus.xutil import XConnection
+
 class WindowSession:
     """A session of blank windows for testing."""
     def __init__(self):
@@ -37,32 +34,32 @@ class WindowSession:
 
 def change_focus(window):
     """Change the active window."""
-    xdotool('windowactivate', window)
+    os.system("xdotool windowactivate " + str(window))
+    sleep(0.1)
 
 
 def close_window(window):
     """Close an X window."""
-    xkill('-id', window)
+    xpybutil.request_close_window_checked(window).check()
 
 
 class WindowWatcher(Thread):
     """Watch a window for changes in opacity."""
     def __init__(self, window):
         super(WindowWatcher, self).__init__()
-        self.xconn = XConnection()
         self.window = window
-        self.opacity_events = [self.xconn.request_opacity(self.window).unpack()]
+        self.opacity_events = [
+            xpybutil.ewmh.get_wm_window_opacity(self.window).reply()]
         self.keep_going = True
         self.done = False
 
     def run(self):
         """Record opacity changes until stop signal received."""
         while self.keep_going:
-            opacity = self.xconn.request_opacity(self.window).unpack()
+            opacity = xpybutil.ewmh.get_wm_window_opacity(self.window).reply()
             if opacity != self.opacity_events[-1]:
                 self.opacity_events.append(opacity)
         self.done = True
-        self.xconn.conn.disconnect()
 
     def report(self):
         """Send the stop signal and report changes in _NET_WM_WINDOW_OPACITY."""
