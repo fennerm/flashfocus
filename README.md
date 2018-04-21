@@ -31,6 +31,12 @@ pip install flashfocus
 
 ## Configuration
 
+The following must be present in your compton config file:
+
+```
+detect-client-opacity = true;
+```
+
 Flashfocus should be added to your startup programs. E.g for i3 put the
 following in your config:
 
