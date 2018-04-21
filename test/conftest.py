@@ -1,10 +1,11 @@
 """Unit test fixtures."""
 from pytest import fixture
+import xpybutil
+import xpybutil.window
 
-from flashfocus.server import (
-    Flasher,
-    FlashServer,
-)
+
+from flashfocus.flasher import Flasher
+from flashfocus.server import FlashServer
 from flashfocus.sockets import (
     init_client_socket,
     init_server_socket,
@@ -73,3 +74,15 @@ def client_socket(server_socket):
 def stub_server(server_socket):
     """StubServer instance."""
     return StubServer(server_socket)
+
+
+@fixture
+def fresh_xpybutil():
+    """Reimport xpybutil to refresh the X connection."""
+    try:
+        import importlib
+        importlib.reload(xpybutil)
+        importlib.reload(xpybutil.window)
+    except:
+        reload(xpybutil)
+        reload(xpybutil.window)

@@ -64,7 +64,7 @@ class WindowWatcher(Thread):
     def report(self):
         """Send the stop signal and report changes in _NET_WM_WINDOW_OPACITY."""
         # Give the x server a little time to catch up with requests
-        sleep(0.01)
+        sleep(0.4)
         self.keep_going = False
         while not self.done:
             pass
