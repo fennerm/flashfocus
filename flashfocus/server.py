@@ -40,7 +40,7 @@ class FlashServer:
     default_opacity: float (between 0 and 1)
         Windows are restored to this opacity post-flash.
     time: float > 0
-        Flash interval in seconds.
+        Flash interval in milliseconds.
     ntimepoints: int
         Number of timepoints in the flash animation. Higher values will lead to
         smoother animations at the cost of increased X server requests.
@@ -56,7 +56,6 @@ class FlashServer:
                  time,
                  ntimepoints,
                  simple):
-        self.locked_windows = set()
         self.flasher = Flasher(time=time,
                                flash_opacity=flash_opacity,
                                default_opacity=default_opacity,

@@ -20,7 +20,7 @@ class Flasher:
     Parameters
     ----------
     time: float
-        Flash interval in seconds
+        Flash interval in milliseconds
     flash_opacity: float
         Flash opacity as a decimal between 0 and 1
     default_opacity: float
@@ -50,13 +50,14 @@ class Flasher:
                  simple, ntimepoints):
         self.default_opacity = default_opacity
         self.flash_opacity = flash_opacity
+        self.time = time / 1000
         if simple:
             self.ntimepoints = 1
             self.timechunk = time
             self.flash_series = [flash_opacity]
         else:
             self.ntimepoints = ntimepoints
-            self.timechunk = time / self.ntimepoints
+            self.timechunk = self.time / self.ntimepoints
             self.flash_series = self._compute_flash_series()
         self.progress = dict()
 

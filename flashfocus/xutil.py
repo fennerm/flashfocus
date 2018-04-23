@@ -10,4 +10,4 @@ def focus_shifted():
     if isinstance(event, PropertyNotifyEvent):
         return xpybutil.util.get_atom_name(event.atom) == '_NET_ACTIVE_WINDOW'
     else:
-        False
+        return False

@@ -1,4 +1,6 @@
 """Unit test fixtures."""
+import sys
+
 from pytest import fixture
 import xpybutil
 import xpybutil.window
@@ -39,7 +41,7 @@ def flash_server():
     return FlashServer(
         default_opacity=1,
         flash_opacity=0.8,
-        time=0.2,
+        time=200,
         ntimepoints=10,
         simple=False)
 
@@ -48,7 +50,7 @@ def flash_server():
 def flasher():
     """Flasher instance."""
     return Flasher(
-        time=0.2,
+        time=200,
         flash_opacity=0.8,
         default_opacity=1,
         ntimepoints=10,
@@ -86,3 +88,11 @@ def fresh_xpybutil():
     except:
         reload(xpybutil)
         reload(xpybutil.window)
+
+
+@fixture
+def string_type():
+    if sys.version_info[0] < 3:
+        return basestring
+    else:
+        return str

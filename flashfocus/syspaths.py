@@ -15,4 +15,39 @@ def determine_runtime_dir():
         runtime_dir = '/tmp'
     return runtime_dir
 
+
+def build_config_search_path():
+    """Return a list of user config locations in order of search priority."""
+    locations = []
+    xdg_config_home = os.environ.get('XDG_CONFIG_HOME')
+    if xdg_config_home:
+        config_file = os.path.join(xdg_config_home,
+                                   'flashfocus',
+                                   'flashfocus.yml')
+        locations.append(config_file)
+
+    home = os.path.expanduser('~')
+    locations.append(os.path.join(home, '.config/flashfocus/flashfocus.yml'))
+    locations.append(os.path.join(home, '.flashfocus.yml'))
+    return locations
+
+
+def find_config_file():
+    """Find the flashfocus config file if it exists."""
+    for location in CONFIG_SEARCH_PATH:
+        if os.path.exists(location):
+            return location
+
+    return None
+
+
+def find_package_root():
+    """Get the flashfocus package directory."""
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+CONFIG_SEARCH_PATH = build_config_search_path()
+USER_CONFIG_FILE = find_config_file()
+PACKAGE_ROOT = find_package_root()
+DEFAULT_CONFIG_FILE = os.path.join(PACKAGE_ROOT, 'default_config.yml')
 RUNTIME_DIR = determine_runtime_dir()

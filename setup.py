@@ -9,7 +9,7 @@ import fastentrypoints
 
 setup(
     name='flashfocus',
-    version='0.2.1',
+    version='0.3.0',
     author='Fenner Macrae',
     author_email='fmacrae.dev@gmail.com',
     description=("Simple focus animations for tiling window managers"),
@@ -20,7 +20,8 @@ setup(
     py_modules=['flashfocus'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
-    install_requires=['xcffib', 'click', 'cffi'],
+    install_requires=['xcffib', 'click', 'cffi', 'xpybutil', 'schema',
+                      'pyyaml'],
     packages=find_packages(exclude=["*test*"]),
     keywords='xorg flash focus i3 bspwm awesomewm herbsluftwm',
     entry_points='''

@@ -12,6 +12,7 @@ RUN pacman -S --noconfirm \
         python-pip \
         python2-pip \
         xdotool \
+        libxcb \
         xorg-xprop
 
 USER user
