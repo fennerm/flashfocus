@@ -178,9 +178,11 @@ def init_server(cli_options):
 
     if cli_options['opacity']:
         warn('--opacity is deprecated, please used --flash-opacity/-o instead')
+        import pytest
+        pytest.set_trace()
         if 'flash_opacity' not in cli_options:
             cli_options['flash_opacity'] = cli_options['opacity']
-            del cli_options['opacity']
+    del cli_options['opacity']
 
     if not USER_CONFIG_FILE:
         try:

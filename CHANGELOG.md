@@ -2,11 +2,15 @@
 
 ## [Unreleased]
 
-- Configuration file
 - Ability to exclude windows by ID or class
 - Ability to apply different flash rules to tabs/new windows/closed windows
 - More finetuned control over flash animation
 - Better support for using flashfocus as a library to produce custom animation scripts.
+
+## [0.3.0] - April 22nd, 2018
+
+- Added a basic configuration file.
+- Deprecate --opacity parameter, --flash-opacity should be used instead.
 
 ## [0.2.1] - April 14th, 2018
 
