@@ -108,7 +108,7 @@ class Flasher:
                 sleep(self.timechunk)
                 self.progress[window] += 1
 
-            info('Resetting opacity to default')
+            info('Resetting window %s opacity to default', window)
             xpybutil.ewmh.set_wm_window_opacity_checked(
                 window, self.default_opacity).check()
 
@@ -116,5 +116,4 @@ class Flasher:
             info('Attempted to draw to nonexistant window %s, ignoring...',
                  str(window))
         finally:
-            # The window is no longer being flashed.
             del self.progress[window]

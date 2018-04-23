@@ -2,11 +2,13 @@
 """flashfocus command line interface."""
 import fcntl
 import logging
-from logging import info
+from logging import (
+    info,
+    warning,
+)
 import os
 from shutil import copy
 import sys
-from warnings import warn
 
 import click
 from schema import (
@@ -27,7 +29,16 @@ from flashfocus.syspaths import (
 
 # Set LOGLEVEL environment variable to DEBUG or WARNING to change logging
 # verbosity.
-logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
+logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'),
+                    format='%(levelname)s: %(message)s')
+
+# Colored logging categories
+logging.addLevelName(logging.WARNING, "\033[1;31m%s\033[1;0m" %
+                     logging.getLevelName(logging.WARNING))
+logging.addLevelName(logging.ERROR, "\033[1;41m%s\033[1;0m" %
+                     logging.getLevelName(logging.ERROR))
+logging.addLevelName(logging.INFO, "\033[92m%s\033[1;0m" %
+                     logging.getLevelName(logging.INFO))
 
 # The pid file for flashfocus. Used to ensure that only one instance is active.
 PID = open(os.path.join(RUNTIME_DIR, 'flashfocus.pid'), 'a')
@@ -141,7 +152,7 @@ def merge_config_sources(cli_options,
 
     """
     if USER_CONFIG_FILE:
-        info('Loading configuration from %s...', USER_CONFIG_FILE)
+        info('Loading configuration from %s', USER_CONFIG_FILE)
     file_config = overwrite(default_config, user_config)
     config = overwrite(file_config, cli_options)
     validated_config = validate_config(config)
@@ -177,7 +188,8 @@ def init_server(cli_options):
     ensure_single_instance()
 
     if cli_options['opacity']:
-        warn('--opacity is deprecated, please used --flash-opacity/-o instead')
+        warning('--opacity is deprecated, please used '
+                '--flash-opacity/-o instead')
         if 'flash_opacity' not in cli_options:
             cli_options['flash_opacity'] = cli_options['opacity']
     del cli_options['opacity']
