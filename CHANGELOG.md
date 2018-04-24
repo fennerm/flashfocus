@@ -7,6 +7,10 @@
 - More finetuned control over flash animation
 - Better support for using flashfocus as a library to produce custom animation scripts.
 
+## [0.3.5] - April 24th, 2018
+- Improved logging output
+
+
 ## [0.3.0] - April 22nd, 2018
 
 - Added a basic configuration file.

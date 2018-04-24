@@ -95,9 +95,8 @@ def test_overwrite(old, new, expected):
 
 
 def test_opacity_deprecation(monkeypatch):
-    def return_true(*args, **kwargs):
-        return True
+    def return_opacity(self, *args, **kwargs):
+        return self.flasher.flash_opacity
 
-    monkeypatch.setattr(FlashServer, 'event_loop', return_true)
-    with warns(UserWarning):
-        init_server({'opacity': '0.8'})
+    monkeypatch.setattr(FlashServer, 'event_loop', return_opacity)
+    assert init_server({'opacity': '0.5'}) == 0.5

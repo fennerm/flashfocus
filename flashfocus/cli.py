@@ -206,7 +206,7 @@ def init_server(cli_options):
     info('Initializing with parameters:')
     info('%s', config)
     server = FlashServer(**config)
-    server.event_loop()
+    return server.event_loop()
 
 if __name__ == '__main__':
     cli()
