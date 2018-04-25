@@ -21,7 +21,7 @@ Install from the Arch User Repository: `flashfocus-git`
 ### Ubuntu/Debian
 
 ```
-sudo apt-get install libxcb-render0-dev;
+sudo apt-get install libxcb-render0-dev libffi-dev python-dev python-cffi
 pip install flashfocus
 ```
 
