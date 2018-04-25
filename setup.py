@@ -26,6 +26,7 @@ setup(
     keywords='xorg flash focus i3 bspwm awesomewm herbsluftwm',
     package_data={'flashfocus': ['default_config.yml']},
     include_package_data=True,
+    scripts=['bin/flash_window_socat'],
     entry_points='''
         [console_scripts]
         flashfocus=flashfocus.cli:cli
