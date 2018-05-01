@@ -1,6 +1,7 @@
 """Helper functions/classes for unit tests."""
 from __future__ import division
 
+from contextlib import contextmanager
 import os
 from threading import Thread
 from time import sleep
@@ -15,8 +16,10 @@ class WindowSession:
     """A session of blank windows for testing."""
     def __init__(self):
         window1 = Gtk.Window(title='window1')
+        window1.set_wmclass('window1', 'Window1')
         window1.show()
         window2 = Gtk.Window(title='window2')
+        window1.set_wmclass('window2', 'Window2')
         window2.show()
         window3 = Gtk.Window(title='window3')
         window3.show()
@@ -91,3 +94,14 @@ def queue_to_list(queue):
     while queue.qsize() != 0:
         result.append(queue.get())
     return result
+
+
+@contextmanager
+def server_running(server):
+    p = Thread(target=server.event_loop)
+    p.start()
+    sleep(0.05)
+    yield
+    sleep(0.05)
+    server.keep_going = False
+    p.join()

@@ -1,7 +1,9 @@
 """Unit test fixtures."""
 import sys
 
+from factory import Factory
 from pytest import fixture
+from pytest_factoryboy import register
 import xpybutil
 import xpybutil.window
 
@@ -35,27 +37,88 @@ def window(windows):
     return windows[0]
 
 
-@fixture
-def flash_server():
-    """FlashServer instance."""
-    return FlashServer(
-        default_opacity=1,
-        flash_opacity=0.8,
-        time=200,
-        ntimepoints=10,
-        simple=False)
+class ServerFactory(Factory):
+    """Factory for producing FlashServer fixture instances."""
+
+    class Meta:
+        model = FlashServer
+
+    default_opacity = 1
+    flash_opacity = 0.8
+    time = 100
+    ntimepoints = 4
+    simple = False
+    preset_opacity = True
+    rules = None
 
 
-@fixture
-def flasher():
-    """Flasher instance."""
-    return Flasher(
-        time=200,
-        flash_opacity=0.8,
-        default_opacity=1,
-        ntimepoints=10,
-        simple=False
-    )
+register(ServerFactory, 'flash_server')
+
+register(ServerFactory, 'transparent_flash_server', default_opacity=0.4)
+
+register(ServerFactory, 'flash_server_with_classrule',
+         rules=[{'window_class': 'Window2', 'flash-opacity': 0}])
+
+register(ServerFactory, 'flash_server_with_idrule',
+         rules=[{'window_id': 'window2', 'flash-opacity': 0}])
+
+register(ServerFactory, 'flash_server_with_matched_rules',
+         rules=[{
+             'window_class': 'Window2',
+             'window_id': 'window2',
+             'flash-opacity': 0}])
+
+register(ServerFactory, 'flash_server_with_unmatched_classrule',
+         rules=[{
+             'window_class': 'foo',
+             'window_id': 'window2',
+             'flash-opacity': 0}])
+
+register(ServerFactory, 'flash_server_with_unmatched_idrule',
+         rules=[{
+             'window_class': 'Window2',
+             'window_id': 'foo',
+             'flash-opacity': 0}])
+
+
+register(ServerFactory, 'mult_rule_server',
+         rules=[
+             {
+                 'window_class': 'Window2',
+                 'window_id': 'window2',
+                 'flash-opacity': 0
+             },
+             {
+                 'window_class': 'Window1',
+                 'flash-opacity': 0.2
+             }])
+
+register(ServerFactory, 'flash_server_with_matched_idregex',
+         rules=[{
+             'window_id': '^.*ndow.*$',
+             'flash-opacity': 0}])
+
+register(ServerFactory, 'flash_server_with_matched_classregex',
+         rules=[{
+             'window_class': '^.*ndow.*$',
+             'flash-opacity': 0}])
+
+
+class FlasherFactory(Factory):
+    """Factory for producing Flasher fixture instances."""
+    class Meta:
+        model = Flasher
+
+    default_opacity = 1
+    flash_opacity = 0.8
+    time = 100
+    ntimepoints = 4
+    simple = False
+
+
+register(FlasherFactory, 'flasher')
+
+register(FlasherFactory, 'pointless_flasher', flash_opacity=1)
 
 
 @fixture
@@ -96,3 +159,13 @@ def string_type():
         return basestring
     else:
         return str
+
+
+@fixture
+def list_only_test_windows(windows):
+    """Generate a function which lists the test window ids."""
+    def lister():
+        return windows
+
+    return lister
+
