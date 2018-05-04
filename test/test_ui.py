@@ -225,9 +225,9 @@ def test_construct_rules_config_error_message(default_config):
     default_config['rules'] = [{'default_opacity': 0.8}]
     errors = {'rules': {0: ['msg']}}
     expected = 'Failed to parse config\n'
-    expected += '  -> rules:\n'
-    expected += '    -> rule 1:\n'
-    expected += '      -> msg'
+    expected += '  - rules:\n'
+    expected += '    - rule 1:\n'
+    expected += '      - msg\n'
     assert construct_config_error_msg(default_config, errors) == expected
 
 
@@ -235,8 +235,8 @@ def test_construct_non_rules_config_error_message(default_config):
     default_config['flash_opacity'] = '2'
     errors = {'flash_opacity': ['msg']}
     expected = 'Failed to parse config\n'
-    expected += '  -> flash-opacity:\n'
-    expected += '    -> msg'
+    expected += '  - flash-opacity:\n'
+    expected += '    - msg\n'
     assert construct_config_error_msg(default_config, errors) == expected
 
 
@@ -250,7 +250,3 @@ def invalid_yaml(tmpdir):
 def test_invalid_yaml_passed_to_load_config(invalid_yaml):
     with raises(SystemExit):
         load_config(invalid_yaml)
-
-
-def test_unknown_parameter_in_rule():
-    assert False
