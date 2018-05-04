@@ -1,10 +1,6 @@
 """Testsuite for the flashfocus CLI."""
 import logging
 import re
-try:
-    from unittest.mock import MagicMock
-except ImportError:
-    from mock import MagicMock
 
 from pytest import (
     fixture,
@@ -29,8 +25,7 @@ def valid_config_types():
         'preset_opacity': bool,
         'window_class': re._pattern_type,
         'window_id': re._pattern_type,
-        'tab': bool,
-        'new_window': bool
+        'flash_on_focus': bool
     }
     return types
 
@@ -44,6 +39,7 @@ def blank_cli_options():
         'ntimepoints': None,
         'simple': None,
         'preset_opacity': None,
+        'flash_on_focus': None
     }
     return cli_options
 
@@ -57,12 +53,12 @@ def default_config():
 def invalid_rules():
     rules = [
         # No window_class or window_id present
-        [{'flash': 'True'}],
+        [{'flash_on_focus': 'True'}],
         # Invalid flash values
-        [{'window-class': 'foo', 'flash': 2}],
-        [{'window-class': 'foo', 'flash': 'bar'}],
+        [{'window_class': 'foo', 'flash_on_focus': 2}],
+        [{'window_class': 'foo', 'flash_on_focus': 'bar'}],
         # List value for window class/id
-        [{'window-class': ['foo', 'bar']}],
+        [{'window_class': ['foo', 'bar']}],
         [{'window_id': ['foo', 'bar']}],
         # preset-opacity parameter cannot be used inside rule
         [{'window_id': 'foo', 'preset_opacity': 'False'}],
@@ -137,21 +133,16 @@ def test_valid_param(option, values, input_type, blank_cli_options,
 
 @mark.parametrize('rules', [
     # Match criteria without any action is valid (but useless)
-    [{'window-class': 'foo'}],
-    # Check flash parameter accepted
-    [{'window-class': 'foo', 'flash': 'False'}],
-    # Special TAB and NEW_WINDOW rules don't require match criteria
-    [{'tab': 'True', 'flash_opacity': '0.2'}],
-    [{'new-window': 'True', 'flash_opacity': '0.2'}],
+    [{'window_class': 'foo'}],
     # Multiple rules can be defined
-    [{'tab': 'True', 'flash_opacity': '0.2'},
-     {'window-class': 'foo', 'simple': 'True'}],
+    [{'window_id': 'bar', 'flash_opacity': '0.2'},
+     {'window_class': 'foo', 'simple': 'True'}],
     # Check that global params are accepted
-    [{'window-class': 'foo', 'default_opacity': '0.5'}],
-    [{'window-class': 'foo', 'simple': 'True'}],
-    [{'window-class': 'foo', 'ntimepoints': '10'}],
-    [{'window-class': 'foo', 'time': '100'}],
-    [{'window-class': 'foo', 'flash_opacity': '0.2'}],
+    [{'window_class': 'foo', 'default_opacity': '0.5'}],
+    [{'window_class': 'foo', 'simple': 'True'}],
+    [{'window_class': 'foo', 'ntimepoints': '10'}],
+    [{'window_class': 'foo', 'time': '100'}],
+    [{'window_class': 'foo', 'flash_opacity': '0.2'}],
 ])
 def test_rules_validation(rules, blank_cli_options, default_config,
                           valid_config_types):
@@ -165,22 +156,24 @@ def test_rules_validation(rules, blank_cli_options, default_config,
 @mark.parametrize('input,expected', [
     ({'foo-bar': 1, 'car': 2}, {'foo_bar': 1, 'car': 2}),
     ({'car': 2}, {'car': 2}),
+    ({'car': 2, 'rules': [{'foo-bar': 3}]},
+     {'car': 2, 'rules': [{'foo_bar': 3}]}),
     (dict(), dict()),
-    (None, None)
 ])
-def test_replace_key_chars(input, expected):
-    assert replace_key_chars(input, '-', '_') == expected
+def test_dehyphen(input, expected):
+    dehyphen(input)
+    assert input == expected
 
 
 def test_opacity_deprecation(monkeypatch):
     def return_opacity(self, *args, **kwargs):
-        return self.flasher.flash_opacity
+        return self.default_flasher.flash_opacity
 
     monkeypatch.setattr(FlashServer, 'event_loop', return_opacity)
     assert init_server({'opacity': '0.5'}) == 0.5
 
 
-@mark.parametrize('old,new,expected', [
+@mark.parametrize('dicts,expected', [
     ([{'a': 1, 'b': 2}, {'a': 2, 'c': 3}], {'a': 2, 'b': 2, 'c': 3}),
     ([None, {'a': 2, 'c': 3}], {'a': 2, 'c': 3}),
     ([{'a': 2, 'c': 3}, None], {'a': 2, 'c': 3}),
@@ -192,17 +185,72 @@ def test_hierarchical_merge(dicts, expected):
     assert hierarchical_merge(dicts) == expected
 
 
-def test_overwrite_returns_a_new_dict():
-    a = {'a': 1, 'b': 2}, {'a': 2, 'c': 3}
+def test_hierarchical_merge_returns_a_new_dict():
+    a = {'a': 1, 'b': 2}
     a_copy = a.copy()
     b = {'a': 2, 'b': 2, 'c': 3}
-    overwrite(a, b)
+    hierarchical_merge([a, b])
     assert a == a_copy
 
 
-def test_issues_warning_for_unrecognized_config_option(
-        monkeypatch, default_config, blank_cli_options):
-    monkeypatch.setattr(logging, 'warn', MagicMock())
-    unrecognized_option = {'foo': 'bar'}
-    merge_config_sources(blank_cli_options, default_config, unrecognized_option)
-    assert 'unrecognized' in logging.warn.call_args()
+def test_rule_defaults_inherited_from_global_param(
+        default_config, blank_cli_options):
+    user_config = {'rules': [{'window_class': 'foo'}]}
+    validated = merge_config_sources(blank_cli_options, default_config,
+                                     user_config)
+    assert (validated['rules'][0]['flash_opacity'] ==
+            default_config['flash_opacity'])
+
+
+def test_rules_added_to_config_dict_if_not_present_in_config(
+        default_config, blank_cli_options):
+    validated = merge_config_sources(blank_cli_options, default_config,
+                                     default_config)
+    assert 'rules' in validated
+
+
+@fixture
+def configfile(tmpdir):
+    tmp = tmpdir.join('conf.yml')
+    tmp.write('default-opacity: 1\nflash-opacity: 0.5')
+    return tmp
+
+
+def test_load_config(configfile):
+    assert load_config(configfile) == {'default_opacity': 1,
+                                       'flash_opacity': 0.5}
+
+
+def test_construct_rules_config_error_message(default_config):
+    default_config['rules'] = [{'default_opacity': 0.8}]
+    errors = {'rules': {0: ['msg']}}
+    expected = 'Failed to parse config\n'
+    expected += '  -> rules:\n'
+    expected += '    -> rule 1:\n'
+    expected += '      -> msg'
+    assert construct_config_error_msg(default_config, errors) == expected
+
+
+def test_construct_non_rules_config_error_message(default_config):
+    default_config['flash_opacity'] = '2'
+    errors = {'flash_opacity': ['msg']}
+    expected = 'Failed to parse config\n'
+    expected += '  -> flash-opacity:\n'
+    expected += '    -> msg'
+    assert construct_config_error_msg(default_config, errors) == expected
+
+
+@fixture
+def invalid_yaml(tmpdir):
+    yml = tmpdir.join('invalid.yml')
+    yml.write('1 :::1: 1:')
+    return yml
+
+
+def test_invalid_yaml_passed_to_load_config(invalid_yaml):
+    with raises(SystemExit):
+        load_config(invalid_yaml)
+
+
+def test_unknown_parameter_in_rule():
+    assert False

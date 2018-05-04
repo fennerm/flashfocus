@@ -168,4 +168,3 @@ def list_only_test_windows(windows):
         return windows
 
     return lister
-

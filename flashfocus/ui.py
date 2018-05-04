@@ -3,6 +3,7 @@
 import fcntl
 import logging
 from logging import (
+    error,
     info,
     warn,
 )
@@ -14,12 +15,18 @@ import sys
 import click
 from marshmallow import (
     fields,
+    post_load,
     Schema,
     validates_schema,
     ValidationError,
 )
+from parser import ParserError
 import yaml
 
+from flashfocus.color import (
+    green,
+    red,
+)
 from flashfocus.server import FlashServer
 from flashfocus.syspaths import (
     CONFIG_SEARCH_PATH,
@@ -28,18 +35,24 @@ from flashfocus.syspaths import (
     USER_CONFIG_FILE,
 )
 
+# Properties which may be contained both in global config and in flash rules.
+BASE_PROPERTIES = ['flash_opacity', 'default_opacity', 'simple',
+                   'flash_on_focus', 'ntimepoints', 'time']
+
 # Set LOGLEVEL environment variable to DEBUG or WARNING to change logging
 # verbosity.
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'),
                     format='%(levelname)s: %(message)s')
 
-# Colored logging categories
-logging.addLevelName(logging.WARNING, "\033[1;31m%s\033[1;0m" %
-                     logging.getLevelName(logging.WARNING))
-logging.addLevelName(logging.ERROR, "\033[1;41m%s\033[1;0m" %
-                     logging.getLevelName(logging.ERROR))
-logging.addLevelName(logging.INFO, "\033[92m%s\033[1;0m" %
-                     logging.getLevelName(logging.INFO))
+if sys.stderr.isatty():
+    # Colored logging categories
+    logging.addLevelName(logging.WARNING,
+                         red(logging.getLevelName(logging.WARNING)))
+    logging.addLevelName(logging.ERROR,
+                         red(logging.getLevelName(logging.ERROR)))
+    logging.addLevelName(logging.INFO,
+                         green(logging.getLevelName(logging.INFO)))
+
 
 # The pid file for flashfocus. Used to ensure that only one instance is active.
 PID = open(os.path.join(RUNTIME_DIR, 'flashfocus.pid'), 'a')
@@ -59,6 +72,7 @@ def validate_decimal(data):
 
 
 class Regex(fields.Field):
+    """Schema field for validating a regex."""
     def _deserialize(self, value, attr, obj):
         try:
             return re.compile(value)
@@ -67,14 +81,22 @@ class Regex(fields.Field):
 
 
 class BaseSchema(Schema):
+    """Base class for `RulesSchema` and `ConfigSchema`
+
+    Contains validation criteria for options which can be present both in the
+    global config and in flash rules.
+
+    """
     flash_opacity = fields.Number(validate=validate_decimal)
     default_opacity = fields.Number(validate=validate_decimal)
     simple = fields.Boolean()
     time = fields.Number(validate=validate_positive_number)
     ntimepoints = fields.Integer(validate=validate_positive_number)
+    flash_on_focus = fields.Boolean()
 
     @validates_schema(pass_original=True)
     def check_unknown_fields(self, data, original_data):
+        """Check that unknown options were not passed by the user."""
         try:
             unknown = set(original_data) - set(self.fields)
         except TypeError:
@@ -84,22 +106,38 @@ class BaseSchema(Schema):
 
 
 class RulesSchema(BaseSchema):
-    flash = fields.Boolean()
+    """Schema for options which are present in rules but not global config."""
     window_class = Regex()
     window_id = Regex()
-    tab = fields.Boolean()
-    new_window = fields.Boolean()
 
     @validates_schema()
-    def check_required_fields(self, data):
-        minimal_req = ['tab', 'new_window', 'window_class', 'window_id']
-        if not any(param in data for param in minimal_req):
+    def check_for_matching_criteria(self, data):
+        """Check that rule contains at least one method for matching a window"""
+        if not any(param in data for param in ['window_class', 'window_id']):
             raise ValidationError('No criteria for matching rule to window')
 
 
 class ConfigSchema(BaseSchema):
+    """Schema for options which are present in global config but not rules.
+
+    Contains a nested `RulesSchema` used to validate rules.
+
+    """
     preset_opacity = fields.Boolean()
     rules = fields.Nested(RulesSchema, many=True)
+
+    @post_load()
+    def set_rule_defaults(self, config):
+        """Set default values for the nested `RulesSchema`."""
+        if 'rules' not in config:
+            config['rules'] = None
+        try:
+            for rule in config['rules']:
+                for property in BASE_PROPERTIES:
+                    if property not in rule:
+                        rule[property] = config[property]
+        except TypeError:
+            pass
 
 
 def ensure_single_instance():
@@ -120,51 +158,92 @@ def load_config(config_file):
     """
     if config_file:
         try:
-            with open(config_file, 'r') as f:
-                config = replace_key_chars(yaml.load(f), '-', '_')
-        except yaml.scanner.ScannerError as e:
+            with open(str(config_file), 'r') as f:
+                config = yaml.load(f)
+                dehyphen(config)
+        except (yaml.scanner.ScannerError,  ParserError) as e:
             sys.exit('Error in config file:\n' + str(e))
     else:
         config = None
     return config
 
 
+def indent(n):
+    """Return `n` indents."""
+    return '  ' * n
+
+
+def parse_config_error(option, err, ntabs=1):
+    """Parse Marshmallow schema error."""
+    if isinstance(option, int):
+        option = 'rule ' + str(option + 1)
+    option = option.replace('_', '-')
+    error_msg = ''.join([indent(ntabs), '- ', option, ':\n'])
+    if isinstance(err, list):
+        # Base case
+        output = error_msg + ''.join([indent(ntabs + 1), '- ', err[0], '\n'])
+    else:
+        # Recursively parse error
+        output = error_msg + parse_config_error(*err.popitem(), ntabs=ntabs + 1)
+    return output
+
+
+def construct_config_error_msg(config, errors):
+    """Construct an error message for an invalid configuration setup
+
+    Parameters
+    ----------
+    config: Dict[str, Any]
+        Merged dictionary of configuration options from CLI, user configfile and
+        default configfile
+    errors: Dict[str, Any]
+        Dictionary of schema validation errors passed by Marshmallow
+
+    Returns
+    -------
+    str
+
+    """
+    error_msg = 'Failed to parse config\n'
+    for error_param, exception_msg in errors.items():
+        error_msg += parse_config_error(error_param, exception_msg)
+    return error_msg
+
+
 def validate_config(config):
     """Validate the config file and command line parameters."""
-    schema = ConfigSchema()
-    validated = schema.load(config)
-    errors = validated[1]
-    if not errors:
-        if hasattr(validated[0]['rules'][0], 'window_class'):
-            import pytest
-            pytest.set_trace()
+    validated, errors = ConfigSchema().load(config)
 
     if errors:
-        error_msg = 'CONFIG ERROR(S):\n'
-        for error_param, exception_msg in errors.items():
-            error_msg += '\t{} ({}) -> {}\n'.format(
-                error_param.replace('_', '-'), config[error_param],
-                exception_msg[0])
-        sys.exit(error_msg)
-    return validated[0]
+        error(construct_config_error_msg(config, errors))
+        sys.exit(1)
+    return validated
 
 
-def replace_key_chars(a_dict, old, new):
-    """Replace a substring in dict keys with another substring."""
-    if a_dict:
-        new_dict = dict()
-        for key in a_dict:
-            new_key = key.replace(old, new)
-            new_dict[new_key] = a_dict[key]
-    else:
-        new_dict = a_dict
-    return new_dict
+def dehyphen(config):
+    """Replace hyphens in config dictionary with underscores."""
+    for option in list(config.keys()):
+        if option == 'rules':
+            for rule in config['rules']:
+                dehyphen(rule)
+        else:
+            new_key = option.replace('-', '_')
+            config[new_key] = config.pop(option)
 
 
 def merge_config_sources(cli_options,
                          default_config=load_config(DEFAULT_CONFIG_FILE),
                          user_config=load_config(USER_CONFIG_FILE)):
-    """Parse configuration by merging the default and user config files
+    """Parse configuration by merging the default and user config files.
+
+    Parameters
+    ----------
+    cli_options: Dict[str, Any]
+        Dictionary of command line options
+    default_config: Dict[str, str]
+        Dictionary of options from the default configfile
+    user_config: Dict[str, str]
+        Dictionary of options from the user configfile
 
     Returns
     -------
@@ -194,11 +273,14 @@ def hierarchical_merge(dicts):
 
     """
     outdict = dict()
-    for x in dicts:
-        if x:
-            for key, value in x.items():
+    for d in dicts:
+        try:
+            for key, value in d.items():
                 if value is not None:
                     outdict[key] = value
+        except (TypeError, AttributeError):
+            # d was probably None
+            pass
     return outdict
 
 
@@ -210,7 +292,7 @@ def hierarchical_merge(dicts):
                    'opacity to this value post-flash. (default: 1.0)')
 @click.option('--time', '-t', required=False,
               help='Flash time interval (in milliseconds).')
-@click.option('--simple', '-s', required=False, is_flag=True,
+@click.option('--simple', '-s', required=False, is_flag=True, default=None,
               help='Don\'t animate flashes. Setting this parameter improves '
                    'performance but causes rougher opacity transitions. '
                    '(default: false)')
@@ -222,12 +304,25 @@ def hierarchical_merge(dicts):
 @click.option('--opacity', required=False,
               help='DEPRECATED: use --flash-opacity/-o instead')
 @click.option('--preset-opacity/--no-preset-opacity', required=False,
-              is_flag=True,
+              is_flag=True, default=None,
               help=('If True, flashfocus will set windows to their default'
-                    'opacity on startup'))
+                    'opacity on startup (default: True)'))
+@click.option('--flash-on-focus/--no-flash-on-focus', required=False,
+              is_flag=True, default=None,
+              help=('If True, windows will be flashed on focus. Otherwise, '
+                    'windows will only be flashed on request. (default: True)'))
 def cli(*args, **kwargs):
     """Simple focus animations for tiling window managers."""
     init_server(kwargs)
+
+
+def create_user_configfile():
+    """Create the initial user config file."""
+    try:
+        os.makedirs(os.path.dirname(CONFIG_SEARCH_PATH[0]))
+    except OSError:
+        pass
+    copy(DEFAULT_CONFIG_FILE, CONFIG_SEARCH_PATH[0])
 
 
 def init_server(cli_options):
@@ -241,11 +336,7 @@ def init_server(cli_options):
     del cli_options['opacity']
 
     if not USER_CONFIG_FILE:
-        try:
-            os.makedirs(os.path.dirname(CONFIG_SEARCH_PATH[0]))
-        except OSError:
-            pass
-        copy(DEFAULT_CONFIG_FILE, CONFIG_SEARCH_PATH[0])
+        create_user_configfile()
 
     config = merge_config_sources(cli_options)
 

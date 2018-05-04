@@ -17,3 +17,46 @@ simple: false
 
 # Number of animation frames in a flash.
 ntimepoints: 10
+
+# If True flashfocus will set all windows to their default opacity on startup.
+preset-opacity: True
+
+# Set this to False if you don't want windows to flash on focus.
+flash-on-focus: True
+
+# Defining window-specific flash rules
+#
+# Flash rules are defined by matching the WM_CLASS property of a window.
+# To get the WM_CLASS property of a window use 'xprop WM_CLASS' and click on a
+# window. The property is a tuple of the form (window-id, window-class). The
+# window-class is usually the name of the application, but not always.
+#
+# All of flashfocus' parameters except `preset-opacity` can be redefined in a
+# flash rule.
+#
+# Say I'd like to set all 'termite' windows to 80% opacity but leave other
+# windows at full opacity:
+#
+# rules:
+#   - window-class: Termite
+#     default-opacity: 0.8
+#
+#
+# I also would prefer that firefox windows are not flashed on focus:
+#
+# rules:
+#   - window-class: Firefox
+#     flash-on-focus: False
+#   - window-class: Termite
+#     default-opacity: 0.8
+#
+#
+# For more complicated rules, you can use (python-style) regexes:
+#
+# rules:
+#   - window-id: ^(?!termite)$
+#     default-opacity: 0.8
+#
+rules:
+  - window-id: ^(?!termite)
+    flash-on-focus: False
