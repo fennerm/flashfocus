@@ -168,3 +168,38 @@ def list_only_test_windows(windows):
         return windows
 
     return lister
+
+
+@fixture
+def valid_config_types():
+    types = {
+        'time': float,
+        'ntimepoints': int,
+        'flash_opacity': float,
+        'default_opacity': float,
+        'simple': bool,
+        'preset_opacity': bool,
+        'window_class': re._pattern_type,
+        'window_id': re._pattern_type,
+        'flash_on_focus': bool
+    }
+    return types
+
+
+@fixture
+def blank_cli_options():
+    cli_options = {
+        'flash-opacity': None,
+        'default-opacity': None,
+        'time': None,
+        'ntimepoints': None,
+        'simple': None,
+        'preset_opacity': None,
+        'flash_on_focus': None
+    }
+    return cli_options
+
+
+@fixture
+def valid_bool():
+    return ['false', 'False', 'FALSE', 'True', 'true', 'TRUE', True, False]
