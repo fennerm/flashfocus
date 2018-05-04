@@ -1,4 +1,5 @@
 """Unit test fixtures."""
+import re
 import sys
 
 from factory import Factory

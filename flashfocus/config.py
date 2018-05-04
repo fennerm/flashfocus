@@ -1,7 +1,12 @@
 """Parsing the user config file."""
+from logging import (
+    error,
+    info,
+)
 import os
 import re
 from shutil import copy
+import sys
 
 from marshmallow import (
     fields,
@@ -19,6 +24,10 @@ from flashfocus.syspaths import (
     DEFAULT_CONFIG_FILE,
     USER_CONFIG_FILE,
 )
+
+# Properties which may be contained both in global config and in flash rules.
+BASE_PROPERTIES = ['flash_opacity', 'default_opacity', 'simple',
+                   'flash_on_focus', 'ntimepoints', 'time']
 
 
 def validate_positive_number(data):
