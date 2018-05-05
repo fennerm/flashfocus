@@ -1,4 +1,5 @@
 """Handle window-specific flash rules."""
+from logging import info
 import re
 
 from flashfocus.flasher import Flasher
@@ -108,9 +109,12 @@ class RuleMatcher:
 
         """
         window_id, window_class = get_wm_class(window)
+        i = 1
         for rule, focus_flash, flasher in self.iter:
             if rule.match(window_id, window_class):
+                info('Window %s matches criteria of rule %s', window, i)
                 if request_type == 'focus_shift' and not focus_flash:
                     return None
                 return rule, flasher
+            i += 1
         raise RuntimeError('No rule matched the window, this is a bug!')
