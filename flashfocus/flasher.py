@@ -46,8 +46,12 @@ class Flasher:
         Number of seconds between opacity transitions.
 
     """
-    def __init__(self, time, flash_opacity, default_opacity,
-                 simple, ntimepoints):
+    def __init__(self,
+                 time,
+                 flash_opacity,
+                 default_opacity,
+                 simple,
+                 ntimepoints):
         self.default_opacity = default_opacity
         self.flash_opacity = flash_opacity
         self.time = time / 1000
@@ -64,6 +68,9 @@ class Flasher:
     def flash_window(self, window):
         """Flash a window."""
         info('Flashing window %s', str(window))
+        if self.default_opacity == self.flash_opacity:
+            return
+
         if window in self.progress:
             try:
                 self.progress[window] = 0

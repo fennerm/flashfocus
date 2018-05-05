@@ -1,5 +1,9 @@
 """Test suite for flashfocus.flasher."""
 from time import sleep
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import MagicMock
 
 from pytest import (
     approx,
@@ -70,3 +74,9 @@ def test_compute_flash_series(flash_opacity, default_opacity, ntimepoints,
     )
     for actual, expected in zip(flasher.flash_series, expected_result):
         assert actual == approx(expected)
+
+
+def test_flash_requests_ignored_if_no_opacity_change(pointless_flasher, window):
+    pointless_flasher._flash = MagicMock()
+    pointless_flasher.flash_window(window)
+    pointless_flasher._flash.assert_not_called()
