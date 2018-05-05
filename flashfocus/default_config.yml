@@ -57,6 +57,3 @@ flash-on-focus: True
 #   - window-id: ^(?!termite)$
 #     default-opacity: 0.8
 #
-rules:
-  - window-id: ^(?!termite)
-    flash-on-focus: False
