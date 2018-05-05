@@ -1,4 +1,14 @@
 """Unit test fixtures."""
+try:
+    from queue import (
+        Empty,
+        Queue,
+    )
+except ImportError:
+    from Queue import (
+        Empty,
+        Queue,
+    )
 import re
 import sys
 
@@ -10,6 +20,10 @@ import xpybutil.window
 
 
 from flashfocus.flasher import Flasher
+from flashfocus.producer import (
+    ClientMonitor,
+    FocusMonitor,
+)
 from flashfocus.rule import RuleMatcher
 from flashfocus.server import FlashServer
 from flashfocus.sockets import (
@@ -128,12 +142,14 @@ class RuleMatcherFactory(Factory):
     class Meta:
         model = RuleMatcher
 
-    default_opacity = 1
-    flash_opacity = 0.8
-    time = 100
-    ntimepoints = 4
-    simple = False
-    flash_on_focus = True
+    defaults = {
+        'default_opacity': 1,
+        'flash_opacity': 0.8,
+        'time': 100,
+        'ntimepoints': 4,
+        'simple': False,
+        'flash_on_focus': True
+    }
     rules = [
         # Matches window1 but not 2
         {
@@ -232,3 +248,13 @@ def blank_cli_options():
 @fixture
 def valid_bool():
     return ['false', 'False', 'FALSE', 'True', 'true', 'TRUE', True, False]
+
+
+@fixture
+def client_monitor():
+    return ClientMonitor(Queue())
+
+
+@fixture
+def focus_monitor():
+    return FocusMonitor(Queue())

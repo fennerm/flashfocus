@@ -10,6 +10,8 @@ from time import sleep
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+import xcffib
+import xpybutil
 import xpybutil.ewmh
 
 
@@ -106,6 +108,16 @@ def server_running(server):
     sleep(0.05)
     server.keep_going = False
     p.join()
+
+
+@contextmanager
+def producer_running(producer):
+    producer.start()
+    yield
+    sleep(0.01)
+    xpybutil.conn.disconnect()
+    producer.stop()
+    xpybutil.conn = xcffib.connect()
 
 
 def to_regex(x):
