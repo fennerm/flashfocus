@@ -25,10 +25,6 @@ from flashfocus.syspaths import (
     USER_CONFIG_FILE,
 )
 
-# Properties which may be contained both in global config and in flash rules.
-BASE_PROPERTIES = ['flash_opacity', 'default_opacity', 'simple',
-                   'flash_on_focus', 'ntimepoints', 'time']
-
 # Set LOGLEVEL environment variable to DEBUG or WARNING to change logging
 # verbosity.
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'),
