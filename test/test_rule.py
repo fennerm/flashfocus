@@ -1,28 +1,52 @@
 """Testsuite for flashfocus.rule."""
-from pytest import mark
+try:
+    from unittest.mock import (
+        call,
+        MagicMock,
+    )
+except ImportError:
+    from mock import (
+        call,
+        MagicMock,
+    )
+from pytest import (
+    mark,
+    raises,
+)
+from xcffib.xproto import WindowError
 
 from flashfocus.rule import *
 from test.helpers import to_regex
 
 
 @mark.parametrize('id_regex,class_regex,should_match', [
+    # Id matches exactly, no class
     (r'window1', None, True),
+    # Id regex matches, no class
     (r'^win.*$', None, True),
+    # Class matches exactly, no id
     (None, r'Window1', True),
+    # Class regex matches, no id
     (None, r'^Win.*$', True),
+    # Both id and class exactly match
     (r'window1', r'Window1', True),
+    # Class matches but id doesn't
     (r'window2', r'Window1', False),
+    # Id matches but class doesn't
     (r'window1', r'Window2', False),
+    # Neither match
     (r'window2', r'Window2', False),
+    # Neither defines (always matches)
+    (None, None, True)
 ])
-@mark.parametrize('default_rule', [True, False])
-def test_rule_matching(id_regex, class_regex, should_match, default_rule):
-    if default_rule:
-        rule = DefaultRule(to_regex(id_regex), to_regex(class_regex))
-        assert rule.match('window1', 'Window1')
-    else:
-        rule = Rule(to_regex(id_regex), to_regex(class_regex))
-        assert rule.match('window1', 'Window1') == should_match
+def test_rule_matching(id_regex, class_regex, should_match):
+    rule = Rule(to_regex(id_regex), to_regex(class_regex))
+    assert rule.match('window1', 'Window1') == should_match
+
+
+def test_rule_matcher_match_raises_window_error(rule_matcher):
+    with raises(WindowError):
+        rule_matcher.match(0)
 
 
 def test_rule_matcher_match(rule_matcher, window):
@@ -36,9 +60,15 @@ def test_rule_matcher_no_match_returns_default(rule_matcher, windows):
     rule, flasher = rule_matcher.match(windows[1])
     assert rule == rule_matcher.rules[1]
     assert flasher == rule_matcher.flashers[1]
-    assert isinstance(rule, DefaultRule)
     assert flasher.flash_opacity != 0
 
 
 def test_rule_matcher_returns_none_if_not_flash_on_focus(rule_matcher, window):
     assert rule_matcher.match(window, 'focus_shift') is None
+
+
+def test_rule_matcher_flash_calls_matching_flasher(rule_matcher, flasher):
+    flasher.flash_window = MagicMock()
+    rule_matcher.match = lambda *args, **kwargs: (Rule(), flasher)
+    rule_matcher.flash(0)
+    flasher.flash_window.assert_called()
