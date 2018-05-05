@@ -10,6 +10,7 @@ import xpybutil.window
 
 
 from flashfocus.flasher import Flasher
+from flashfocus.rule import RuleMatcher
 from flashfocus.server import FlashServer
 from flashfocus.sockets import (
     init_client_socket,
@@ -120,6 +121,33 @@ class FlasherFactory(Factory):
 register(FlasherFactory, 'flasher')
 
 register(FlasherFactory, 'pointless_flasher', flash_opacity=1)
+
+
+class RuleMatcherFactory(Factory):
+    """Factory for producing RuleMatcher fixture instances."""
+    class Meta:
+        model = RuleMatcher
+
+    default_opacity = 1
+    flash_opacity = 0.8
+    time = 100
+    ntimepoints = 4
+    simple = False
+    flash_on_focus = True
+    rules = [
+        # Matches window1 but not 2
+        {
+            'window_id': re.compile('^.*1$'),
+            'flash_opacity': 0,
+            'default_opacity': 0.8,
+            'time': 100,
+            'ntimepoints': 4,
+            'simple': False,
+            'flash_on_focus': False
+        }
+    ]
+
+register(RuleMatcherFactory, 'rule_matcher')
 
 
 @fixture

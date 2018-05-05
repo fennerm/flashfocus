@@ -3,6 +3,7 @@ from __future__ import division
 
 from contextlib import contextmanager
 import os
+import re
 from threading import Thread
 from time import sleep
 
@@ -105,3 +106,12 @@ def server_running(server):
     sleep(0.05)
     server.keep_going = False
     p.join()
+
+
+def to_regex(x):
+    """Convert a string to a regex (returns None if `x` is None)"""
+    try:
+        return re.compile(x)
+    except TypeError:
+        return None
+
