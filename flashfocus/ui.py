@@ -71,10 +71,6 @@ def ensure_single_instance():
                    '(default: 10)')
 @click.option('--opacity', required=False,
               help='DEPRECATED: use --flash-opacity/-o instead')
-@click.option('--preset-opacity/--no-preset-opacity', required=False,
-              is_flag=True, default=None,
-              help=('If True, flashfocus will set windows to their default'
-                    'opacity on startup (default: True)'))
 @click.option('--flash-on-focus/--no-flash-on-focus', required=False,
               is_flag=True, default=None,
               help=('If True, windows will be flashed on focus. Otherwise, '
