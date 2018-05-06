@@ -10,6 +10,7 @@ except ImportError:
         MagicMock,
     )
 from pytest import (
+    lazy_fixture,
     mark,
     raises,
 )
@@ -49,11 +50,16 @@ def test_rule_matcher_match_raises_window_error(rule_matcher):
         rule_matcher.match(0)
 
 
-def test_rule_matcher_match(rule_matcher, window):
-    rule, flasher = rule_matcher.match(window)
-    assert rule == rule_matcher.rules[0]
-    assert flasher == rule_matcher.flashers[0]
-    assert flasher.flash_opacity == 0
+@mark.parametrize('matcher', [
+    lazy_fixture('rule_matcher'),
+    lazy_fixture('norule_matcher')
+])
+def test_rule_matcher_match(matcher, window):
+    rule, flasher = matcher.match(window)
+    assert rule == matcher.rules[0]
+    assert flasher == matcher.flashers[0]
+    if len(matcher.rules) > 1:
+        assert flasher.flash_opacity == 0
 
 
 def test_rule_matcher_no_match_returns_default(rule_matcher, windows):

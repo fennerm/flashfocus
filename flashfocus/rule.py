@@ -63,12 +63,14 @@ class RuleMatcher:
         self.flashers = []
         self.flash_on_focus = []
         flasher_param = list_param(Flasher.__init__)
-        for rule in rules:
-            self.rules.append(
-                Rule(id_regex=rule.get('window_id'),
-                     class_regex=rule.get('window_class')))
-            self.flashers.append(Flasher(**{k: rule[k] for k in flasher_param}))
-            self.flash_on_focus.append(rule['flash_on_focus'])
+        if rules:
+            for rule in rules:
+                self.rules.append(
+                    Rule(id_regex=rule.get('window_id'),
+                         class_regex=rule.get('window_class')))
+                self.flashers.append(
+                    Flasher(**{k: rule[k] for k in flasher_param}))
+                self.flash_on_focus.append(rule['flash_on_focus'])
         self.rules.append(Rule())
         self.flash_on_focus.append(defaults['flash_on_focus'])
         self.flashers.append(Flasher(**{k: defaults[k] for k in flasher_param}))
@@ -87,9 +89,12 @@ class RuleMatcher:
             flashed.
 
         """
-        flasher = self.match(window, request_type)[1]
-        if flasher:
+        try:
+            flasher = self.match(window, request_type)[1]
             flasher.flash_window(window)
+        except TypeError:
+            # match returned None
+            pass
 
     def match(self, window, request_type=None):
         """Find a flash rule which matches `window`
@@ -112,8 +117,11 @@ class RuleMatcher:
         i = 1
         for rule, focus_flash, flasher in self.iter:
             if rule.match(window_id, window_class):
-                info('Window %s matches criteria of rule %s', window, i)
+                if i < len(self.rules):
+                    info('Window %s matches criteria of rule %s', window, i)
                 if request_type == 'focus_shift' and not focus_flash:
+                    info('flash_on_focus is False for window %s, ignoring...',
+                         window)
                     return None
                 return rule, flasher
             i += 1

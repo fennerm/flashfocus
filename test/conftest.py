@@ -158,6 +158,7 @@ class RuleMatcherFactory(Factory):
     ]
 
 register(RuleMatcherFactory, 'rule_matcher')
+register(RuleMatcherFactory, 'norule_matcher', rules=[])
 
 
 @fixture
