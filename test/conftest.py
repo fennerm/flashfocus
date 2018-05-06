@@ -1,14 +1,8 @@
 """Unit test fixtures."""
 try:
-    from queue import (
-        Empty,
-        Queue,
-    )
+    from queue import Queue
 except ImportError:
-    from Queue import (
-        Empty,
-        Queue,
-    )
+    from Queue import Queue
 import re
 import sys
 
@@ -22,7 +16,7 @@ import xpybutil.window
 from flashfocus.flasher import Flasher
 from flashfocus.producer import (
     ClientMonitor,
-    FocusMonitor,
+    XHandler,
 )
 from flashfocus.rule import RuleMatcher
 from flashfocus.server import FlashServer
@@ -64,8 +58,8 @@ class ServerFactory(Factory):
     time = 100
     ntimepoints = 4
     simple = False
-    preset_opacity = True
     rules = None
+    flash_on_focus = True
 
 
 register(ServerFactory, 'flash_server')
@@ -207,12 +201,13 @@ def string_type():
 
 
 @fixture
-def list_only_test_windows(windows):
-    """Generate a function which lists the test window ids."""
-    def lister():
-        return windows
-
-    return lister
+def list_only_test_windows(monkeypatch, windows):
+    """Only list test window ids."""
+    class Lister:
+        def reply(self):
+            return windows
+    monkeypatch.setattr('xpybutil.ewmh.get_client_list', Lister)
+    return Lister
 
 
 @fixture
@@ -223,7 +218,6 @@ def valid_config_types():
         'flash_opacity': float,
         'default_opacity': float,
         'simple': bool,
-        'preset_opacity': bool,
         'window_class': re._pattern_type,
         'window_id': re._pattern_type,
         'flash_on_focus': bool
@@ -239,7 +233,6 @@ def blank_cli_options():
         'time': None,
         'ntimepoints': None,
         'simple': None,
-        'preset_opacity': None,
         'flash_on_focus': None
     }
     return cli_options
@@ -257,4 +250,5 @@ def client_monitor():
 
 @fixture
 def focus_monitor():
-    return FocusMonitor(Queue())
+    return XHandler(Queue(), 1)
+

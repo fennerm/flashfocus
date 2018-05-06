@@ -9,6 +9,8 @@ from xcffib.xproto import WindowError
 import xpybutil
 import xpybutil.ewmh
 
+from flashfocus.xutil import set_opacity
+
 
 class Flasher:
     """Creates smooth window flash animations.
@@ -89,15 +91,11 @@ class Flasher:
         Given the default window opacity, and the flash opacity, this method
         calculates a smooth series of intermediate opacity values.
         """
-        info('Computing flash series from %s to %s',
-             self.flash_opacity,
-             self.default_opacity)
         opacity_diff = self.default_opacity - self.flash_opacity
 
         flash_series = [self.flash_opacity +
                         ((x / self.ntimepoints) * opacity_diff)
                         for x in range(self.ntimepoints)]
-        info('Computed flash series = %s', flash_series)
         return flash_series
 
     def _flash(self, window):
@@ -110,14 +108,12 @@ class Flasher:
         try:
             self.progress[window] = 0
             while self.progress[window] < self.ntimepoints:
-                xpybutil.ewmh.set_wm_window_opacity_checked(
-                    window, self.flash_series[self.progress[window]]).check()
+                set_opacity(window, self.progress[window])
                 sleep(self.timechunk)
                 self.progress[window] += 1
 
             info('Resetting window %s opacity to default', window)
-            xpybutil.ewmh.set_wm_window_opacity_checked(
-                window, self.default_opacity).check()
+            set_opacity(window, self.default_opacity)
 
         except WindowError:
             info('Attempted to draw to nonexistant window %s, ignoring...',

@@ -3,6 +3,7 @@ from pytest import approx
 import xpybutil.icccm
 
 from flashfocus.xutil import *
+from test.helpers import get_opacity
 
 
 def test_get_wm_class(window):
@@ -17,5 +18,9 @@ def test_create_message_window():
 def test_set_all_window_opacity(windows, list_only_test_windows):
     set_all_window_opacity(0.5)
     for window in windows:
-        assert (xpybutil.ewmh.get_wm_window_opacity(window).reply() ==
-                approx(0.5))
+        assert get_opacity(window) == approx(0.5)
+
+
+def test_set_opacity(window):
+    set_opacity(window, 0.5)
+    assert get_opacity(window) == approx(0.5)

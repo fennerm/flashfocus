@@ -106,8 +106,8 @@ def server_running(server):
     sleep(0.05)
     yield
     sleep(0.05)
-    server.keep_going = False
-    p.join()
+    server.shutdown()
+    xpybutil.conn = xcffib.connect()
 
 
 @contextmanager
@@ -127,3 +127,7 @@ def to_regex(x):
     except TypeError:
         return None
 
+
+def get_opacity(window):
+    """Get the opacity of a window."""
+    return xpybutil.ewmh.get_wm_window_opacity(window).reply()
