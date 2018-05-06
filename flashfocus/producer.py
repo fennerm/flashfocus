@@ -13,7 +13,6 @@ import xpybutil.icccm
 from flashfocus.xutil import (
     create_message_window,
     set_all_window_opacity,
-    set_opacity,
 )
 from flashfocus.sockets import init_server_socket
 
@@ -32,10 +31,9 @@ class Producer(Thread):
         self.queue = queue
         self.keep_going = True
 
-    def queue_window(self):
+    def queue_window(self, window, type):
         """Add a window to the queue."""
-        focused = xpybutil.ewmh.get_active_window().reply()
-        self.queue.put(tuple([focused, self.type]))
+        self.queue.put(tuple([window, type]))
 
     def stop(self):
         """Kill the thread."""
@@ -66,12 +64,14 @@ class XHandler(Producer):
                 atom = xpybutil.util.get_atom_name(event.atom)
                 if atom == '_NET_ACTIVE_WINDOW':
                     info('Focus shifted...')
-                    self.queue_window()
+                    focused = xpybutil.ewmh.get_active_window().reply()
+                    self.queue_window(focused, 'focus_shift')
                 elif atom == 'WM_NAME' and event.window == self.message_window:
                     # Kill signal from server
                     break
             elif isinstance(event, MapNotifyEvent):
-                set_opacity(event.window, self.opacity)
+                info('New window mapped...')
+                self.queue_window(event.window, 'new_window')
 
     def stop(self):
         set_all_window_opacity(1)
@@ -95,10 +95,10 @@ class ClientMonitor(Producer):
                 pass
             else:
                 info('Received a flash request from client...')
-                self.queue_window()
+                focused = xpybutil.ewmh.get_active_window().reply()
+                self.queue_window(focused, 'client_request')
 
     def stop(self):
         super(ClientMonitor, self).stop()
         info('Disconnecting socket...')
-        self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()

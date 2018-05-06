@@ -28,9 +28,6 @@ flash-on-focus: True
 # window. The property is a tuple of the form (window-id, window-class). The
 # window-class is usually the name of the application, but not always.
 #
-# All of flashfocus' parameters except `preset-opacity` can be redefined in a
-# flash rule.
-#
 # Say I'd like to set all 'termite' windows to 80% opacity but leave other
 # windows at full opacity:
 #

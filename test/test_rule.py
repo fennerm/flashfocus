@@ -73,8 +73,9 @@ def test_rule_matcher_returns_none_if_not_flash_on_focus(rule_matcher, window):
     assert rule_matcher.match(window, 'focus_shift') is None
 
 
-def test_rule_matcher_flash_calls_matching_flasher(rule_matcher, flasher):
+def test_rule_matcher_direct_request_calls_matching_flasher(
+        rule_matcher, flasher):
     flasher.flash_window = MagicMock()
     rule_matcher.match = lambda *args, **kwargs: (Rule(), flasher)
-    rule_matcher.flash(0)
+    rule_matcher.direct_request(0)
     flasher.flash_window.assert_called()

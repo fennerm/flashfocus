@@ -1,7 +1,4 @@
 """Test suite for the main flashfocus module."""
-from threading import Thread
-from time import sleep
-
 try:
     from unittest.mock import (
         call,
@@ -12,43 +9,20 @@ except ImportError:
         call,
         MagicMock,
     )
+from time import sleep
 
-from pytest import mark
+from pytest import (
+    approx,
+    mark,
+)
 
 from flashfocus.client import client_request_flash
 from test.helpers import (
     change_focus,
-    queue_to_list,
+    get_opacity,
+    server_running,
+    WindowSession,
 )
-
-
-def test_queue_focus_shift_tasks(flash_server, windows):
-    flash_server._flash_queued_window = MagicMock()
-    p = Thread(target=flash_server._queue_focus_shift_tasks)
-    p.start()
-    sleep(0.1)
-    # When queue_focus_shift_tasks starts up it already has some focus shift
-    # tasks to get through. We have to clear these out first
-    while flash_server.target_windows.qsize() != 0:
-        flash_server.target_windows.get()
-    change_focus(windows[1])
-    change_focus(windows[0])
-    flash_server.keep_going = False
-    assert (queue_to_list(flash_server.target_windows) ==
-            [(windows[1], 'focus_shift'), (windows[0], 'focus_shift')])
-
-
-def test_queue_client_tasks(flash_server, windows):
-    p = Thread(target=flash_server._queue_client_tasks)
-    p.start()
-    sleep(0.05)
-    client_request_flash()
-    client_request_flash()
-    sleep(0.1)
-    flash_server.keep_going = False
-    expected_queue = [(windows[0], 'client_request'),
-                      (windows[0], 'client_request')]
-    assert queue_to_list(flash_server.target_windows) == expected_queue
 
 
 @mark.parametrize('focus_indices,flash_indices', [
@@ -57,19 +31,34 @@ def test_queue_client_tasks(flash_server, windows):
 ])
 def test_event_loop(flash_server, windows, focus_indices, flash_indices,
                     monkeypatch):
-    # Shift focus as specified by parameters then throw in a client request for
-    # good measure
     focus_shifts = [windows[i] for i in focus_indices]
-    expected_calls = ([call(windows[i]) for i in flash_indices] +
-                      [call(focus_shifts[-1])])
-    flash_server.flasher.flash_window = MagicMock()
-    p = Thread(target=flash_server.event_loop)
-    p.start()
+    expected_calls = ([call(windows[i], 'focus_shift') for i in flash_indices] +
+                      [call(focus_shifts[-1], 'client_request')])
+    flash_server.matcher.direct_request = MagicMock()
+    with server_running(flash_server):
+        for window in focus_shifts:
+            change_focus(window)
+        client_request_flash()
+    assert flash_server.matcher.direct_request.call_args_list == expected_calls
 
-    for window in focus_shifts:
-        change_focus(window)
-    client_request_flash()
-    sleep(0.5)
-    flash_server.keep_going = False
-    p.join()
-    assert flash_server.flasher.flash_window.call_args_list == expected_calls
+
+def test_window_opacity_set_to_default_on_startup(
+        transparent_flash_server, list_only_test_windows, windows):
+    with server_running(transparent_flash_server):
+        for window in windows:
+            assert get_opacity(window) == approx(0.4)
+
+
+def test_new_window_opacity_set_to_default(
+        transparent_flash_server, list_only_test_windows):
+    with server_running(transparent_flash_server):
+        windows = WindowSession()
+        sleep(0.1)
+        assert get_opacity(windows.ids[0]) == approx(0.4)
+    windows.destroy()
+
+
+def test_server_handles_nonexistant_window(flash_server):
+    with server_running(flash_server):
+        flash_server.target_windows.put((0, 'client_request'))
+        sleep(0.1)

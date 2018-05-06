@@ -5,6 +5,7 @@ except ImportError:
     from Queue import Queue
 import re
 import sys
+from time import sleep
 
 from factory import Factory
 from pytest import fixture

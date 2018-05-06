@@ -10,7 +10,6 @@ from time import sleep
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
-import xcffib
 import xpybutil
 import xpybutil.ewmh
 
@@ -101,18 +100,20 @@ def queue_to_list(queue):
 
 @contextmanager
 def server_running(server):
+    while xpybutil.conn.poll_for_event():
+        pass
     p = Thread(target=server.event_loop)
     p.start()
-    sleep(0.05)
+    sleep(1)
     yield
     sleep(0.05)
-    server.shutdown()
-    xpybutil.conn = xcffib.connect()
+    server.shutdown(disconnect_from_xorg=False)
 
 
 @contextmanager
 def producer_running(producer):
     producer.start()
+    sleep(0.01)
     yield
     sleep(0.01)
     producer.stop()

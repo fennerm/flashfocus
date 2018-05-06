@@ -28,8 +28,6 @@ def invalid_rules():
         # List value for window class/id
         [{'window_class': ['foo', 'bar']}],
         [{'window_id': ['foo', 'bar']}],
-        # preset-opacity parameter cannot be used inside rule
-        [{'window_id': 'foo', 'preset_opacity': 'False'}],
     ]
     return rules
 
@@ -39,7 +37,7 @@ def invalid_rules():
     ('default_opacity', ['-1', '2', 'foo', -1, 2]),
     ('time', ['0', '-1', 'foo', 0, -1]),
     ('ntimepoints', ['0', '-1', 'foo', 0, -1]),
-    ('simple', ['foo', '10']), ('preset_opacity', ['foo', '10']),
+    ('simple', ['foo', '10']),
     ('rules', lazy_fixture('invalid_rules'))
 ])
 @mark.parametrize('input_type', ['cli', 'file'])
@@ -76,7 +74,6 @@ def check_validated_config(config, expected_types):
     ('time', ['200', '50.5', 200, 50.5]),
     ('ntimepoints', ['10', 10]),
     ('simple', lazy_fixture('valid_bool')),
-    ('preset_opacity', lazy_fixture('valid_bool')),
 ])
 @mark.parametrize('input_type', ['cli', 'file'])
 def test_valid_param(option, values, input_type, blank_cli_options,

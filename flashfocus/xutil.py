@@ -53,9 +53,14 @@ def set_opacity(window, opacity, checked=True):
     """
     if opacity:
         cookie = xpybutil.ewmh.set_wm_window_opacity_checked(window, opacity)
-    if checked:
-        return cookie.check()
-    return cookie
+        if checked:
+            return cookie.check()
+        return cookie
+
+
+def get_opacity(window):
+    """Get the opacity of a window."""
+    return xpybutil.ewmh.get_wm_window_opacity(window).reply()
 
 
 def set_all_window_opacity(opacity):
