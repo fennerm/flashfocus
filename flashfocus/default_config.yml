@@ -18,9 +18,6 @@ simple: false
 # Number of animation frames in a flash.
 ntimepoints: 10
 
-# If True flashfocus will set all windows to their default opacity on startup.
-preset-opacity: True
-
 # Set this to False if you don't want windows to flash on focus.
 flash-on-focus: True
 
@@ -56,4 +53,3 @@ flash-on-focus: True
 # rules:
 #   - window-id: ^(?!termite)$
 #     default-opacity: 0.8
-#
