@@ -27,10 +27,10 @@ def test_client_monitor_stop_disconnects_socket(client_monitor):
         client_monitor.sock.getsockname()
 
 
-def test_focus_monitor_handles_focus_shifts(focus_monitor, windows):
-    with producer_running(focus_monitor):
+def test_xhandler_handles_focus_shifts(xhandler, windows):
+    with producer_running(xhandler):
         change_focus(windows[1])
         change_focus(windows[0])
     change_focus(windows[1])
-    queued = queue_to_list(focus_monitor.queue)
+    queued = queue_to_list(xhandler.queue)
     assert queued == [(windows[1], 'focus_shift'), (windows[0], 'focus_shift')]

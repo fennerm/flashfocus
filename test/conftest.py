@@ -250,6 +250,5 @@ def client_monitor():
 
 
 @fixture
-def focus_monitor():
+def xhandler():
     return XHandler(Queue(), 1)
-

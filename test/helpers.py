@@ -115,9 +115,7 @@ def producer_running(producer):
     producer.start()
     yield
     sleep(0.01)
-    xpybutil.conn.disconnect()
     producer.stop()
-    xpybutil.conn = xcffib.connect()
 
 
 def to_regex(x):

@@ -3,11 +3,19 @@ from logging import info
 import socket
 from threading import Thread
 
-from xcffib import ConnectionException
+from xcffib.xproto import (
+    MapNotifyEvent,
+    PropertyNotifyEvent,
+)
 import xpybutil
+import xpybutil.icccm
 
+from flashfocus.xutil import (
+    create_message_window,
+    set_all_window_opacity,
+    set_opacity,
+)
 from flashfocus.sockets import init_server_socket
-from flashfocus.xutil import focus_shifted
 
 
 class Producer(Thread):
@@ -35,23 +43,40 @@ class Producer(Thread):
         self.join()
 
 
-class FocusMonitor(Producer):
+class XHandler(Producer):
     """Queue flashes due to shifts in focus."""
-    def __init__(self, queue):
-        super(FocusMonitor, self).__init__(queue)
+    def __init__(self, queue, opacity=None):
+        super(XHandler, self).__init__(queue)
         self.type = 'focus_shift'
+        self.message_window = create_message_window()
+        self.opacity = opacity
 
     def run(self):
         """Queue focus shift flashes."""
-        xpybutil.window.listen(xpybutil.root, 'PropertyChange')
+        xpybutil.window.listen(xpybutil.root,
+                               'PropertyChange', 'SubstructureNotify')
+        xpybutil.window.listen(self.message_window, 'PropertyChange')
+
+        if self.opacity != 1:
+            set_all_window_opacity(self.opacity)
 
         while self.keep_going:
-            try:
-                if focus_shifted():
+            event = xpybutil.conn.wait_for_event()
+            if isinstance(event, PropertyNotifyEvent):
+                atom = xpybutil.util.get_atom_name(event.atom)
+                if atom == '_NET_ACTIVE_WINDOW':
                     info('Focus shifted...')
                     self.queue_window()
-            except ConnectionException:
-                pass
+                elif atom == 'WM_NAME' and event.window == self.message_window:
+                    # Kill signal from server
+                    break
+            elif isinstance(event, MapNotifyEvent):
+                set_opacity(event.window, self.opacity)
+
+    def stop(self):
+        set_all_window_opacity(1)
+        xpybutil.icccm.set_wm_name_checked(self.message_window, 'KILL').check()
+        super(XHandler, self).stop()
 
 
 class ClientMonitor(Producer):
