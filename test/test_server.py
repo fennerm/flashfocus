@@ -42,6 +42,15 @@ def test_event_loop(flash_server, windows, focus_indices, flash_indices,
     assert flash_server.matcher.direct_request.call_args_list == expected_calls
 
 
+def test_second_consecutive_focus_requests_ignored(flash_server, windows):
+    flash_server.matcher.direct_request = MagicMock()
+    with server_running(flash_server):
+        change_focus(windows[1])
+        change_focus(windows[1])
+    assert (flash_server.matcher.direct_request.call_args_list ==
+            [call(windows[1], 'focus_shift')])
+
+
 def test_window_opacity_set_to_default_on_startup(
         transparent_flash_server, list_only_test_windows, windows):
     with server_running(transparent_flash_server):
@@ -56,7 +65,6 @@ def test_new_window_opacity_set_to_default(
         sleep(0.1)
         assert get_opacity(windows.ids[0]) == approx(0.4)
     windows.destroy()
-
 
 def test_server_handles_nonexistant_window(flash_server):
     with server_running(flash_server):

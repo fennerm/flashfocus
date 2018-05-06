@@ -128,4 +128,3 @@ class RuleMatcher:
                     return None
                 return rule, flasher
             i += 1
-        raise RuntimeError('No rule matched the window, this is a bug!')
