@@ -184,18 +184,6 @@ def stub_server(server_socket):
 
 
 @fixture
-def fresh_xpybutil():
-    """Reimport xpybutil to refresh the X connection."""
-    try:
-        import importlib
-        importlib.reload(xpybutil)
-        importlib.reload(xpybutil.window)
-    except:
-        reload(xpybutil)
-        reload(xpybutil.window)
-
-
-@fixture
 def string_type():
     if sys.version_info[0] < 3:
         return basestring
