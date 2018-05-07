@@ -20,16 +20,14 @@ setup(
     py_modules=['flashfocus'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
-    install_requires=['xcffib', 'click', 'cffi', 'xpybutil', 'schema',
+    install_requires=['xcffib', 'click', 'cffi', 'xpybutil', 'marshmallow',
                       'pyyaml'],
     packages=find_packages(exclude=["*test*"]),
     keywords='xorg flash focus i3 bspwm awesomewm herbsluftwm',
-    package_data={'flashfocus': ['default_config.yml']},
-    include_package_data=True,
     scripts=['bin/nc_flash_window'],
     entry_points='''
         [console_scripts]
-        flashfocus=flashfocus.cli:cli
+        flashfocus=flashfocus.ui:cli
         flash_window=flashfocus.client:client_request_flash
     ''',
 )

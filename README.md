@@ -39,7 +39,11 @@ If you use i3, the following is also required for flashfocus to work with tabbed
 
 ```
 opacity-rule = [
-    "0:_NET_WM_STATE@:32a *= '_NET_WM_STATE_HIDDEN'"
+    "0:_NET_WM_STATE@[0]:32a = '_NET_WM_STATE_HIDDEN'",
+    "0:_NET_WM_STATE@[1]:32a = '_NET_WM_STATE_HIDDEN'",
+    "0:_NET_WM_STATE@[2]:32a = '_NET_WM_STATE_HIDDEN'",
+    "0:_NET_WM_STATE@[3]:32a = '_NET_WM_STATE_HIDDEN'",
+    "0:_NET_WM_STATE@[4]:32a = '_NET_WM_STATE_HIDDEN'",
 ];
 ```
 

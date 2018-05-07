@@ -1,13 +1,16 @@
 """Helper functions/classes for unit tests."""
 from __future__ import division
 
+from contextlib import contextmanager
 import os
+import re
 from threading import Thread
 from time import sleep
 
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+import xpybutil
 import xpybutil.ewmh
 
 
@@ -15,8 +18,10 @@ class WindowSession:
     """A session of blank windows for testing."""
     def __init__(self):
         window1 = Gtk.Window(title='window1')
+        window1.set_wmclass('window1', 'Window1')
         window1.show()
         window2 = Gtk.Window(title='window2')
+        window1.set_wmclass('window2', 'Window2')
         window2.show()
         window3 = Gtk.Window(title='window3')
         window3.show()
@@ -91,3 +96,37 @@ def queue_to_list(queue):
     while queue.qsize() != 0:
         result.append(queue.get())
     return result
+
+
+@contextmanager
+def server_running(server):
+    while xpybutil.conn.poll_for_event():
+        pass
+    p = Thread(target=server.event_loop)
+    p.start()
+    sleep(1)
+    yield
+    sleep(0.01)
+    server.shutdown(disconnect_from_xorg=False)
+
+
+@contextmanager
+def producer_running(producer):
+    producer.start()
+    sleep(0.01)
+    yield
+    sleep(0.01)
+    producer.stop()
+
+
+def to_regex(x):
+    """Convert a string to a regex (returns None if `x` is None)"""
+    try:
+        return re.compile(x)
+    except TypeError:
+        return None
+
+
+def get_opacity(window):
+    """Get the opacity of a window."""
+    return xpybutil.ewmh.get_wm_window_opacity(window).reply()
