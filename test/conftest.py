@@ -38,6 +38,7 @@ def windows():
     """Display session with multiple open windows."""
     windows = WindowSession()
     change_focus(windows.ids[0])
+    sleep(0.1)
     yield windows.ids
     windows.destroy()
 

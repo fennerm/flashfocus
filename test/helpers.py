@@ -106,7 +106,7 @@ def server_running(server):
     p.start()
     sleep(1)
     yield
-    sleep(0.05)
+    sleep(0.01)
     server.shutdown(disconnect_from_xorg=False)
 
 

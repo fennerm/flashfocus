@@ -27,7 +27,7 @@ from test.helpers import (
 
 @mark.parametrize('focus_indices,flash_indices', [
     # Test normal usage
-    ([0, 1, 0], [0, 1, 0]),
+    ([1, 0, 1], [1, 0, 1]),
 ])
 def test_event_loop(flash_server, windows, focus_indices, flash_indices,
                     monkeypatch):
