@@ -24,7 +24,7 @@ setup(
                       'pyyaml'],
     packages=find_packages(exclude=["*test*"]),
     keywords='xorg flash focus i3 bspwm awesomewm herbsluftwm',
-    scripts=['bin/flash_window_socat'],
+    scripts=['bin/nc_flash_window'],
     entry_points='''
         [console_scripts]
         flashfocus=flashfocus.ui:cli
