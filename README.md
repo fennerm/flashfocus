@@ -62,14 +62,13 @@ The `flash_window` script can be used to flash the current window on key-press. 
 bindsym $mod+n exec --no-startup-id flash_window
 ```
 
-
 ## Configuration
 
-Flashfocus can be configured via its config file or with command line parameters.
+Flashfocus can be configured via its config file or with command line parameters. Some features, such as window-specific flash customization, are only available through the config file.
 
 The config file is searched for in the following locations:
 1. $XDG_CONFIG_HOME/flashfocus/flashfocus.yml
 2. ~/.config/flashfocus/flashfocus.yml
 3. ~/.flashfocus.yml
 
-When flashfocus is first run it creates a default config file in 1. or 2. Documentation of all configuration options is present in the config file. More configuration options coming soon!
+When flashfocus is first run it creates a default config file in 1. or 2. Documentation of all configuration options is present in the config file.
