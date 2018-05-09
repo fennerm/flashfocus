@@ -41,8 +41,21 @@ def get_wm_class(window):
         (window id, window class)
 
     """
-    reply = xpybutil.icccm.get_wm_class(window).reply()
+    reply = xpybutil.util.get_property_value(
+        xpybutil.util.get_property(window, 'WM_CLASS').reply())
     return reply[0], reply[1]
+
+
+def set_wm_name(window, name):
+    """Set the WM_NAME property of a window."""
+    xpybutil.conn.core.ChangePropertyChecked(
+        xcffib.xproto.PropMode.Replace,
+        window,
+        xcffib.xproto.Atom.WM_NAME,
+        xcffib.xproto.Atom.STRING,
+        8,
+        len(name),
+        name).check()
 
 
 def set_opacity(window, opacity, checked=True):
@@ -54,6 +67,7 @@ def set_opacity(window, opacity, checked=True):
     if opacity:
         cookie = xpybutil.ewmh.set_wm_window_opacity_checked(window, opacity)
         if checked:
+
             return cookie.check()
         return cookie
 

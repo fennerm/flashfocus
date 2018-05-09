@@ -1,6 +1,5 @@
 """Testsuite for flashfocus.xutil."""
 from pytest import approx
-import xpybutil.icccm
 
 from flashfocus.xutil import *
 from test.helpers import get_opacity
@@ -12,7 +11,7 @@ def test_get_wm_class(window):
 
 def test_create_message_window():
     window = create_message_window()
-    xpybutil.icccm.set_wm_name_checked(window, 'foo').check()
+    set_opacity(window, 0.8)
 
 
 def test_set_all_window_opacity(windows, list_only_test_windows):

@@ -8,11 +8,11 @@ from xcffib.xproto import (
     PropertyNotifyEvent,
 )
 import xpybutil
-import xpybutil.icccm
 
 from flashfocus.xutil import (
     create_message_window,
     set_all_window_opacity,
+    set_wm_name,
 )
 from flashfocus.sockets import init_server_socket
 
@@ -75,8 +75,11 @@ class XHandler(Producer):
 
     def stop(self):
         set_all_window_opacity(1)
-        xpybutil.icccm.set_wm_name_checked(self.message_window, 'KILL').check()
+        set_wm_name(self.message_window, 'KILL')
+        # xpybutil.iccm.set_wm_name_checked(self.message_window, 'KILL').check()
         super(XHandler, self).stop()
+        xpybutil.conn.core.DestroyWindow(self.message_window, True).check()
+
 
 
 class ClientMonitor(Producer):
