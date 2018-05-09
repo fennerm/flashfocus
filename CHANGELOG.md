@@ -2,10 +2,16 @@
 
 ## [Unreleased]
 
-- Ability to exclude windows by ID or class
 - Ability to apply different flash rules to tabs/new windows/closed windows
 - More finetuned control over flash animation
 - Better support for using flashfocus as a library to produce custom animation scripts.
+
+
+## [1.0.0] - May 9th, 2018
+- Flash parameters can now be set for specific window class/ids. Regexes are supported.
+- A faster alternative to the flash_window script (`nc_flash_window`) was added which required openbsd-netcat. This script is not fully supported yet, so don't be surprised if its name/api changes later.
+- Added a new `flash-on-focus` parameter for windows which user does not want to flash on focus but still needs the ability to flash on request.
+
 
 ## [0.3.5] - April 24th, 2018
 - Improved logging output
