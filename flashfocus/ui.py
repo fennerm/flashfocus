@@ -53,23 +53,24 @@ def ensure_single_instance():
 
 
 @click.command()
-@click.option('--flash-opacity', '-o', required=False,
+@click.option('--flash-opacity', '-o', type=float, required=False,
               help='Opacity of the window during a flash.')
-@click.option('--default-opacity', '-e', required=False,
+@click.option('--default-opacity', '-e', type=float, required=False,
               help='Default window opacity. flashfocus will reset the window '
                    'opacity to this value post-flash. (default: 1.0)')
-@click.option('--time', '-t', required=False,
+@click.option('--time', '-t', type=int, required=False,
               help='Flash time interval (in milliseconds).')
-@click.option('--simple', '-s', required=False, is_flag=True, default=None,
+@click.option('--simple', '-s', required=False, is_flag=True,
+              default=None,
               help='Don\'t animate flashes. Setting this parameter improves '
                    'performance but causes rougher opacity transitions. '
                    '(default: false)')
-@click.option('--ntimepoints', '-n', required=False,
+@click.option('--ntimepoints', '-n', required=False, type=int,
               help='Number of timepoints in the flash animation. Higher values '
                    'will lead to smoother animations with the cost of '
                    'increased X server requests. Ignored if --simple is set. '
                    '(default: 10)')
-@click.option('--opacity', required=False,
+@click.option('--opacity', required=False, type=float,
               help='DEPRECATED: use --flash-opacity/-o instead')
 @click.option('--flash-on-focus/--no-flash-on-focus', required=False,
               is_flag=True, default=None,
