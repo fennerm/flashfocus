@@ -4,12 +4,12 @@ from setuptools import (
     setup,
 )
 
-# This
+# This speeds up the flash_window script
 import fastentrypoints
 
 setup(
     name='flashfocus',
-    version='1.0.1',
+    version='1.0.2',
     author='Fenner Macrae',
     author_email='fmacrae.dev@gmail.com',
     description=("Simple focus animations for tiling window managers"),
