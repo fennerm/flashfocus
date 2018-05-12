@@ -127,11 +127,6 @@ def to_regex(x):
         return None
 
 
-def get_opacity(window):
-    """Get the opacity of a window."""
-    return xpybutil.ewmh.get_wm_window_opacity(window).reply()
-
-
 def default_flash_param():
     param = {
         'default_opacity': 1,

@@ -1,8 +1,17 @@
 """Xorg utility code."""
 import xcffib
 import xcffib.xproto
-import xpybutil
+from xcffib.xproto import (
+    CW,
+    EventMask,
+    WindowClass,
+)
+from xpybutil import (
+    conn,
+    root,
+)
 import xpybutil.ewmh
+import xpybutil.icccm
 import xpybutil.window
 
 
@@ -17,17 +26,17 @@ def create_message_window():
         An X-window id.
 
     """
-    setup = xpybutil.conn.get_setup()
-    window = xpybutil.conn.generate_id()
-    xpybutil.conn.core.CreateWindow(
+    setup = conn.get_setup()
+    window = conn.generate_id()
+    conn.core.CreateWindow(
         depth=setup.roots[0].root_depth,
         wid=window,
-        parent=xpybutil.root,
+        parent=root,
         x=0, y=0, width=1, height=1, border_width=0,
-        _class=xcffib.xproto.WindowClass.InputOutput,
+        _class=WindowClass.InputOutput,
         visual=setup.roots[0].root_visual,
-        value_mask=xcffib.xproto.CW.EventMask,
-        value_list=[xcffib.xproto.EventMask.PropertyChange],
+        value_mask=CW.EventMask,
+        value_list=[EventMask.PropertyChange],
         is_checked=True).check()
     return window
 
@@ -41,21 +50,9 @@ def get_wm_class(window):
         (window id, window class)
 
     """
-    reply = xpybutil.util.get_property_value(
-        xpybutil.util.get_property(window, 'WM_CLASS').reply())
+
+    reply = xpybutil.icccm.get_wm_class(window).reply()
     return reply[0], reply[1]
-
-
-def set_wm_name(window, name):
-    """Set the WM_NAME property of a window."""
-    xpybutil.conn.core.ChangePropertyChecked(
-        xcffib.xproto.PropMode.Replace,
-        window,
-        xcffib.xproto.Atom.WM_NAME,
-        xcffib.xproto.Atom.STRING,
-        8,
-        len(name),
-        name).check()
 
 
 def set_opacity(window, opacity, checked=True):
@@ -71,20 +68,18 @@ def set_opacity(window, opacity, checked=True):
         return cookie
 
 
-def get_opacity(window):
-    """Get the opacity of a window.
-
-    Returns
-    -------
-    float
-
-    """
-    return xpybutil.ewmh.get_wm_window_opacity(window).reply()
-
-
 def destroy_window(window):
-    xpybutil.conn.core.DestroyWindow(window, True).check()
+    conn.core.DestroyWindow(window, True).check()
 
 
 def list_mapped_windows():
     return xpybutil.ewmh.get_client_list().reply()
+#
+#
+# def get_adjacent_windows(window):
+#     windows = list_mapped_windows()
+#     areas =
+#
+#     pass
+#
+#

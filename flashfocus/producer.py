@@ -9,12 +9,12 @@ from xcffib.xproto import (
 )
 import xpybutil
 from xpybutil.ewmh import get_active_window
+from xpybutil.icccm import set_wm_name_checked
 from xpybutil.util import get_atom_name
 
 from flashfocus.xutil import (
     create_message_window,
     destroy_window,
-    set_wm_name,
 )
 from flashfocus.sockets import init_server_socket
 
@@ -63,8 +63,7 @@ class XHandler(Producer):
                 self._handle_new_mapped_window(event)
 
     def stop(self):
-        set_wm_name(self.message_window, 'KILL')
-        # xpybutil.iccm.set_wm_name_checked(self.message_window, 'KILL').check()
+        set_wm_name_checked(self.message_window, 'KILL').check()
         super(XHandler, self).stop()
         destroy_window(self.message_window)
 

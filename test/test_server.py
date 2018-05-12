@@ -15,11 +15,11 @@ from pytest import (
     approx,
     mark,
 )
+from xpybutil.ewmh import get_wm_window_opacity
 
 from flashfocus.client import client_request_flash
 from test.helpers import (
     change_focus,
-    get_opacity,
     server_running,
     WindowSession,
 )
@@ -54,16 +54,16 @@ def test_second_consecutive_focus_requests_ignored(flash_server, windows):
 def test_window_opacity_set_to_default_on_startup(
         mult_opacity_server, list_only_test_windows, windows):
     with server_running(mult_opacity_server):
-        assert get_opacity(windows[0]) == approx(0.2)
-        assert get_opacity(windows[1]) == approx(0.5)
+        assert get_wm_window_opacity(windows[0]).reply() == approx(0.2)
+        assert get_wm_window_opacity(windows[1]).reply() == approx(0.5)
 
 
 def test_window_opacity_unset_on_shutdown(
         mult_opacity_server, list_only_test_windows, windows):
     with server_running(mult_opacity_server):
         pass
-    assert get_opacity(windows[0]) == approx(1)
-    assert get_opacity(windows[1]) == approx(1)
+    assert get_wm_window_opacity(windows[0]).reply() == approx(1)
+    assert get_wm_window_opacity(windows[1]).reply() == approx(1)
 
 
 def test_new_window_opacity_set_to_default(
@@ -71,7 +71,7 @@ def test_new_window_opacity_set_to_default(
     with server_running(transparent_flash_server):
         windows = WindowSession()
         sleep(0.2)
-        assert get_opacity(windows.ids[0]) == approx(0.4)
+        assert get_wm_window_opacity(windows.ids[0]).reply() == approx(0.4)
     windows.destroy()
 
 
