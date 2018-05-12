@@ -76,7 +76,7 @@ class RuleMatcher:
         self.flashers.append(Flasher(**{k: defaults[k] for k in flasher_param}))
         self.iter = list(zip(self.rules, self.flash_on_focus, self.flashers))
 
-    def direct_request(self, window, request_type=None):
+    def route_request(self, window, request_type=None):
         """Direct a request to the appropriate flasher.
 
         Parameters
@@ -90,7 +90,7 @@ class RuleMatcher:
 
         """
         try:
-            flasher = self.match(window, request_type)[1]
+            flasher = self.match(window, request_type)
             if request_type == 'new_window':
                 flasher.set_default_opacity(window)
             else:
@@ -126,5 +126,5 @@ class RuleMatcher:
                     info('flash_on_focus is False for window %s, ignoring...',
                          window)
                     return None
-                return rule, flasher
+                return flasher
             i += 1

@@ -10,9 +10,6 @@ from time import sleep
 from factory import Factory
 from pytest import fixture
 from pytest_factoryboy import register
-import xpybutil
-import xpybutil.window
-
 
 from flashfocus.flasher import Flasher
 from flashfocus.producer import (
@@ -28,6 +25,7 @@ from flashfocus.sockets import (
 
 from test.helpers import (
     change_focus,
+    fill_in_rule,
     StubServer,
     WindowSession,
 )
@@ -68,52 +66,10 @@ register(ServerFactory, 'flash_server')
 
 register(ServerFactory, 'transparent_flash_server', default_opacity=0.4)
 
-register(ServerFactory, 'flash_server_with_classrule',
-         rules=[{'window_class': 'Window2', 'flash-opacity': 0}])
-
-register(ServerFactory, 'flash_server_with_idrule',
-         rules=[{'window_id': 'window2', 'flash-opacity': 0}])
-
-register(ServerFactory, 'flash_server_with_matched_rules',
-         rules=[{
-             'window_class': 'Window2',
-             'window_id': 'window2',
-             'flash-opacity': 0}])
-
-register(ServerFactory, 'flash_server_with_unmatched_classrule',
-         rules=[{
-             'window_class': 'foo',
-             'window_id': 'window2',
-             'flash-opacity': 0}])
-
-register(ServerFactory, 'flash_server_with_unmatched_idrule',
-         rules=[{
-             'window_class': 'Window2',
-             'window_id': 'foo',
-             'flash-opacity': 0}])
-
-
-register(ServerFactory, 'mult_rule_server',
-         rules=[
-             {
-                 'window_class': 'Window2',
-                 'window_id': 'window2',
-                 'flash-opacity': 0
-             },
-             {
-                 'window_class': 'Window1',
-                 'flash-opacity': 0.2
-             }])
-
-register(ServerFactory, 'flash_server_with_matched_idregex',
-         rules=[{
-             'window_id': '^.*ndow.*$',
-             'flash-opacity': 0}])
-
-register(ServerFactory, 'flash_server_with_matched_classregex',
-         rules=[{
-             'window_class': '^.*ndow.*$',
-             'flash-opacity': 0}])
+register(ServerFactory, 'mult_opacity_server',
+         rules=[fill_in_rule(rule) for rule in
+                [{'window_class': 'Window1', 'default_opacity': 0.2},
+                 {'window_id': 'window2', 'default_opacity': 0.5}]])
 
 
 class FlasherFactory(Factory):
@@ -194,11 +150,7 @@ def string_type():
 @fixture
 def list_only_test_windows(monkeypatch, windows):
     """Only list test window ids."""
-    class Lister:
-        def reply(self):
-            return windows
-    monkeypatch.setattr('xpybutil.ewmh.get_client_list', Lister)
-    return Lister
+    monkeypatch.setattr('flashfocus.xutil.list_mapped_windows', lambda: windows)
 
 
 @fixture
@@ -241,4 +193,4 @@ def client_monitor():
 
 @fixture
 def xhandler():
-    return XHandler(Queue(), 1)
+    return XHandler(Queue())

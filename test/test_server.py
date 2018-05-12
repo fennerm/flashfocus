@@ -34,28 +34,36 @@ def test_event_loop(flash_server, windows, focus_indices, flash_indices,
     focus_shifts = [windows[i] for i in focus_indices]
     expected_calls = ([call(windows[i], 'focus_shift') for i in flash_indices] +
                       [call(focus_shifts[-1], 'client_request')])
-    flash_server.matcher.direct_request = MagicMock()
+    flash_server.matcher.route_request = MagicMock()
     with server_running(flash_server):
         for window in focus_shifts:
             change_focus(window)
         client_request_flash()
-    assert flash_server.matcher.direct_request.call_args_list == expected_calls
+    assert flash_server.matcher.route_request.call_args_list == expected_calls
 
 
 def test_second_consecutive_focus_requests_ignored(flash_server, windows):
-    flash_server.matcher.direct_request = MagicMock()
+    flash_server.matcher.route_request = MagicMock()
     with server_running(flash_server):
         change_focus(windows[1])
         change_focus(windows[1])
-    assert (flash_server.matcher.direct_request.call_args_list ==
+    assert (flash_server.matcher.route_request.call_args_list ==
             [call(windows[1], 'focus_shift')])
 
 
 def test_window_opacity_set_to_default_on_startup(
-        transparent_flash_server, list_only_test_windows, windows):
-    with server_running(transparent_flash_server):
-        for window in windows:
-            assert get_opacity(window) == approx(0.4)
+        mult_opacity_server, list_only_test_windows, windows):
+    with server_running(mult_opacity_server):
+        assert get_opacity(windows[0]) == approx(0.2)
+        assert get_opacity(windows[1]) == approx(0.5)
+
+
+def test_window_opacity_unset_on_shutdown(
+        mult_opacity_server, list_only_test_windows, windows):
+    with server_running(mult_opacity_server):
+        pass
+    assert get_opacity(windows[0]) == approx(1)
+    assert get_opacity(windows[1]) == approx(1)
 
 
 def test_new_window_opacity_set_to_default(
@@ -66,7 +74,8 @@ def test_new_window_opacity_set_to_default(
         assert get_opacity(windows.ids[0]) == approx(0.4)
     windows.destroy()
 
+
 def test_server_handles_nonexistant_window(flash_server):
     with server_running(flash_server):
-        flash_server.target_windows.put((0, 'client_request'))
+        flash_server.flash_requests.put((0, 'client_request'))
         sleep(0.1)

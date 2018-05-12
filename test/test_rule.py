@@ -1,14 +1,8 @@
 """Testsuite for flashfocus.rule."""
 try:
-    from unittest.mock import (
-        call,
-        MagicMock,
-    )
+    from unittest.mock import MagicMock
 except ImportError:
-    from mock import (
-        call,
-        MagicMock,
-    )
+    from mock import MagicMock
 from pytest import (
     lazy_fixture,
     mark,
@@ -55,16 +49,14 @@ def test_rule_matcher_match_raises_window_error(rule_matcher):
     lazy_fixture('norule_matcher')
 ])
 def test_rule_matcher_match(matcher, window):
-    rule, flasher = matcher.match(window)
-    assert rule == matcher.rules[0]
+    flasher = matcher.match(window)
     assert flasher == matcher.flashers[0]
     if len(matcher.rules) > 1:
         assert flasher.flash_opacity == 0
 
 
 def test_rule_matcher_no_match_returns_default(rule_matcher, windows):
-    rule, flasher = rule_matcher.match(windows[1])
-    assert rule == rule_matcher.rules[1]
+    flasher = rule_matcher.match(windows[1])
     assert flasher == rule_matcher.flashers[1]
     assert flasher.flash_opacity != 0
 
@@ -73,9 +65,9 @@ def test_rule_matcher_returns_none_if_not_flash_on_focus(rule_matcher, window):
     assert rule_matcher.match(window, 'focus_shift') is None
 
 
-def test_rule_matcher_direct_request_calls_matching_flasher(
+def test_rule_matcher_route_request_calls_matching_flasher(
         rule_matcher, flasher):
     flasher.flash_window = MagicMock()
-    rule_matcher.match = lambda *args, **kwargs: (Rule(), flasher)
-    rule_matcher.direct_request(0)
+    rule_matcher.match = lambda *args, **kwargs: (flasher)
+    rule_matcher.route_request(0)
     flasher.flash_window.assert_called()

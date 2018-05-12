@@ -21,7 +21,7 @@ class WindowSession:
         window1.set_wmclass('window1', 'Window1')
         window1.show()
         window2 = Gtk.Window(title='window2')
-        window1.set_wmclass('window2', 'Window2')
+        window2.set_wmclass('window2', 'Window2')
         window2.show()
         window3 = Gtk.Window(title='window3')
         window3.show()
@@ -130,3 +130,23 @@ def to_regex(x):
 def get_opacity(window):
     """Get the opacity of a window."""
     return xpybutil.ewmh.get_wm_window_opacity(window).reply()
+
+
+def default_flash_param():
+    param = {
+        'default_opacity': 1,
+        'flash_opacity': 0.8,
+        'time': 100,
+        'ntimepoints': 4,
+        'simple': False,
+        'flash_on_focus': True
+    }
+    return param
+
+
+def fill_in_rule(partial_rule):
+    """Fill in default param for a rule given a partial rule definition."""
+    for key, value in default_flash_param().items():
+        if key not in partial_rule.keys():
+            partial_rule[key] = value
+    return partial_rule

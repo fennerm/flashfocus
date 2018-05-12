@@ -8,10 +8,12 @@ from xcffib.xproto import (
     PropertyNotifyEvent,
 )
 import xpybutil
+from xpybutil.ewmh import get_active_window
+from xpybutil.util import get_atom_name
 
 from flashfocus.xutil import (
     create_message_window,
-    set_all_window_opacity,
+    destroy_window,
     set_wm_name,
 )
 from flashfocus.sockets import init_server_socket
@@ -42,44 +44,45 @@ class Producer(Thread):
 
 
 class XHandler(Producer):
-    """Queue flashes due to shifts in focus."""
-    def __init__(self, queue, opacity=None):
+    """Parse events from the X-server and pass them on to FlashServer"""
+    def __init__(self, queue):
         super(XHandler, self).__init__(queue)
         self.type = 'focus_shift'
         self.message_window = create_message_window()
-        self.opacity = opacity
 
     def run(self):
-        """Queue focus shift flashes."""
         xpybutil.window.listen(xpybutil.root,
-                               'PropertyChange', 'SubstructureNotify')
+                               'PropertyChange',
+                               'SubstructureNotify')
         xpybutil.window.listen(self.message_window, 'PropertyChange')
-
-        if self.opacity != 1:
-            set_all_window_opacity(self.opacity)
-
         while self.keep_going:
             event = xpybutil.conn.wait_for_event()
             if isinstance(event, PropertyNotifyEvent):
-                atom = xpybutil.util.get_atom_name(event.atom)
-                if atom == '_NET_ACTIVE_WINDOW':
-                    info('Focus shifted...')
-                    focused = xpybutil.ewmh.get_active_window().reply()
-                    self.queue_window(focused, 'focus_shift')
-                elif atom == 'WM_NAME' and event.window == self.message_window:
-                    # Kill signal from server
-                    break
+                self._handle_property_change(event)
             elif isinstance(event, MapNotifyEvent):
-                info('New window mapped...')
-                self.queue_window(event.window, 'new_window')
+                self._handle_new_mapped_window(event)
 
     def stop(self):
-        set_all_window_opacity(1)
         set_wm_name(self.message_window, 'KILL')
         # xpybutil.iccm.set_wm_name_checked(self.message_window, 'KILL').check()
         super(XHandler, self).stop()
-        xpybutil.conn.core.DestroyWindow(self.message_window, True).check()
+        destroy_window(self.message_window)
 
+    def _handle_new_mapped_window(self, event):
+        """Handle a new mapped window event."""
+        info('New window mapped...')
+        self.queue_window(event.window, 'new_window')
+
+    def _handle_property_change(self, event):
+        """Handle a property change on a watched window."""
+        atom = get_atom_name(event.atom)
+        if atom == '_NET_ACTIVE_WINDOW':
+            info('Focus shifted...')
+            focused = get_active_window().reply()
+            self.queue_window(focused, 'focus_shift')
+        elif atom == 'WM_NAME' and event.window == self.message_window:
+            # Kill signal from server
+            self.keep_going = False
 
 
 class ClientMonitor(Producer):

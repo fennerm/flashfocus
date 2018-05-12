@@ -67,18 +67,24 @@ def set_opacity(window, opacity, checked=True):
     if opacity:
         cookie = xpybutil.ewmh.set_wm_window_opacity_checked(window, opacity)
         if checked:
-
             return cookie.check()
         return cookie
 
 
 def get_opacity(window):
-    """Get the opacity of a window."""
+    """Get the opacity of a window.
+
+    Returns
+    -------
+    float
+
+    """
     return xpybutil.ewmh.get_wm_window_opacity(window).reply()
 
 
-def set_all_window_opacity(opacity):
-    """Set all visible window's opacity to `opacity`."""
-    for window in xpybutil.ewmh.get_client_list().reply():
-        set_opacity(window, opacity, checked=False)
-    xpybutil.conn.flush()
+def destroy_window(window):
+    xpybutil.conn.core.DestroyWindow(window, True).check()
+
+
+def list_mapped_windows():
+    return xpybutil.ewmh.get_client_list().reply()

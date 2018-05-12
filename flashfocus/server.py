@@ -23,6 +23,7 @@ from signal import (
 
 from xcffib.xproto import WindowError
 import xpybutil
+from xpybutil.ewmh import get_client_list
 import xpybutil.window
 
 from flashfocus.producer import (
@@ -30,6 +31,10 @@ from flashfocus.producer import (
     XHandler,
 )
 from flashfocus.rule import RuleMatcher
+from flashfocus.xutil import (
+    list_mapped_windows,
+    set_opacity,
+)
 
 
 # Ensure that SIGINTs are handled correctly
@@ -58,6 +63,24 @@ class FlashServer:
         If True, windows will be flashed on focus. Otherwise, windows will only
         be flashed on request.
 
+    Attributes
+    ----------
+    prev_focus: int
+        The id of the previously focused window. We keep track of this so that
+        the same window is never flashed consecutively. When a window is closed
+        in i3, the next window is flashed 3 times without this guard
+    matcher: RuleMatcher
+        Object used to match window id's to flash parameters from the config
+        file.
+    keep_going: bool
+        Setting this to False terminates the event loop (but does not initiate
+        cleanup).
+    producers: List[Thread]
+        List of threads which produce work for the server.
+    flash_requests: Queue
+        Queue of flash jobs for the server to work through. Each item of the
+        queue is a tuple of (window id, request type).
+
     """
     def __init__(self,
                  default_opacity,
@@ -77,19 +100,15 @@ class FlashServer:
                 'ntimepoints': ntimepoints,
                 'flash_on_focus': flash_on_focus},
             rules=rules)
-
-        # We keep track of the previously focused window so that the same
-        # window is never flashed twice in a row (except for `flash_window`
-        # requests). In i3 when a window is closed, the next window is flashed
-        # three times consecutively without this guard.
         self.prev_focus = 0
-        self.target_windows = Queue()
-        self.producers = [ClientMonitor(self.target_windows),
-                          XHandler(self.target_windows, default_opacity)]
+        self.flash_requests = Queue()
+        self.producers = [ClientMonitor(self.flash_requests),
+                          XHandler(self.flash_requests)]
         self.keep_going = True
 
     def event_loop(self):
         """Wait for changes in focus or client requests and queues flashes."""
+        self._set_all_window_opacity_to_default()
         try:
             for producer in self.producers:
                 producer.start()
@@ -102,25 +121,46 @@ class FlashServer:
     def shutdown(self, disconnect_from_xorg=True):
         """Cleanup after recieving a SIGINT."""
         self.keep_going = False
-        info('Killing threads...')
-        for producer in self.producers:
-            producer.stop()
+        self._kill_producers()
+        self._unset_all_window_opacity()
         if disconnect_from_xorg:
-            info('Disconnecting from X session...')
-            xpybutil.conn.disconnect()
+            self._disconnect_xsession()
+
+    def _disconnect_xsession(self):
+        info('Disconnecting from X session...')
+        xpybutil.conn.disconnect()
 
     def _flash_queued_window(self):
-        """Pop a window from the target_windows queue and initiate flash."""
+        """Pop a window from the flash_requests queue and initiate flash."""
         try:
-            window, request_type = self.target_windows.get(timeout=1)
+            window, request_type = self.flash_requests.get(timeout=1)
         except Empty:
-            pass
+            return None
+
+        if window != self.prev_focus or request_type != 'focus_shift':
+            try:
+                self.matcher.route_request(window, request_type)
+            except WindowError:
+                pass
         else:
-            if window != self.prev_focus or request_type != 'focus_shift':
-                try:
-                    self.matcher.direct_request(window, request_type)
-                except WindowError:
-                    pass
-            else:
-                info('Window %s was just flashed, ignoring...', window)
-            self.prev_focus = window
+            info('Window %s was just flashed, ignoring...', window)
+        self.prev_focus = window
+
+    def _kill_producers(self):
+        info('Terminating threads...')
+        for producer in self.producers:
+            producer.stop()
+
+    def _unset_all_window_opacity(self):
+        info('Resetting windows to full opacity...')
+        cookies = [set_opacity(window, 1, checked=False)
+                   for window in list_mapped_windows()]
+        xpybutil.conn.flush()
+        for cookie in cookies:
+            cookie.check()
+
+    def _set_all_window_opacity_to_default(self):
+        info('Setting all windows to their default opacity...')
+        for window in list_mapped_windows():
+            flasher = self.matcher.match(window)
+            flasher.set_default_opacity(window)
