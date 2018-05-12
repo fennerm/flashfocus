@@ -18,32 +18,32 @@ from test.helpers import (
 from flashfocus.flasher import Flasher
 
 
-def test_flash_window(flasher, window):
+def test_flash(flasher, window):
     change_focus(window)
     expected_opacity = [None] + flasher.flash_series + [1.0]
     watcher = WindowWatcher(window)
     watcher.start()
-    flasher.flash_window(window)
+    flasher.flash(window)
     report = watcher.report()
     assert not report[0]
     assert report[1:] == approx(expected_opacity[1:], 0.01)
 
 
-def test_flash_window_stress_test(flasher, window):
+def test_flash_stress_test(flasher, window):
     for _ in range(10):
-        flasher.flash_window(window)
+        flasher.flash(window)
 
 
 def test_flash_nonexistant_window_ignored(flasher):
-    flasher.flash_window(0)
+    flasher.flash(0)
 
 
-def test_flash_window_conflicts_are_restarted(flasher, window):
+def test_flash_conflicts_are_restarted(flasher, window):
     watcher = WindowWatcher(window)
     watcher.start()
-    flasher.flash_window(window)
+    flasher.flash(window)
     sleep(0.05)
-    flasher.flash_window(window)
+    flasher.flash(window)
     sleep(0.2)
     num_completions = sum([x == 1 for x in watcher.report()])
     # If the flasher restarts a flash, we should expect the default opacity to
@@ -78,5 +78,5 @@ def test_compute_flash_series(flash_opacity, default_opacity, ntimepoints,
 
 def test_flash_requests_ignored_if_no_opacity_change(pointless_flasher, window):
     pointless_flasher._flash = MagicMock()
-    pointless_flasher.flash_window(window)
+    pointless_flasher.flash(window)
     pointless_flasher._flash.assert_not_called()

@@ -67,7 +67,7 @@ class Flasher:
             self.flash_series = self._compute_flash_series()
         self.progress = dict()
 
-    def flash_window(self, window):
+    def flash(self, window):
         """Flash a window."""
         info('Flashing window %s', str(window))
         if self.default_opacity == self.flash_opacity:

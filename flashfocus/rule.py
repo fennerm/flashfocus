@@ -94,7 +94,7 @@ class RuleMatcher:
             if request_type == 'new_window':
                 flasher.set_default_opacity(window)
             else:
-                flasher.flash_window(window)
+                flasher.flash(window)
         except TypeError:
             # match returned None
             pass

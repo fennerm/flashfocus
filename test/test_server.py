@@ -70,7 +70,7 @@ def test_new_window_opacity_set_to_default(
         transparent_flash_server, list_only_test_windows):
     with server_running(transparent_flash_server):
         windows = WindowSession()
-        sleep(0.1)
+        sleep(0.2)
         assert get_opacity(windows.ids[0]) == approx(0.4)
     windows.destroy()
 
