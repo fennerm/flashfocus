@@ -162,5 +162,8 @@ class FlashServer:
     def _set_all_window_opacity_to_default(self):
         info('Setting all windows to their default opacity...')
         for window in list_mapped_windows():
-            flasher = self.matcher.match(window)
-            flasher.set_default_opacity(window)
+            try:
+                flasher = self.matcher.match(window)
+                flasher.set_default_opacity(window)
+            except WindowError:
+                pass

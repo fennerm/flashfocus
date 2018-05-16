@@ -32,11 +32,18 @@ class Rule:
 
         """
         if self.id_regex:
-            if not re.match(self.id_regex, window_id):
-                return False
+            try:
+                if not re.match(self.id_regex, window_id):
+                    return False
+            except TypeError:
+                # class is probably None
+                pass
         if self.class_regex:
-            if not re.match(self.class_regex, window_class):
-                return False
+            try:
+                if not re.match(self.class_regex, window_class):
+                    return False
+            except TypeError:
+                pass
         return True
 
 

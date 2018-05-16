@@ -1,6 +1,4 @@
 """Xorg utility code."""
-import xcffib
-import xcffib.xproto
 from xcffib.xproto import (
     CW,
     EventMask,
@@ -10,8 +8,8 @@ from xpybutil import (
     conn,
     root,
 )
-import xpybutil.ewmh
-import xpybutil.icccm
+from xpybutil.ewmh import set_wm_window_opacity_checked
+from xpybutil.icccm import get_wm_class as _get_wm_class
 import xpybutil.window
 
 
@@ -50,9 +48,11 @@ def get_wm_class(window):
         (window id, window class)
 
     """
-
-    reply = xpybutil.icccm.get_wm_class(window).reply()
-    return reply[0], reply[1]
+    reply = _get_wm_class(window).reply()
+    try:
+        return reply[0], reply[1]
+    except TypeError:
+        return None, None
 
 
 def set_opacity(window, opacity, checked=True):
@@ -62,7 +62,7 @@ def set_opacity(window, opacity, checked=True):
 
     """
     if opacity:
-        cookie = xpybutil.ewmh.set_wm_window_opacity_checked(window, opacity)
+        cookie = set_wm_window_opacity_checked(window, opacity)
         if checked:
             return cookie.check()
         return cookie
@@ -74,12 +74,3 @@ def destroy_window(window):
 
 def list_mapped_windows():
     return xpybutil.ewmh.get_client_list().reply()
-#
-#
-# def get_adjacent_windows(window):
-#     windows = list_mapped_windows()
-#     areas =
-#
-#     pass
-#
-#
