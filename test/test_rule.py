@@ -71,3 +71,6 @@ def test_rule_matcher_route_request_calls_matching_flasher(
     rule_matcher.match = lambda *args, **kwargs: (flasher)
     rule_matcher.route_request(0)
     flasher.flash.assert_called()
+
+# def test_default_returned_if_match_is_none():
+#     assert False
