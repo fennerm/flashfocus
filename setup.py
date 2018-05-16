@@ -9,7 +9,7 @@ import fastentrypoints
 
 setup(
     name='flashfocus',
-    version='1.0.3',
+    version='1.0.4',
     author='Fenner Macrae',
     author_email='fmacrae.dev@gmail.com',
     description=("Simple focus animations for tiling window managers"),
