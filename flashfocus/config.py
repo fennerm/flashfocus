@@ -1,8 +1,5 @@
 """Parsing the user config file."""
-from logging import (
-    error,
-    info,
-)
+from logging import error, info
 import os
 import re
 from shutil import copy
@@ -26,30 +23,38 @@ from flashfocus.syspaths import (
 )
 
 # Properties which may be contained both in global config and in flash rules.
-BASE_PROPERTIES = ['flash_opacity', 'default_opacity', 'simple',
-                   'flash_on_focus', 'ntimepoints', 'time']
+BASE_PROPERTIES = [
+    "flash_opacity",
+    "default_opacity",
+    "simple",
+    "flash_on_focus",
+    "ntimepoints",
+    "time",
+]
 
 
 def validate_positive_number(data):
     """Check that a value is a positive number."""
     if not data > 0:
-        raise ValidationError('Not a positive number'.format(data))
+        raise ValidationError("Not a positive number".format(data))
 
 
 def validate_decimal(data):
     """Check that a value is a decimal between 0 and 1."""
     if not 0 <= data <= 1:
         raise ValidationError(
-            'Not in valid range, expected a float between 0 and 1'.format(data))
+            "Not in valid range, expected a float between 0 and 1".format(data)
+        )
 
 
 class Regex(fields.Field):
     """Schema field for validating a regex."""
+
     def _deserialize(self, value, attr, obj):
         try:
             return re.compile(value)
         except:
-            raise ValidationError('Invalid regex')
+            raise ValidationError("Invalid regex")
 
 
 class BaseSchema(Schema):
@@ -74,7 +79,7 @@ class BaseSchema(Schema):
         except TypeError:
             unknown = set(original_data[0]) - set(self.fields)
         if unknown:
-            raise ValidationError('Unknown parameter', unknown)
+            raise ValidationError("Unknown parameter", unknown)
 
 
 class RulesSchema(BaseSchema):
@@ -85,8 +90,8 @@ class RulesSchema(BaseSchema):
     @validates_schema()
     def check_for_matching_criteria(self, data):
         """Check that rule contains at least one method for matching a window"""
-        if not any(param in data for param in ['window_class', 'window_id']):
-            raise ValidationError('No criteria for matching rule to window')
+        if not any(param in data for param in ["window_class", "window_id"]):
+            raise ValidationError("No criteria for matching rule to window")
 
 
 class ConfigSchema(BaseSchema):
@@ -101,10 +106,10 @@ class ConfigSchema(BaseSchema):
     @post_load()
     def set_rule_defaults(self, config):
         """Set default values for the nested `RulesSchema`."""
-        if 'rules' not in config:
-            config['rules'] = None
+        if "rules" not in config:
+            config["rules"] = None
         try:
-            for rule in config['rules']:
+            for rule in config["rules"]:
                 for property in BASE_PROPERTIES:
                     if property not in rule:
                         rule[property] = config[property]
@@ -122,11 +127,11 @@ def load_config(config_file):
     """
     if config_file:
         try:
-            with open(str(config_file), 'r') as f:
+            with open(str(config_file), "r") as f:
                 config = yaml.load(f)
                 dehyphen(config)
-        except (yaml.scanner.ScannerError,  ParserError) as e:
-            sys.exit('Error in config file:\n' + str(e))
+        except (yaml.scanner.ScannerError, ParserError) as e:
+            sys.exit("Error in config file:\n" + str(e))
     else:
         config = None
     return config
@@ -134,18 +139,18 @@ def load_config(config_file):
 
 def indent(n):
     """Return `n` indents."""
-    return '  ' * n
+    return "  " * n
 
 
 def parse_config_error(option, err, ntabs=1):
     """Parse Marshmallow schema error."""
     if isinstance(option, int):
-        option = 'rule ' + str(option + 1)
-    option = option.replace('_', '-')
-    error_msg = ''.join([indent(ntabs), '- ', option, ':\n'])
+        option = "rule " + str(option + 1)
+    option = option.replace("_", "-")
+    error_msg = "".join([indent(ntabs), "- ", option, ":\n"])
     if isinstance(err, list):
         # Base case
-        output = error_msg + ''.join([indent(ntabs + 1), '- ', err[0], '\n'])
+        output = error_msg + "".join([indent(ntabs + 1), "- ", err[0], "\n"])
     else:
         # Recursively parse error
         output = error_msg + parse_config_error(*err.popitem(), ntabs=ntabs + 1)
@@ -168,7 +173,7 @@ def construct_config_error_msg(config, errors):
     str
 
     """
-    error_msg = 'Failed to parse config\n'
+    error_msg = "Failed to parse config\n"
     for error_param, exception_msg in errors.items():
         error_msg += parse_config_error(error_param, exception_msg)
     return error_msg
@@ -187,17 +192,19 @@ def validate_config(config):
 def dehyphen(config):
     """Replace hyphens in config dictionary with underscores."""
     for option in list(config.keys()):
-        if option == 'rules':
-            for rule in config['rules']:
+        if option == "rules":
+            for rule in config["rules"]:
                 dehyphen(rule)
         else:
-            new_key = option.replace('-', '_')
+            new_key = option.replace("-", "_")
             config[new_key] = config.pop(option)
 
 
-def merge_config_sources(cli_options,
-                         default_config=load_config(DEFAULT_CONFIG_FILE),
-                         user_config=load_config(USER_CONFIG_FILE)):
+def merge_config_sources(
+    cli_options,
+    default_config=load_config(DEFAULT_CONFIG_FILE),
+    user_config=load_config(USER_CONFIG_FILE),
+):
     """Parse configuration by merging the default and user config files.
 
     Parameters
@@ -215,7 +222,7 @@ def merge_config_sources(cli_options,
 
     """
     if USER_CONFIG_FILE:
-        info('Loading configuration from %s', USER_CONFIG_FILE)
+        info("Loading configuration from %s", USER_CONFIG_FILE)
     config = hierarchical_merge([default_config, user_config, cli_options])
     validated_config = validate_config(config)
     return validated_config

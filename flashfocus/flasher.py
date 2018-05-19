@@ -2,9 +2,7 @@
 from __future__ import division
 
 from logging import info
-from threading import (
-    Thread,
-)
+from threading import Thread
 from time import sleep
 
 from xcffib.xproto import WindowError
@@ -48,12 +46,10 @@ class Flasher:
         Number of seconds between opacity transitions.
 
     """
-    def __init__(self,
-                 time,
-                 flash_opacity,
-                 default_opacity,
-                 simple,
-                 ntimepoints):
+
+    def __init__(
+        self, time, flash_opacity, default_opacity, simple, ntimepoints
+    ):
         self.default_opacity = default_opacity
         self.flash_opacity = flash_opacity
         self.time = time / 1000
@@ -69,7 +65,7 @@ class Flasher:
 
     def flash(self, window):
         """Flash a window."""
-        info('Flashing window %s', str(window))
+        info("Flashing window %s", str(window))
         if self.default_opacity == self.flash_opacity:
             return
 
@@ -101,9 +97,10 @@ class Flasher:
         """
         opacity_diff = self.default_opacity - self.flash_opacity
 
-        flash_series = [self.flash_opacity +
-                        ((x / self.ntimepoints) * opacity_diff)
-                        for x in range(self.ntimepoints)]
+        flash_series = [
+            self.flash_opacity + ((x / self.ntimepoints) * opacity_diff)
+            for x in range(self.ntimepoints)
+        ]
         return flash_series
 
     def _flash(self, window):
@@ -121,11 +118,13 @@ class Flasher:
                 sleep(self.timechunk)
                 self.progress[window] += 1
 
-            info('Resetting window %s opacity to default', window)
+            info("Resetting window %s opacity to default", window)
             set_opacity(window, self.default_opacity)
 
         except WindowError:
-            info('Attempted to draw to nonexistant window %s, ignoring...',
-                 str(window))
+            info(
+                "Attempted to draw to nonexistant window %s, ignoring...",
+                str(window),
+            )
         finally:
             del self.progress[window]

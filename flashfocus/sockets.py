@@ -9,7 +9,7 @@ import sys
 
 from flashfocus.syspaths import RUNTIME_DIR
 
-SOCKET_ADDRESS = os.path.join(RUNTIME_DIR, 'flashfocus_socket')
+SOCKET_ADDRESS = os.path.join(RUNTIME_DIR, "flashfocus_socket")
 
 
 def init_client_socket():
@@ -18,8 +18,10 @@ def init_client_socket():
     try:
         sock.connect(SOCKET_ADDRESS)
     except socket.error:
-        sys.exit('Error: Couldn\'t connect to the flashfocus daemon!\n'
-                 '=> Please check that the flashfocus daemon is running.')
+        sys.exit(
+            "Error: Couldn't connect to the flashfocus daemon!\n"
+            "=> Please check that the flashfocus daemon is running."
+        )
     return sock
 
 

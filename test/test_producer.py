@@ -4,11 +4,7 @@ import socket
 from pytest import raises
 
 from flashfocus.client import client_request_flash
-from test.helpers import (
-    change_focus,
-    producer_running,
-    queue_to_list,
-)
+from test.helpers import change_focus, producer_running, queue_to_list
 
 
 def test_client_monitor_handles_client_requests(client_monitor, windows):
@@ -16,8 +12,10 @@ def test_client_monitor_handles_client_requests(client_monitor, windows):
         client_request_flash()
         client_request_flash()
     queued = queue_to_list(client_monitor.queue)
-    assert queued == [(windows[0], 'client_request'),
-                      (windows[0], 'client_request')]
+    assert queued == [
+        (windows[0], "client_request"),
+        (windows[0], "client_request"),
+    ]
 
 
 def test_client_monitor_stop_disconnects_socket(client_monitor):
@@ -33,4 +31,4 @@ def test_xhandler_handles_focus_shifts(xhandler, windows):
         change_focus(windows[0])
     change_focus(windows[1])
     queued = queue_to_list(xhandler.queue)
-    assert queued == [(windows[1], 'focus_shift'), (windows[0], 'focus_shift')]
+    assert queued == [(windows[1], "focus_shift"), (windows[0], "focus_shift")]

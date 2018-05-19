@@ -1,19 +1,14 @@
 """Test suite for flashfocus.flasher."""
 from time import sleep
+
 try:
     from unittest.mock import MagicMock
 except ImportError:
     from mock import MagicMock
 
-from pytest import (
-    approx,
-    mark,
-)
+from pytest import approx, mark
 
-from test.helpers import (
-    change_focus,
-    WindowWatcher,
-)
+from test.helpers import change_focus, WindowWatcher
 
 from flashfocus.flasher import Flasher
 
@@ -52,7 +47,8 @@ def test_flash_conflicts_are_restarted(flasher, window):
 
 
 @mark.parametrize(
-    'flash_opacity,default_opacity,ntimepoints,expected_result', [
+    "flash_opacity,default_opacity,ntimepoints,expected_result",
+    [
         # test typical usecase
         (0.8, 1, 4, [0.8, 0.85, 0.9, 0.95, None]),
         # test that it still works when flash opacity > preflash opacity
@@ -60,17 +56,18 @@ def test_flash_conflicts_are_restarted(flasher, window):
         # test that opacity=1 gives same result as opacity=none
         (0.8, 1, 4, [0.8, 0.85, 0.9, 0.95, None]),
         # test for single chunk
-        (0.8, 1, 1, [0.8, None])
-    ]
+        (0.8, 1, 1, [0.8, None]),
+    ],
 )
-def test_compute_flash_series(flash_opacity, default_opacity, ntimepoints,
-                              expected_result, flash_server):
+def test_compute_flash_series(
+    flash_opacity, default_opacity, ntimepoints, expected_result, flash_server
+):
     flasher = Flasher(
         flash_opacity=flash_opacity,
         default_opacity=default_opacity,
         ntimepoints=ntimepoints,
         simple=False,
-        time=0.2
+        time=0.2,
     )
     for actual, expected in zip(flasher.flash_series, expected_result):
         assert actual == approx(expected)

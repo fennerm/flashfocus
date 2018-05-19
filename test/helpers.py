@@ -8,7 +8,8 @@ from threading import Thread
 from time import sleep
 
 import gi
-gi.require_version('Gtk', '3.0')
+
+gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 import xpybutil
 import xpybutil.ewmh
@@ -16,19 +17,19 @@ import xpybutil.ewmh
 
 class WindowSession:
     """A session of blank windows for testing."""
+
     def __init__(self):
-        window1 = Gtk.Window(title='window1')
-        window1.set_wmclass('window1', 'Window1')
+        window1 = Gtk.Window(title="window1")
+        window1.set_wmclass("window1", "Window1")
         window1.show()
-        window2 = Gtk.Window(title='window2')
-        window2.set_wmclass('window2', 'Window2')
+        window2 = Gtk.Window(title="window2")
+        window2.set_wmclass("window2", "Window2")
         window2.show()
-        window3 = Gtk.Window(title='window3')
+        window3 = Gtk.Window(title="window3")
         window3.show()
 
         self.windows = [window1, window2, window3]
-        self.ids = [
-            w.get_property('window').get_xid() for w in self.windows]
+        self.ids = [w.get_property("window").get_xid() for w in self.windows]
         change_focus(self.ids[0])
 
     def destroy(self):
@@ -50,11 +51,13 @@ def close_window(window):
 
 class WindowWatcher(Thread):
     """Watch a window for changes in opacity."""
+
     def __init__(self, window):
         super(WindowWatcher, self).__init__()
         self.window = window
         self.opacity_events = [
-            xpybutil.ewmh.get_wm_window_opacity(self.window).reply()]
+            xpybutil.ewmh.get_wm_window_opacity(self.window).reply()
+        ]
         self.keep_going = True
         self.done = False
 
@@ -81,6 +84,7 @@ class StubServer:
 
     Used to test that clients are making correct requests.
     """
+
     def __init__(self, socket):
         self.socket = socket
         self.data = []
@@ -129,12 +133,12 @@ def to_regex(x):
 
 def default_flash_param():
     param = {
-        'default_opacity': 1,
-        'flash_opacity': 0.8,
-        'time': 100,
-        'ntimepoints': 4,
-        'simple': False,
-        'flash_on_focus': True
+        "default_opacity": 1,
+        "flash_opacity": 0.8,
+        "time": 100,
+        "ntimepoints": 4,
+        "simple": False,
+        "flash_on_focus": True,
     }
     return param
 

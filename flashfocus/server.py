@@ -1,40 +1,21 @@
 """Flash windows on focus."""
 from __future__ import division
 
-from logging import (
-    info,
-    warn,
-)
+from logging import info, warn
+
 try:
-    from queue import (
-        Empty,
-        Queue,
-    )
+    from queue import Empty, Queue
 except ImportError:
-    from Queue import (
-        Empty,
-        Queue,
-    )
-from signal import (
-    default_int_handler,
-    SIGINT,
-    signal,
-)
+    from Queue import Empty, Queue
+from signal import default_int_handler, SIGINT, signal
 
 from xcffib.xproto import WindowError
 import xpybutil
-from xpybutil.ewmh import get_client_list
 import xpybutil.window
 
-from flashfocus.producer import (
-    ClientMonitor,
-    XHandler,
-)
+from flashfocus.producer import ClientMonitor, XHandler
 from flashfocus.rule import RuleMatcher
-from flashfocus.xutil import (
-    list_mapped_windows,
-    set_opacity,
-)
+from flashfocus.xutil import list_mapped_windows, set_opacity
 
 
 # Ensure that SIGINTs are handled correctly
@@ -82,28 +63,35 @@ class FlashServer:
         queue is a tuple of (window id, request type).
 
     """
-    def __init__(self,
-                 default_opacity,
-                 flash_opacity,
-                 time,
-                 ntimepoints,
-                 simple,
-                 rules,
-                 flash_on_focus):
+
+    def __init__(
+        self,
+        default_opacity,
+        flash_opacity,
+        time,
+        ntimepoints,
+        simple,
+        rules,
+        flash_on_focus,
+    ):
         self.matcher = RuleMatcher(
             defaults={
-                'default_opacity': default_opacity,
-                'flash_opacity': flash_opacity,
-                'simple': simple,
-                'rules': rules,
-                'time': time,
-                'ntimepoints': ntimepoints,
-                'flash_on_focus': flash_on_focus},
-            rules=rules)
+                "default_opacity": default_opacity,
+                "flash_opacity": flash_opacity,
+                "simple": simple,
+                "rules": rules,
+                "time": time,
+                "ntimepoints": ntimepoints,
+                "flash_on_focus": flash_on_focus,
+            },
+            rules=rules,
+        )
         self.prev_focus = 0
         self.flash_requests = Queue()
-        self.producers = [ClientMonitor(self.flash_requests),
-                          XHandler(self.flash_requests)]
+        self.producers = [
+            ClientMonitor(self.flash_requests),
+            XHandler(self.flash_requests),
+        ]
         self.keep_going = True
 
     def event_loop(self):
@@ -115,7 +103,7 @@ class FlashServer:
             while self.keep_going:
                 self._flash_queued_window()
         except (KeyboardInterrupt, SystemExit):
-            warn('Interrupt received, shutting down...')
+            warn("Interrupt received, shutting down...")
             self.shutdown()
 
     def shutdown(self, disconnect_from_xorg=True):
@@ -127,7 +115,7 @@ class FlashServer:
             self._disconnect_xsession()
 
     def _disconnect_xsession(self):
-        info('Disconnecting from X session...')
+        info("Disconnecting from X session...")
         xpybutil.conn.disconnect()
 
     def _flash_queued_window(self):
@@ -137,30 +125,32 @@ class FlashServer:
         except Empty:
             return None
 
-        if window != self.prev_focus or request_type != 'focus_shift':
+        if window != self.prev_focus or request_type != "focus_shift":
             try:
                 self.matcher.route_request(window, request_type)
             except WindowError:
                 pass
         else:
-            info('Window %s was just flashed, ignoring...', window)
+            info("Window %s was just flashed, ignoring...", window)
         self.prev_focus = window
 
     def _kill_producers(self):
-        info('Terminating threads...')
+        info("Terminating threads...")
         for producer in self.producers:
             producer.stop()
 
     def _unset_all_window_opacity(self):
-        info('Resetting windows to full opacity...')
-        cookies = [set_opacity(window, 1, checked=False)
-                   for window in list_mapped_windows()]
+        info("Resetting windows to full opacity...")
+        cookies = [
+            set_opacity(window, 1, checked=False)
+            for window in list_mapped_windows()
+        ]
         xpybutil.conn.flush()
         for cookie in cookies:
             cookie.check()
 
     def _set_all_window_opacity_to_default(self):
-        info('Setting all windows to their default opacity...')
+        info("Setting all windows to their default opacity...")
         for window in list_mapped_windows():
             try:
                 flasher = self.matcher.match(window)

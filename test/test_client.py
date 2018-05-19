@@ -13,4 +13,4 @@ def test_client_request_flash(stub_server):
     client_request_flash()
     sleep(0.05)
     p.join()
-    assert stub_server.data == [b'1']
+    assert stub_server.data == [b"1"]
