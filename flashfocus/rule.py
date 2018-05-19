@@ -7,6 +7,14 @@ from flashfocus.misc import list_param
 from flashfocus.xutil import get_wm_class
 
 
+def match_regex(regex, target):
+    try:
+        return bool(re.match(regex, target))
+    except TypeError:
+        # For our purposes, target is probably None
+        return False
+
+
 class Rule:
     """A rule for matching a window's id and class to a set of criteria.
 
@@ -31,19 +39,11 @@ class Rule:
             ID and class of a window
 
         """
-        if self.id_regex:
-            try:
-                if not re.match(self.id_regex, window_id):
+        for regex, property in zip([self.id_regex, self.class_regex],
+                                   [window_id, window_class]):
+            if regex:
+                if not match_regex(regex, property):
                     return False
-            except TypeError:
-                # class is probably None
-                pass
-        if self.class_regex:
-            try:
-                if not re.match(self.class_regex, window_class):
-                    return False
-            except TypeError:
-                pass
         return True
 
 
