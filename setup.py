@@ -26,7 +26,6 @@ setup(
     keywords='xorg flash focus i3 bspwm awesomewm herbsluftwm',
     scripts=['bin/nc_flash_window'],
     include_package_data=True,
-    package_data={'flashfocus': 'default_config.yml'},
     entry_points='''
         [console_scripts]
         flashfocus=flashfocus.ui:cli
