@@ -15,7 +15,7 @@ import xpybutil.window
 
 from flashfocus.producer import ClientMonitor, XHandler
 from flashfocus.rule import RuleMatcher
-from flashfocus.xutil import list_mapped_windows, set_opacity
+from flashfocus.xutil import list_mapped_windows, set_opacity, WMError
 
 
 # Ensure that SIGINTs are handled correctly
@@ -128,7 +128,7 @@ class FlashServer:
         if window != self.prev_focus or request_type != "focus_shift":
             try:
                 self.matcher.route_request(window, request_type)
-            except WindowError:
+            except (WindowError, WMError):
                 pass
         else:
             info("Window %s was just flashed, ignoring...", window)

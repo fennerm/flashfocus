@@ -72,5 +72,6 @@ def test_rule_matcher_route_request_calls_matching_flasher(
     flasher.flash.assert_called()
 
 
-# def test_default_returned_if_match_is_none():
-#     assert False
+def test_rule_matcher_raises_window_error_for_none_window(rule_matcher):
+    with raises(WindowError):
+        rule_matcher.match(33333333)

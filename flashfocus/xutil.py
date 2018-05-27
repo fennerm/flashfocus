@@ -1,9 +1,16 @@
 """Xorg utility code."""
+import struct
+
 from xcffib.xproto import CW, EventMask, WindowClass
 from xpybutil import conn, root
 from xpybutil.ewmh import set_wm_window_opacity_checked
 from xpybutil.icccm import get_wm_class as _get_wm_class
 import xpybutil.window
+
+
+class WMError(ValueError):
+    """An error related to an Xorg window."""
+    pass
 
 
 def create_message_window():
@@ -46,7 +53,10 @@ def get_wm_class(window):
         (window id, window class)
 
     """
-    reply = _get_wm_class(window).reply()
+    try:
+        reply = _get_wm_class(window).reply()
+    except struct.error:
+        raise WMError("Invalid window: %s", window)
     try:
         return reply[0], reply[1]
     except TypeError:

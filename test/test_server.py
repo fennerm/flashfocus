@@ -75,3 +75,9 @@ def test_server_handles_nonexistant_window(flash_server):
     with server_running(flash_server):
         flash_server.flash_requests.put((0, "client_request"))
         sleep(0.1)
+
+
+def test_server_handles_none_window(flash_server):
+    with server_running(flash_server):
+        flash_server.flash_requests.put((None, "client_request"))
+        sleep(0.1)
