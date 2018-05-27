@@ -75,7 +75,7 @@ class Flasher:
             except KeyError:
                 # This happens in rare case that window is deleted from progress
                 # after first if statement
-                self.flash_window(window)
+                self.flash(window)
         else:
             p = Thread(target=self._flash, args=[window])
             p.daemon = True
