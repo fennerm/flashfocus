@@ -11,8 +11,44 @@ import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+import xcffib
+import xcffib.xproto
 import xpybutil
 import xpybutil.ewmh
+from xpybutil.icccm import set_wm_class_checked, set_wm_name_checked
+
+
+def create_window(wm_name=None, wm_class=None):
+    """Create a blank Xorg window."""
+    setup = xpybutil.conn.get_setup()
+    window = xpybutil.conn.generate_id()
+    xpybutil.conn.core.CreateWindow(
+        setup.roots[0].root_depth,
+        window,
+        setup.roots[0].root,
+        0,
+        0,
+        640,
+        480,
+        0,
+        xcffib.xproto.WindowClass.InputOutput,
+        setup.roots[0].root_visual,
+        xcffib.xproto.CW.BackPixel | xcffib.xproto.CW.EventMask,
+        [
+            setup.roots[0].white_pixel,
+            xcffib.xproto.EventMask.Exposure | xcffib.xproto.EventMask.KeyPress,
+        ],
+    )
+    xpybutil.conn.core.MapWindow(window)
+    xpybutil.conn.flush()
+    cookies = []
+    if wm_class:
+        cookies.append(set_wm_class_checked(window, wm_class))
+    if wm_name:
+        cookies.append(set_wm_name_checked(window, wm_name))
+    for cookie in cookies:
+        cookie.check()
+    return window
 
 
 class WindowSession:
