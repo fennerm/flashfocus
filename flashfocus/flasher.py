@@ -83,8 +83,7 @@ class Flasher:
 
     def set_default_opacity(self, window):
         """Set the opacity of a window to its default."""
-        # This needs to occur in a separate thread or Xorg freaks out and
-        # doesn't allow further changes to window properties
+        # This needs to occur in a separate thread or Xorg freaks out
         p = Thread(target=set_opacity, args=(window, self.default_opacity))
         p.daemon = True
         p.start()
