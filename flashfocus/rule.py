@@ -26,6 +26,7 @@ class Rule:
         Window ID and class match criteria
 
     """
+
     def __init__(self, id_regex=None, class_regex=None):
         self.id_regex = id_regex
         self.class_regex = class_regex
@@ -39,8 +40,9 @@ class Rule:
             ID and class of a window
 
         """
-        for regex, property in zip([self.id_regex, self.class_regex],
-                                   [window_id, window_class]):
+        for regex, property in zip(
+            [self.id_regex, self.class_regex], [window_id, window_class]
+        ):
             if regex:
                 if not match_regex(regex, property):
                     return False
@@ -65,6 +67,7 @@ class RuleMatcher:
         `window_class`.
 
     """
+
     def __init__(self, defaults, rules):
         self.rules = []
         self.flashers = []
@@ -73,13 +76,17 @@ class RuleMatcher:
         if rules:
             for rule in rules:
                 self.rules.append(
-                    Rule(id_regex=rule.get('window_id'),
-                         class_regex=rule.get('window_class')))
+                    Rule(
+                        id_regex=rule.get("window_id"),
+                        class_regex=rule.get("window_class"),
+                    )
+                )
                 self.flashers.append(
-                    Flasher(**{k: rule[k] for k in flasher_param}))
-                self.flash_on_focus.append(rule['flash_on_focus'])
+                    Flasher(**{k: rule[k] for k in flasher_param})
+                )
+                self.flash_on_focus.append(rule["flash_on_focus"])
         self.rules.append(Rule())
-        self.flash_on_focus.append(defaults['flash_on_focus'])
+        self.flash_on_focus.append(defaults["flash_on_focus"])
         self.flashers.append(Flasher(**{k: defaults[k] for k in flasher_param}))
         self.iter = list(zip(self.rules, self.flash_on_focus, self.flashers))
 
@@ -92,13 +99,13 @@ class RuleMatcher:
             A Xorg window id
         request_type: str
             One of ['focus_shift', 'client_request'], if 'focus_shift' and
-            flash_on_focus is set for the matching rule, the window will not be
-            flashed.
+            flash_on_focus is False for the matching rule, the window will not
+            be flashed.
 
         """
         try:
             flasher = self.match(window, request_type)
-            if request_type == 'new_window':
+            if request_type == "new_window":
                 flasher.set_default_opacity(window)
             else:
                 flasher.flash(window)
@@ -128,10 +135,12 @@ class RuleMatcher:
         for rule, focus_flash, flasher in self.iter:
             if rule.match(window_id, window_class):
                 if i < len(self.rules):
-                    info('Window %s matches criteria of rule %s', window, i)
-                if request_type == 'focus_shift' and not focus_flash:
-                    info('flash_on_focus is False for window %s, ignoring...',
-                         window)
+                    info("Window %s matches criteria of rule %s", window, i)
+                if request_type == "focus_shift" and not focus_flash:
+                    info(
+                        "flash_on_focus is False for window %s, ignoring...",
+                        window,
+                    )
                     return None
                 return flasher
             i += 1
