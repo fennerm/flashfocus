@@ -8,6 +8,11 @@ Simple focus animations for tiling window managers.
 
 Compatible with all X based window managers (i3, bspwm, awesome-wm, xmonad...).
 
+
+Flashfocus is currently pretty stable and I don't have any major features in
+the works, however the project is still actively maintained and feature
+requests are always welcome :)
+
 ## Installation
 
 An active window compositor is required for the effects of flashfocus to be
@@ -68,3 +73,5 @@ The config file is searched for in the following locations:
 3. ~/.flashfocus.yml
 
 When flashfocus is first run it creates a default config file in 1. or 2. Documentation of all configuration options is present in the config file.
+
+See the [wiki](https://github.com/fennerm/flashfocus/wiki) for some extra docs.
