@@ -29,6 +29,5 @@ def test_xhandler_handles_focus_shifts(xhandler, windows):
     with producer_running(xhandler):
         change_focus(windows[1])
         change_focus(windows[0])
-    change_focus(windows[1])
     queued = queue_to_list(xhandler.queue)
     assert queued == [(windows[1], "focus_shift"), (windows[0], "focus_shift")]

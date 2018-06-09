@@ -65,16 +65,17 @@ def test_new_window_opacity_set_to_default(
     transparent_flash_server, list_only_test_windows
 ):
     with server_running(transparent_flash_server):
-        windows = WindowSession()
-        sleep(0.2)
-        assert get_wm_window_opacity(windows.ids[0]).reply() == approx(0.4)
-    windows.destroy()
+        window_session = WindowSession()
+        assert get_wm_window_opacity(
+            window_session.windows[0]
+        ).reply() == approx(0.4)
+    window_session.destroy()
 
 
 def test_server_handles_nonexistant_window(flash_server):
     with server_running(flash_server):
         flash_server.flash_requests.put((0, "client_request"))
-        sleep(0.1)
+        sleep(0.01)
 
 
 def test_server_handles_none_window(flash_server):

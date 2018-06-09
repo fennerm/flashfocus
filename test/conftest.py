@@ -5,7 +5,6 @@ except ImportError:
     from Queue import Queue
 import re
 import sys
-from time import sleep
 
 from factory import Factory
 from pytest import fixture
@@ -17,17 +16,15 @@ from flashfocus.rule import RuleMatcher
 from flashfocus.server import FlashServer
 from flashfocus.sockets import init_client_socket, init_server_socket
 
-from test.helpers import change_focus, fill_in_rule, StubServer, WindowSession
+from test.helpers import fill_in_rule, StubServer, WindowSession
 
 
 @fixture
 def windows():
     """Display session with multiple open windows."""
-    windows = WindowSession()
-    change_focus(windows.ids[0])
-    sleep(0.1)
-    yield windows.ids
-    windows.destroy()
+    window_session = WindowSession()
+    yield window_session.windows
+    window_session.destroy()
 
 
 @fixture

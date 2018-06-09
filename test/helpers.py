@@ -2,23 +2,22 @@
 from __future__ import division
 
 from contextlib import contextmanager
-import os
 import re
 from threading import Thread
 from time import sleep
 
-import gi
-
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
 import xcffib
 import xcffib.xproto
 import xpybutil
 import xpybutil.ewmh
+from xpybutil.ewmh import set_active_window_checked
 from xpybutil.icccm import set_wm_class_checked, set_wm_name_checked
 
 
-def create_window(wm_name=None, wm_class=None):
+from flashfocus.xutil import destroy_window
+
+
+def create_blank_window(wm_name=None, wm_class=None):
     """Create a blank Xorg window."""
     setup = xpybutil.conn.get_setup()
     window = xpybutil.conn.generate_id()
@@ -43,7 +42,7 @@ def create_window(wm_name=None, wm_class=None):
     xpybutil.conn.flush()
     cookies = []
     if wm_class:
-        cookies.append(set_wm_class_checked(window, wm_class))
+        cookies.append(set_wm_class_checked(window, wm_class[0], wm_class[1]))
     if wm_name:
         cookies.append(set_wm_name_checked(window, wm_name))
     for cookie in cookies:
@@ -55,34 +54,26 @@ class WindowSession:
     """A session of blank windows for testing."""
 
     def __init__(self):
-        window1 = Gtk.Window(title="window1")
-        window1.set_wmclass("window1", "Window1")
-        window1.show()
-        window2 = Gtk.Window(title="window2")
-        window2.set_wmclass("window2", "Window2")
-        window2.show()
-        window3 = Gtk.Window(title="window3")
-        window3.show()
-
-        self.windows = [window1, window2, window3]
-        self.ids = [w.get_property("window").get_xid() for w in self.windows]
-        change_focus(self.ids[0])
+        wm_names = ["window1", "window2"]
+        wm_classes = [("window1", "Window1"), ("window2", "Window2")]
+        self.windows = [
+            create_blank_window(wm_name, wm_class)
+            for wm_name, wm_class in zip(wm_names, wm_classes)
+        ]
+        sleep(0.1)
+        change_focus(self.windows[0])
+        sleep(0.4)
 
     def destroy(self):
         """Tear down the window session."""
         for window in self.windows:
-            window.destroy()
+            destroy_window(window)
 
 
 def change_focus(window):
     """Change the active window."""
-    os.system("xdotool windowactivate " + str(window))
-    sleep(0.1)
-
-
-def close_window(window):
-    """Close an X window."""
-    xpybutil.request_close_window_checked(window).check()
+    set_active_window_checked(window).check()
+    sleep(0.01)
 
 
 class WindowWatcher(Thread):
@@ -108,7 +99,7 @@ class WindowWatcher(Thread):
     def report(self):
         """Send the stop signal and report changes in _NET_WM_WINDOW_OPACITY."""
         # Give the x server a little time to catch up with requests
-        sleep(0.4)
+        sleep(0.2)
         self.keep_going = False
         while not self.done:
             pass
@@ -144,7 +135,7 @@ def server_running(server):
         pass
     p = Thread(target=server.event_loop)
     p.start()
-    sleep(1)
+    sleep(0.1)
     yield
     sleep(0.01)
     server.shutdown(disconnect_from_xorg=False)
