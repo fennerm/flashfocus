@@ -109,7 +109,7 @@ class RuleMatcher:
                 flasher.set_default_opacity(window)
             else:
                 flasher.flash(window)
-        except TypeError:
+        except AttributeError:
             # match returned None
             pass
 

@@ -155,5 +155,6 @@ class FlashServer:
             try:
                 flasher = self.matcher.match(window)
                 flasher.set_default_opacity(window)
-            except WindowError:
+            except (AttributeError, WindowError):
+                # Match returned None or window disappeared
                 pass
