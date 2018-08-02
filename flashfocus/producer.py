@@ -5,11 +5,15 @@ from threading import Thread
 
 from xcffib.xproto import CreateNotifyEvent, PropertyNotifyEvent
 import xpybutil
-from xpybutil.ewmh import get_active_window, get_client_list
+from xpybutil.ewmh import get_active_window
 from xpybutil.icccm import set_wm_name_checked
 from xpybutil.util import get_atom_name
 
-from flashfocus.xutil import create_message_window, destroy_window
+from flashfocus.xutil import (
+    create_message_window,
+    destroy_window,
+    list_mapped_windows,
+)
 from flashfocus.sockets import init_server_socket
 
 
@@ -68,8 +72,7 @@ class XHandler(Producer):
         # Check that window is visible so that we don't accidentally set
         # opacity of windows which are not for display. Without this step
         # window opacity can become frozen and stop responding to flashes.
-        visible_windows = get_client_list().reply()
-        if event.window in visible_windows:
+        if event.window in list_mapped_windows():
             self.queue_window(event.window, "new_window")
         else:
             info("Window %s is not visible, ignoring...", event.window)
