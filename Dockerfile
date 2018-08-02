@@ -3,6 +3,7 @@ FROM fennerm/arch-i3-novnc
 LABEL maintainer="fmacrae.dev@gmail.com"
 
 RUN pacman -S --noconfirm \
+        gcc \
         glib2 \
         gtk3 \
         python-cairo \
@@ -12,8 +13,7 @@ RUN pacman -S --noconfirm \
         python-pip \
         python2-pip \
         xdotool \
-        libxcb \
-        xorg-xprop
+        libxcb
 
 USER user
 ENV PATH="/home/user/.local/bin:${PATH}"
