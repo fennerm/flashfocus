@@ -1,7 +1,13 @@
 """Testsuite for flashfocus.producer."""
 import socket
 
+try:
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import MagicMock
+
 from pytest import raises
+from xcffib.xproto import CreateNotifyEvent
 
 from flashfocus.client import client_request_flash
 from test.helpers import change_focus, producer_running, queue_to_list
@@ -31,3 +37,30 @@ def test_xhandler_handles_focus_shifts(xhandler, windows):
         change_focus(windows[0])
     queued = queue_to_list(xhandler.queue)
     assert queued == [(windows[1], "focus_shift"), (windows[0], "focus_shift")]
+
+
+def test_that_nonvisible_windows_are_not_queued_by_xhandler(
+    xhandler, monkeypatch, windows
+):
+    null_fake_event = MagicMock(spec=CreateNotifyEvent)
+    null_fake_event.window = 0
+    visible_fake_event = MagicMock(spec=CreateNotifyEvent)
+    visible_fake_event.window = windows[0]
+
+    class FakeConnection:
+        def __init__(self, windows):
+            self.i = 0
+            self.windows = windows
+
+        def wait_for_event(self):
+            self.i += 1
+            if self.i == 2:
+                return visible_fake_event
+            else:
+                return null_fake_event
+
+    monkeypatch.setattr("xpybutil.conn", FakeConnection(windows))
+    with producer_running(xhandler):
+        pass
+    queued = queue_to_list(xhandler.queue)
+    assert queued == [(windows[0], "new_window")]

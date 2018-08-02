@@ -3,9 +3,9 @@ from logging import info
 import socket
 from threading import Thread
 
-from xcffib.xproto import MapNotifyEvent, PropertyNotifyEvent
+from xcffib.xproto import CreateNotifyEvent, PropertyNotifyEvent
 import xpybutil
-from xpybutil.ewmh import get_active_window
+from xpybutil.ewmh import get_active_window, get_client_list
 from xpybutil.icccm import set_wm_name_checked
 from xpybutil.util import get_atom_name
 
@@ -54,7 +54,7 @@ class XHandler(Producer):
             event = xpybutil.conn.wait_for_event()
             if isinstance(event, PropertyNotifyEvent):
                 self._handle_property_change(event)
-            elif isinstance(event, MapNotifyEvent):
+            elif isinstance(event, CreateNotifyEvent):
                 self._handle_new_mapped_window(event)
 
     def stop(self):
@@ -64,8 +64,15 @@ class XHandler(Producer):
 
     def _handle_new_mapped_window(self, event):
         """Handle a new mapped window event."""
-        info("New window mapped...")
-        self.queue_window(event.window, "new_window")
+        info("Window %s mapped...", event.window)
+        # Check that window is visible so that we don't accidentally set
+        # opacity of windows which are not for display. Without this step
+        # window opacity can become frozen and stop responding to flashes.
+        visible_windows = get_client_list().reply()
+        if event.window in visible_windows:
+            self.queue_window(event.window, "new_window")
+        else:
+            info("Window %s is not visible, ignoring...", event.window)
 
     def _handle_property_change(self, event):
         """Handle a property change on a watched window."""
