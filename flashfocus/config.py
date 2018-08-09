@@ -64,6 +64,7 @@ class BaseSchema(Schema):
     global config and in flash rules.
 
     """
+
     flash_opacity = fields.Number(validate=validate_decimal)
     default_opacity = fields.Number(validate=validate_decimal)
     simple = fields.Boolean()
@@ -84,6 +85,7 @@ class BaseSchema(Schema):
 
 class RulesSchema(BaseSchema):
     """Schema for options which are present in rules but not global config."""
+
     window_class = Regex()
     window_id = Regex()
 
@@ -100,6 +102,7 @@ class ConfigSchema(BaseSchema):
     Contains a nested `RulesSchema` used to validate rules.
 
     """
+
     preset_opacity = fields.Boolean()
     rules = fields.Nested(RulesSchema, many=True)
 

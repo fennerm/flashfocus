@@ -151,14 +151,18 @@ def list_only_test_windows(monkeypatch, windows):
 
 @fixture
 def valid_config_types():
+    try:
+        regex_pattern_type = re.Pattern
+    except:
+        regex_pattern_type = re._pattern_type
     types = {
         "time": float,
         "ntimepoints": int,
         "flash_opacity": float,
         "default_opacity": float,
         "simple": bool,
-        "window_class": re._pattern_type,
-        "window_id": re._pattern_type,
+        "window_class": regex_pattern_type,
+        "window_id": regex_pattern_type,
         "flash_on_focus": bool,
     }
     return types
