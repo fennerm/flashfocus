@@ -12,7 +12,6 @@ RUN pacman -S --noconfirm \
         python2-gobject \
         python-pip \
         python2-pip \
-        xdotool \
         libxcb
 
 USER user
