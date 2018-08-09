@@ -81,8 +81,8 @@ class XHandler(Producer):
         """Handle a property change on a watched window."""
         atom_name = get_atom_name(event.atom)
         if atom_name == "_NET_ACTIVE_WINDOW":
-            info("Focus shifted...")
             focused_window = get_active_window().reply()
+            info("Focus shifted to %s", focused_window)
             self.queue_window(focused_window, "focus_shift")
         elif atom_name == "WM_NAME" and event.window == self.message_window:
             # Received kill signal from server -> terminate the thread
