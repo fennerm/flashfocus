@@ -36,14 +36,14 @@ BASE_PROPERTIES = [
 def validate_positive_number(data):
     """Check that a value is a positive number."""
     if not data > 0:
-        raise ValidationError("Not a positive number".format(data))
+        raise ValidationError("Not a positive number", data)
 
 
 def validate_decimal(data):
-    """Check that a value is a decimal between 0 and 1."""
+    """Check that a value is a decimal between 0 and 1 inclusive."""
     if not 0 <= data <= 1:
         raise ValidationError(
-            "Not in valid range, expected a float between 0 and 1".format(data)
+            "Not in valid range, expected a float between 0 and 1"
         )
 
 
@@ -58,7 +58,7 @@ class Regex(fields.Field):
 
 
 class BaseSchema(Schema):
-    """Base class for `RulesSchema` and `ConfigSchema`
+    """Base class for `RulesSchema` and `ConfigSchema`.
 
     Contains validation criteria for options which can be present both in the
     global config and in flash rules.
@@ -92,7 +92,7 @@ class RulesSchema(BaseSchema):
     @validates_schema()
     def check_for_matching_criteria(self, data):
         """Check that rule contains at least one method for matching a window"""
-        if not any(param in data for param in ["window_class", "window_id"]):
+        if not any([param in data for param in ["window_class", "window_id"]]):
             raise ValidationError("No criteria for matching rule to window")
 
 

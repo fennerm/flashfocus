@@ -37,10 +37,15 @@ if sys.stderr.isatty():
 PID = open(os.path.join(RUNTIME_DIR, "flashfocus.pid"), "a")
 
 
+def lock_pid_file():
+    """Lock the flashfocus PID file."""
+    fcntl.lockf(PID, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
 def ensure_single_instance():
     """Ensure that no other flashfocus instances are running."""
     try:
-        fcntl.lockf(PID, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock_pid_file()
     except IOError:
         sys.exit("Another flashfocus instance is running.")
 
@@ -119,7 +124,7 @@ def init_server(cli_options):
             cli_options["flash_opacity"] = cli_options["opacity"]
     del cli_options["opacity"]
 
-    if not USER_CONFIG_FILE:
+    if USER_CONFIG_FILE is None:
         create_user_configfile()
 
     config = merge_config_sources(cli_options)

@@ -15,7 +15,12 @@ import xpybutil.window
 
 from flashfocus.producer import ClientMonitor, XHandler
 from flashfocus.rule import RuleMatcher
-from flashfocus.xutil import list_mapped_windows, set_opacity, WMError
+from flashfocus.xutil import (
+    list_mapped_windows,
+    set_opacity,
+    unset_all_window_opacity,
+    WMError,
+)
 
 
 # Ensure that SIGINTs are handled correctly
@@ -110,13 +115,11 @@ class FlashServer:
         """Cleanup after recieving a SIGINT."""
         self.keep_going = False
         self._kill_producers()
-        self._unset_all_window_opacity()
+        info("Resetting windows to full opacity...")
+        unset_all_window_opacity()
         if disconnect_from_xorg:
-            self._disconnect_xsession()
-
-    def _disconnect_xsession(self):
-        info("Disconnecting from X session...")
-        xpybutil.conn.disconnect()
+            info("Disconnecting from X session...")
+            xpybutil.conn.disconnect()
 
     def _flash_queued_window(self):
         """Pop a window from the flash_requests queue and initiate flash."""
@@ -138,16 +141,6 @@ class FlashServer:
         info("Terminating threads...")
         for producer in self.producers:
             producer.stop()
-
-    def _unset_all_window_opacity(self):
-        info("Resetting windows to full opacity...")
-        cookies = [
-            set_opacity(window, 1, checked=False)
-            for window in list_mapped_windows()
-        ]
-        xpybutil.conn.flush()
-        for cookie in cookies:
-            cookie.check()
 
     def _set_all_window_opacity_to_default(self):
         info("Setting all windows to their default opacity...")

@@ -10,6 +10,7 @@ import xpybutil.window
 
 class WMError(ValueError):
     """An error related to an Xorg window."""
+
     pass
 
 
@@ -82,3 +83,14 @@ def destroy_window(window):
 
 def list_mapped_windows():
     return xpybutil.ewmh.get_client_list().reply()
+
+
+def unset_all_window_opacity():
+    """Unset the opacity of all mapped windows."""
+    cookies = [
+        set_opacity(window, 1, checked=False)
+        for window in list_mapped_windows()
+    ]
+    xpybutil.conn.flush()
+    for cookie in cookies:
+        cookie.check()
