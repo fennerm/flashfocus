@@ -30,6 +30,16 @@ sudo apt-get install libxcb-render0-dev libffi-dev python-dev python-cffi
 pip install flashfocus
 ```
 
+### openSUSE
+Flashfocus is in the official repository of openSUSE Tumbleweed.
+openSUSE Leap users can install it from the [X11:Utilities](https://build.opensuse.org/package/show/X11%3AUtilities/flashfocus) devel project:
+
+```
+zypper ar obs://X11:Utilities x11util
+zypper ref
+zypper in flashfocus
+```
+
 ## Quickstart
 
 #### Compton setup
