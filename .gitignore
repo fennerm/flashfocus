@@ -10,6 +10,7 @@
 .bumpversion.cfg
 .mypy_cache
 .eggs
+.testmondata
 dist
 __LAST__
 Makefile
