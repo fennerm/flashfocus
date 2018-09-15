@@ -4,8 +4,29 @@
 
 - Ability to apply different flash rules to tabs/new windows/closed windows
 - More finetuned control over flash animation
-- Better support for using flashfocus as a library to produce custom animation scripts.
 
+## [1.0.9] - Aug 2nd, 2018
+
+- Fixed bug which broke window flashing when transparent windows are also
+  active **#18**
+
+## [1.0.8] - Jul 17th, 2018
+- Fixed uncaught AttributeError when switching workspaces **#17**
+
+## [1.0.7] - May 27th, 2018
+- Fixed incorrect method call in Flasher
+
+## [1.0.6] - May 27th, 2018
+- Improved exception handling with nonexistant windows **#15**
+
+## [1.0.5] - May 24th, 2018
+- Added MANIFEST file for package data due to bug which caused default config to not be created **#14**
+
+## [1.0.3 - 1.0.4] - May 16th, 2018
+- Fixed bug when Xutil function returns None
+
+## [1.0.1] - May 12th, 2018
+- Fixed bug in presetting opacity
 
 ## [1.0.0] - May 9th, 2018
 - Flash parameters can now be set for specific window class/ids. Regexes are supported.
