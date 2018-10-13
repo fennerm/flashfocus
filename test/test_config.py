@@ -18,9 +18,12 @@ def invalid_rules():
     rules = [
         # No window_class or window_id present
         [{"flash_on_focus": "True"}],
-        # Invalid flash values
+        [{"flash_lone_windows": "always"}],
+        # Invalid values
         [{"window_class": "foo", "flash_on_focus": 2}],
         [{"window_class": "foo", "flash_on_focus": "bar"}],
+        [{"window_class": "foo", "flash_on_focus": "this"}],
+        [{"window_class": "foo", "flash_on_focus": "that"}],
         # List value for window class/id
         [{"window_class": ["foo", "bar"]}],
         [{"window_id": ["foo", "bar"]}],
@@ -36,6 +39,7 @@ def invalid_rules():
         ("time", ["0", "-1", "foo", 0, -1]),
         ("ntimepoints", ["0", "-1", "foo", 0, -1]),
         ("simple", ["foo", "10"]),
+        ("flash_lone_windows", ["foo", "true"]),
         ("rules", lazy_fixture("invalid_rules")),
     ],
 )
@@ -60,10 +64,12 @@ def test_invalid_param(
 def check_validated_config(config, expected_types):
     for name, value in config.items():
         try:
-            if expected_types[name] == bool:
+            if expected_types[name] == [bool]:
                 assert value in [True, False]
             else:
-                assert isinstance(value, expected_types[name])
+                assert True in [
+                    isinstance(value, typ) for typ in expected_types[name]
+                ]
         except KeyError:
             pass
 
@@ -76,6 +82,11 @@ def check_validated_config(config, expected_types):
         ("time", ["200", "50.5", 200, 50.5]),
         ("ntimepoints", ["10", 10]),
         ("simple", lazy_fixture("valid_bool")),
+        ("flash_on_focus", ["True"]),
+        (
+            "flash_lone_windows",
+            ["always", "never", "on_open_close", "on_switch"],
+        ),
     ],
 )
 @mark.parametrize("input_type", ["cli", "file"])
@@ -118,8 +129,10 @@ def test_valid_param(
         [{"window_class": "foo", "ntimepoints": "10"}],
         [{"window_class": "foo", "time": "100"}],
         [{"window_class": "foo", "flash_opacity": "0.2"}],
+        [{"window_class": "foo", "flash_on_focus": True}],
+        [{"window_class": "foo", "flash_lone_windows": "always"}],
         # Regexes are valid
-        [{"window_class": "^indo.*$"}],
+        [{"window_class": "^indo.*$", "time": "100"}],
     ],
 )
 def test_rules_validation(

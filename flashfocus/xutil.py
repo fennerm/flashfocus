@@ -3,7 +3,11 @@ import struct
 
 from xcffib.xproto import CW, EventMask, WindowClass
 from xpybutil import conn, root
-from xpybutil.ewmh import set_wm_window_opacity_checked
+from xpybutil.ewmh import (
+    get_current_desktop,
+    get_wm_desktop,
+    set_wm_window_opacity_checked,
+)
 from xpybutil.icccm import get_wm_class as _get_wm_class
 import xpybutil.window
 
@@ -81,8 +85,18 @@ def destroy_window(window):
     conn.core.DestroyWindow(window, True).check()
 
 
-def list_mapped_windows():
+def count_windows(desktop):
+    cookies = [get_wm_desktop(window) for window in list_mapped_windows()]
+    window_desktops = [cookie.reply() for cookie in cookies]
+    return sum([d == desktop for d in window_desktops])
+
+
+def list_mapped_windows(desktop=None):
     return xpybutil.ewmh.get_client_list().reply()
+
+
+def get_current_desktop():
+    return xpybutil.ewmh.get_current_desktop().reply()
 
 
 def unset_all_window_opacity():

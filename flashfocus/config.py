@@ -16,6 +16,7 @@ from parser import ParserError
 import yaml
 
 
+from flashfocus.misc import cmd_exists
 from flashfocus.syspaths import (
     CONFIG_SEARCH_PATH,
     DEFAULT_CONFIG_FILE,
@@ -30,6 +31,7 @@ BASE_PROPERTIES = [
     "flash_on_focus",
     "ntimepoints",
     "time",
+    "flash_lone_windows",
 ]
 
 
@@ -44,6 +46,16 @@ def validate_decimal(data):
     if not 0 <= data <= 1:
         raise ValidationError(
             "Not in valid range, expected a float between 0 and 1"
+        )
+
+
+def validate_flash_lone_windows(data):
+    accepted_values = ["never", "on_open_close", "on_switch", "always"]
+    if not data in accepted_values:
+        raise ValidationError(
+            "Invalid 'flash-lone-windows' value, expected one of {}".format(
+                ", ".join(accepted_values), data
+            )
         )
 
 
@@ -71,6 +83,7 @@ class BaseSchema(Schema):
     time = fields.Number(validate=validate_positive_number)
     ntimepoints = fields.Integer(validate=validate_positive_number)
     flash_on_focus = fields.Boolean()
+    flash_lone_windows = fields.String(validate=validate_flash_lone_windows)
 
     @validates_schema(pass_original=True)
     def check_unknown_fields(self, data, original_data):

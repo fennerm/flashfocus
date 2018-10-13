@@ -7,7 +7,7 @@ from pytest import lazy_fixture, mark, raises
 from xcffib.xproto import WindowError
 
 from flashfocus.rule import *
-from test.helpers import to_regex
+from test.helpers import switch_desktop, to_regex, WindowSession
 
 
 @mark.parametrize(
@@ -75,3 +75,38 @@ def test_rule_matcher_route_request_calls_matching_flasher(
 def test_rule_matcher_raises_window_error_for_none_window(rule_matcher):
     with raises(WindowError):
         rule_matcher.match(33333333)
+
+
+def test_matcher_with_flash_lone_windows_never(no_lone_win_matcher, window):
+    assert no_lone_win_matcher.match(window, request_type="focus_shift") is None
+    switch_desktop(1)
+    assert no_lone_win_matcher.match(window, request_type="focus_shift") is None
+    switch_desktop(0)
+    assert no_lone_win_matcher.match(window, request_type="focus_shift") is None
+
+
+def test_matcher_with_flash_lone_windows_on_open_close(
+    lone_win_oc_matcher, window
+):
+    assert lone_win_oc_matcher.match(window, request_type="focus_shift")
+    switch_desktop(1)
+    assert lone_win_oc_matcher.match(window, request_type="focus_shift") is None
+    switch_desktop(0)
+    assert lone_win_oc_matcher.match(window, request_type="focus_shift") is None
+
+
+def test_matcher_with_flash_lone_windows_on_desktop_switch(
+    lone_win_dswitch_matcher, window
+):
+    switch_desktop(1)
+    assert lone_win_dswitch_matcher.match(window, request_type="focus_shift")
+    assert (
+        lone_win_dswitch_matcher.match(window, request_type="focus_shift")
+        is None
+    )
+    switch_desktop(0)
+    assert lone_win_dswitch_matcher.match(window, request_type="focus_shift")
+    assert (
+        lone_win_dswitch_matcher.match(window, request_type="focus_shift")
+        is None
+    )

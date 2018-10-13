@@ -19,7 +19,20 @@ simple: false
 ntimepoints: 10
 
 # Set this to False if you don't want windows to flash on focus.
-flash-on-focus: True
+flash-on-focus: true
+
+# Whether or not to flash windows if they are the only window on the desktop.
+# Possible values:
+#   'always':
+#      Always flash lone windows
+#   'never':
+#      Never flash lone windows
+#   'on_open_close':
+#      Lone windows will be flashed only if a) if they were just opened and b) if 
+#      another window was just closed. 
+#   'on_switch':
+#      Lone windows will be flashed only upon switching desktops.
+flash-lone-windows: 'always'
 
 # Defining window-specific flash rules
 #

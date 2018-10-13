@@ -16,13 +16,21 @@ from flashfocus.rule import RuleMatcher
 from flashfocus.server import FlashServer
 from flashfocus.sockets import init_client_socket, init_server_socket
 
-from test.helpers import fill_in_rule, StubServer, WindowSession
+from test.helpers import (
+    clear_desktop,
+    default_flash_param,
+    fill_in_rule,
+    rekey,
+    StubServer,
+    WindowSession,
+)
 
 
 @fixture
 def windows():
     """Display session with multiple open windows."""
-    window_session = WindowSession()
+    clear_desktop(0)
+    window_session = WindowSession(3)
     yield window_session.windows
     window_session.destroy()
 
@@ -30,7 +38,10 @@ def windows():
 @fixture
 def window(windows):
     """Single blank window."""
-    return windows[0]
+    clear_desktop(0)
+    window_session = WindowSession(1)
+    yield window_session.windows[0]
+    window_session.destroy()
 
 
 class ServerFactory(Factory):
@@ -46,6 +57,7 @@ class ServerFactory(Factory):
     simple = False
     rules = None
     flash_on_focus = True
+    flash_lone_windows = "always"
 
 
 register(ServerFactory, "flash_server")
@@ -90,29 +102,48 @@ class RuleMatcherFactory(Factory):
         model = RuleMatcher
 
     defaults = {
-        "default_opacity": 1,
-        "flash_opacity": 0.8,
-        "time": 100,
-        "ntimepoints": 4,
-        "simple": False,
-        "flash_on_focus": True,
+        key: val["default"]
+        for key, val in default_flash_param().items()
+        if val["location"] == "any"
     }
     rules = [
         # Matches window1 but not 2
-        {
-            "window_id": re.compile("^.*1$"),
-            "flash_opacity": 0,
-            "default_opacity": 0.8,
-            "time": 100,
-            "ntimepoints": 4,
-            "simple": False,
-            "flash_on_focus": False,
-        }
+        fill_in_rule(
+            {
+                "window_id": re.compile("^.*1$"),
+                "flash_opacity": 0,
+                "default_opacity": 0.8,
+                "simple": False,
+                "flash_on_focus": False,
+            }
+        )
     ]
 
 
 register(RuleMatcherFactory, "rule_matcher")
 register(RuleMatcherFactory, "norule_matcher", rules=[])
+register(
+    RuleMatcherFactory,
+    "no_lone_win_matcher",
+    defaults=rekey(RuleMatcherFactory.defaults, "flash_lone_windows", "never"),
+    rules=[],
+)
+register(
+    RuleMatcherFactory,
+    "lone_win_oc_matcher",
+    defaults=rekey(
+        RuleMatcherFactory.defaults, "flash_lone_windows", "on_open_close"
+    ),
+    rules=[],
+)
+register(
+    RuleMatcherFactory,
+    "lone_win_dswitch_matcher",
+    defaults=rekey(
+        RuleMatcherFactory.defaults, "flash_lone_windows", "on_switch"
+    ),
+    rules=[],
+)
 
 
 @fixture
@@ -151,34 +182,16 @@ def list_only_test_windows(monkeypatch, windows):
 
 @fixture
 def valid_config_types():
-    try:
-        regex_pattern_type = re.Pattern
-    except:
-        regex_pattern_type = re._pattern_type
-    types = {
-        "time": float,
-        "ntimepoints": int,
-        "flash_opacity": float,
-        "default_opacity": float,
-        "simple": bool,
-        "window_class": regex_pattern_type,
-        "window_id": regex_pattern_type,
-        "flash_on_focus": bool,
-    }
-    return types
+    return {key: val["type"] for key, val in default_flash_param().items()}
 
 
 @fixture
 def blank_cli_options():
-    cli_options = {
-        "flash-opacity": None,
-        "default-opacity": None,
-        "time": None,
-        "ntimepoints": None,
-        "simple": None,
-        "flash_on_focus": None,
+    return {
+        key: None
+        for key, val in default_flash_param().items()
+        if val["location"] == "any"
     }
-    return cli_options
 
 
 @fixture

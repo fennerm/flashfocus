@@ -8,7 +8,7 @@ except ImportError:
 
 from pytest import approx, mark
 
-from test.helpers import change_focus, WindowWatcher
+from test.helpers import change_focus, watching_windows
 
 from flashfocus.flasher import Flasher
 
@@ -16,10 +16,9 @@ from flashfocus.flasher import Flasher
 def test_flash(flasher, window):
     change_focus(window)
     expected_opacity = [None] + flasher.flash_series + [1.0]
-    watcher = WindowWatcher(window)
-    watcher.start()
-    flasher.flash(window)
-    report = watcher.report()
+    with watching_windows([window]) as watchers:
+        flasher.flash(window)
+    report = watchers[0].report()
     assert not report[0]
     assert report[1:] == approx(expected_opacity[1:], 0.01)
 
@@ -34,13 +33,12 @@ def test_flash_nonexistant_window_ignored(flasher):
 
 
 def test_flash_conflicts_are_restarted(flasher, window):
-    watcher = WindowWatcher(window)
-    watcher.start()
-    flasher.flash(window)
-    sleep(0.05)
-    flasher.flash(window)
-    sleep(0.2)
-    num_completions = sum([x == 1 for x in watcher.report()])
+    with watching_windows([window]) as watchers:
+        flasher.flash(window)
+        sleep(0.05)
+        flasher.flash(window)
+        sleep(0.2)
+    num_completions = sum([x == 1 for x in watchers[0].report()])
     # If the flasher restarts a flash, we should expect the default opacity to
     # only be present at the end of the watcher report.
     assert num_completions == 1

@@ -13,23 +13,24 @@ RUN pacman -S --noconfirm \
         python-pip \
         python2-pip \
         libxcb
+        
 
 USER user
 ENV PATH="/home/user/.local/bin:${PATH}"
 
-# Required for testing click command line interface
-ENV LC_ALL=en_US.utf8
-ENV LANG=en_US.utf8
-
 RUN pip3 install --no-cache-dir --user pytest pytest-cov pytest-runner \
-        pytest-factoryboy pytest-lazy-fixture
+        pytest-factoryboy pytest-lazy-fixture pdbpp
 RUN pip2 install --no-cache-dir --user pytest pytest-cov pytest-runner mock \
-        pytest-factoryboy pytest-lazy-fixture
+        pytest-factoryboy pytest-lazy-fixture pdbpp
+
+COPY --chown=user requirements.txt requirements.txt
+RUN pip3 install --user -r requirements.txt
+RUN pip2 install --user -r requirements.txt
 
 COPY --chown=user . flashfocus
-
 WORKDIR flashfocus
-RUN pip3 install --user -r requirements.txt --user .
-RUN pip2 install --user -r requirements.txt --user .
+RUN pip3 install --no-deps -e . --user .
+RUN pip2 install -e . --no-deps --user .
+
 
 CMD test/docker_startup.sh

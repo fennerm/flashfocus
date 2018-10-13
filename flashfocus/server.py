@@ -48,6 +48,9 @@ class FlashServer:
     flash_on_focus: bool
         If True, windows will be flashed on focus. Otherwise, windows will only
         be flashed on request.
+    flash_lone_windows: bool
+        If True, windows will be flashed even if they are the only window on 
+        the desktop.
 
     Attributes
     ----------
@@ -78,6 +81,7 @@ class FlashServer:
         simple,
         rules,
         flash_on_focus,
+        flash_lone_windows,
     ):
         self.matcher = RuleMatcher(
             defaults={
@@ -88,6 +92,7 @@ class FlashServer:
                 "time": time,
                 "ntimepoints": ntimepoints,
                 "flash_on_focus": flash_on_focus,
+                "flash_lone_windows": flash_lone_windows,
             },
             rules=rules,
         )

@@ -9,6 +9,7 @@ from pytest import approx, mark
 from xpybutil.ewmh import get_wm_window_opacity
 
 from flashfocus.client import client_request_flash
+from flashfocus.xutil import count_windows, destroy_window, get_current_desktop
 from test.helpers import change_focus, server_running, WindowSession
 
 
