@@ -5,6 +5,11 @@
 - Ability to apply different flash rules to tabs/new windows/closed windows
 - More finetuned control over flash animation
 
+## [1.1.0] - Oct 13, 2018
+
+- Implemented flash-lone-windows configuration option (see default config file
+  for details).
+
 ## [1.0.9] - Aug 2nd, 2018
 
 - Fixed bug which broke window flashing when transparent windows are also
