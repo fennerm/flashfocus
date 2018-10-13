@@ -5,6 +5,9 @@
 - Ability to apply different flash rules to tabs/new windows/closed windows
 - More finetuned control over flash animation
 
+## [1.1.1] - Oct 13, 2018 
+- Added flash-lone-windows CLI option.
+
 ## [1.1.0] - Oct 13, 2018
 
 - Implemented flash-lone-windows configuration option (see default config file

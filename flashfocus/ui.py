@@ -109,6 +109,16 @@ def ensure_single_instance():
         "windows will only be flashed on request. (default: True)"
     ),
 )
+@click.option(
+    "--flash-lone-windows",
+    "-l",
+    required=False,
+    default=None,
+    help=(
+        "Should windows be flashed when they are the only one on the desktop?. "
+        "One of [never, always, on_open_close, on_switch]."
+    ),
+)
 def cli(*args, **kwargs):
     """Simple focus animations for tiling window managers."""
     init_server(kwargs)
