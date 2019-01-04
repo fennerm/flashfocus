@@ -92,7 +92,11 @@ def count_windows(desktop):
 
 
 def list_mapped_windows(desktop=None):
-    return xpybutil.ewmh.get_client_list().reply()
+    mapped_windows = xpybutil.ewmh.get_client_list().reply()
+    if mapped_windows is None:
+        return []
+    else:
+        return mapped_windows
 
 
 def get_current_desktop():
@@ -102,8 +106,7 @@ def get_current_desktop():
 def unset_all_window_opacity():
     """Unset the opacity of all mapped windows."""
     cookies = [
-        set_opacity(window, 1, checked=False)
-        for window in list_mapped_windows()
+        set_opacity(window, 1, checked=False) for window in list_mapped_windows()
     ]
     xpybutil.conn.flush()
     for cookie in cookies:

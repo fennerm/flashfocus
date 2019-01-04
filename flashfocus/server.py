@@ -15,12 +15,7 @@ import xpybutil.window
 
 from flashfocus.producer import ClientMonitor, XHandler
 from flashfocus.rule import RuleMatcher
-from flashfocus.xutil import (
-    list_mapped_windows,
-    set_opacity,
-    unset_all_window_opacity,
-    WMError,
-)
+from flashfocus.xutil import list_mapped_windows, unset_all_window_opacity, WMError
 
 
 # Ensure that SIGINTs are handled correctly
