@@ -5,6 +5,12 @@
 - Ability to apply different flash rules to tabs/new windows/closed windows
 - More finetuned control over flash animation
 
+
+## [1.2.0] - Jan 20, 2018
+- Added: ability to set custom config file location with --config flag
+- Fixed: Use marshmallow strict mode due to deprecation warning
+- Fixed: Updated pyaml version in requirements due to security vulnerability
+
 ## [1.1.1] - Oct 13, 2018 
 - Added flash-lone-windows CLI option.
 
