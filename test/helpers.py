@@ -89,9 +89,7 @@ class WindowWatcher(Thread):
     def __init__(self, window):
         super(WindowWatcher, self).__init__()
         self.window = window
-        self.opacity_events = [
-            xpybutil.ewmh.get_wm_window_opacity(self.window).reply()
-        ]
+        self.opacity_events = [xpybutil.ewmh.get_wm_window_opacity(self.window).reply()]
         self.keep_going = True
         self.done = False
 
@@ -184,6 +182,7 @@ def default_flash_param():
         string_type = str
 
     return {
+        "config": {"default": None, "type": [string_type], "location": "cli"},
         "default_opacity": {"default": 1, "type": [float], "location": "any"},
         "flash_opacity": {"default": 0.8, "type": [float], "location": "any"},
         "time": {"default": 100, "type": [float], "location": "any"},

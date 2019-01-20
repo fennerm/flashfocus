@@ -131,17 +131,13 @@ register(
 register(
     RuleMatcherFactory,
     "lone_win_oc_matcher",
-    defaults=rekey(
-        RuleMatcherFactory.defaults, "flash_lone_windows", "on_open_close"
-    ),
+    defaults=rekey(RuleMatcherFactory.defaults, "flash_lone_windows", "on_open_close"),
     rules=[],
 )
 register(
     RuleMatcherFactory,
     "lone_win_dswitch_matcher",
-    defaults=rekey(
-        RuleMatcherFactory.defaults, "flash_lone_windows", "on_switch"
-    ),
+    defaults=rekey(RuleMatcherFactory.defaults, "flash_lone_windows", "on_switch"),
     rules=[],
 )
 
@@ -190,7 +186,7 @@ def blank_cli_options():
     return {
         key: None
         for key, val in default_flash_param().items()
-        if val["location"] == "any"
+        if val["location"] == "any" or val["location"] == "cli"
     }
 
 
@@ -207,3 +203,17 @@ def client_monitor():
 @fixture
 def xhandler():
     return XHandler(Queue())
+
+
+@fixture
+def configfile(tmpdir):
+    tmp = tmpdir.join("conf.yml")
+    tmp.write("default-opacity: 1\nflash-opacity: 0.5")
+    return tmp
+
+
+@fixture
+def configfile_with_02_flash_opacity(tmpdir):
+    tmp = tmpdir.join("conf.yml")
+    tmp.write("default-opacity: 1\nflash-opacity: 0.2")
+    return tmp

@@ -5,22 +5,15 @@ import re
 from shutil import copy
 import sys
 
-from marshmallow import (
-    fields,
-    post_load,
-    Schema,
-    validates_schema,
-    ValidationError,
-)
+from marshmallow import fields, post_load, Schema, validates_schema, ValidationError
 from parser import ParserError
 import yaml
 
 
-from flashfocus.misc import cmd_exists
 from flashfocus.syspaths import (
-    CONFIG_SEARCH_PATH,
-    DEFAULT_CONFIG_FILE,
-    USER_CONFIG_FILE,
+    build_config_search_path,
+    find_config_file,
+    get_default_config_file,
 )
 
 # Properties which may be contained both in global config and in flash rules.
@@ -44,9 +37,7 @@ def validate_positive_number(data):
 def validate_decimal(data):
     """Check that a value is a decimal between 0 and 1 inclusive."""
     if not 0 <= data <= 1:
-        raise ValidationError(
-            "Not in valid range, expected a float between 0 and 1"
-        )
+        raise ValidationError("Not in valid range, expected a float between 0 and 1")
 
 
 def validate_flash_lone_windows(data):
@@ -104,7 +95,7 @@ class RulesSchema(BaseSchema):
 
     @validates_schema()
     def check_for_matching_criteria(self, data):
-        """Check that rule contains at least one method for matching a window"""
+        """Check that rule contains at least one method for matching a window."""
         if not any([param in data for param in ["window_class", "window_id"]]):
             raise ValidationError("No criteria for matching rule to window")
 
@@ -174,7 +165,7 @@ def parse_config_error(option, err, ntabs=1):
 
 
 def construct_config_error_msg(config, errors):
-    """Construct an error message for an invalid configuration setup
+    """Construct an error message for an invalid configuration setup.
 
     Parameters
     ----------
@@ -216,11 +207,7 @@ def dehyphen(config):
             config[new_key] = config.pop(option)
 
 
-def merge_config_sources(
-    cli_options,
-    default_config=load_config(DEFAULT_CONFIG_FILE),
-    user_config=load_config(USER_CONFIG_FILE),
-):
+def merge_config_sources(cli_options, user_config, default_config):
     """Parse configuration by merging the default and user config files.
 
     Parameters
@@ -237,8 +224,8 @@ def merge_config_sources(
     Dict[str, str]
 
     """
-    if USER_CONFIG_FILE:
-        info("Loading configuration from %s", USER_CONFIG_FILE)
+    if user_config:
+        info("Loading configuration from %s", user_config)
     config = hierarchical_merge([default_config, user_config, cli_options])
     validated_config = validate_config(config)
     return validated_config
@@ -271,10 +258,32 @@ def hierarchical_merge(dicts):
     return outdict
 
 
-def create_user_configfile():
-    """Create the initial user config file."""
-    try:
-        os.makedirs(os.path.dirname(CONFIG_SEARCH_PATH[0]))
-    except OSError:
-        pass
-    copy(DEFAULT_CONFIG_FILE, CONFIG_SEARCH_PATH[0])
+def init_user_configfile(default_config_file):
+    """Create the initial user config file if it doesn't exist."""
+    config_file_path = find_config_file()
+    if config_file_path is None:
+        try:
+            config_file_path = build_config_search_path()[0]
+            os.makedirs(os.path.dirname(config_file_path))
+        except OSError:
+            pass
+        copy(default_config_file, config_file_path)
+
+    return config_file_path
+
+
+def load_merged_config(cli_options):
+    """Merge the CLI options with the user and default config files and return as a dict."""
+    default_config_file = get_default_config_file()
+    if cli_options["config"] is not None:
+        config_file_path = cli_options["config"]
+        if not os.path.exists(config_file_path):
+            error("%s does not exist")
+            sys.exit("Could not load config file, exiting...")
+    else:
+        config_file_path = init_user_configfile(default_config_file)
+    del cli_options["config"]
+    default_config = load_config(default_config_file)
+    user_config = load_config(config_file_path)
+    config = merge_config_sources(cli_options, user_config, default_config)
+    return config

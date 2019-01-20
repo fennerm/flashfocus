@@ -2,15 +2,20 @@
 from pytest import fixture, mark, raises
 from pytest_lazyfixture import lazy_fixture
 
-from flashfocus.ui import *
-from flashfocus.syspaths import DEFAULT_CONFIG_FILE
-
-from flashfocus.config import *
+from flashfocus.config import (
+    construct_config_error_msg,
+    dehyphen,
+    hierarchical_merge,
+    load_config,
+    load_merged_config,
+    merge_config_sources,
+)
+from flashfocus.syspaths import get_default_config_file
 
 
 @fixture
 def default_config():
-    return load_config(DEFAULT_CONFIG_FILE)
+    return load_config(get_default_config_file())
 
 
 @fixture
@@ -44,9 +49,7 @@ def invalid_rules():
     ],
 )
 @mark.parametrize("input_type", ["cli", "file"])
-def test_invalid_param(
-    option, values, input_type, blank_cli_options, default_config
-):
+def test_invalid_param(option, values, input_type, blank_cli_options, default_config):
     if input_type == "cli" and option == "rules":
         return
     for value in values:
@@ -56,9 +59,13 @@ def test_invalid_param(
         config = {option: value}
         with raises(SystemExit):
             if input_type == "cli":
-                merge_config_sources(config, defaults, None)
+                merge_config_sources(
+                    cli_options=config, user_config=None, default_config=defaults
+                )
             else:
-                merge_config_sources(blanks, defaults, config)
+                merge_config_sources(
+                    cli_options=blanks, user_config=config, default_config=defaults
+                )
 
 
 def check_validated_config(config, expected_types):
@@ -67,9 +74,7 @@ def check_validated_config(config, expected_types):
             if expected_types[name] == [bool]:
                 assert value in [True, False]
             else:
-                assert True in [
-                    isinstance(value, typ) for typ in expected_types[name]
-                ]
+                assert True in [isinstance(value, typ) for typ in expected_types[name]]
         except KeyError:
             pass
 
@@ -83,10 +88,7 @@ def check_validated_config(config, expected_types):
         ("ntimepoints", ["10", 10]),
         ("simple", lazy_fixture("valid_bool")),
         ("flash_on_focus", ["True"]),
-        (
-            "flash_lone_windows",
-            ["always", "never", "on_open_close", "on_switch"],
-        ),
+        ("flash_lone_windows", ["always", "never", "on_open_close", "on_switch"]),
     ],
 )
 @mark.parametrize("input_type", ["cli", "file"])
@@ -103,14 +105,16 @@ def test_valid_param(
         config = {option: value}
         if input_type == "cli":
             validated_config = merge_config_sources(
-                config, default_config, None
+                cli_options=config, user_config=None, default_config=default_config
             )
         else:
             validated_config = merge_config_sources(
-                blank_cli_options, default_config, config
+                cli_options=blank_cli_options,
+                user_config=config,
+                default_config=default_config,
             )
         check_validated_config(validated_config, valid_config_types)
-        assert len(validated_config) == len(blank_cli_options) + 1
+        assert len(validated_config) == len(blank_cli_options)
 
 
 @mark.parametrize(
@@ -135,9 +139,7 @@ def test_valid_param(
         [{"window_class": "^indo.*$", "time": "100"}],
     ],
 )
-def test_rules_validation(
-    rules, blank_cli_options, default_config, valid_config_types
-):
+def test_rules_validation(rules, blank_cli_options, default_config, valid_config_types):
     rules_dict = {"rules": rules}
     validated_config = merge_config_sources(
         blank_cli_options, default_config, rules_dict
@@ -151,10 +153,7 @@ def test_rules_validation(
     [
         ({"foo-bar": 1, "car": 2}, {"foo_bar": 1, "car": 2}),
         ({"car": 2}, {"car": 2}),
-        (
-            {"car": 2, "rules": [{"foo-bar": 3}]},
-            {"car": 2, "rules": [{"foo_bar": 3}]},
-        ),
+        ({"car": 2, "rules": [{"foo-bar": 3}]}, {"car": 2, "rules": [{"foo_bar": 3}]}),
         (dict(), dict()),
     ],
 )
@@ -186,40 +185,21 @@ def test_hierarchical_merge_returns_a_new_dict():
     assert a == a_copy
 
 
-def test_rule_defaults_inherited_from_global_param(
-    default_config, blank_cli_options
-):
+def test_rule_defaults_inherited_from_global_param(default_config, blank_cli_options):
     user_config = {"rules": [{"window_class": "foo"}]}
-    validated = merge_config_sources(
-        blank_cli_options, default_config, user_config
-    )
-    assert (
-        validated["rules"][0]["flash_opacity"]
-        == default_config["flash_opacity"]
-    )
+    validated = merge_config_sources(blank_cli_options, default_config, user_config)
+    assert validated["rules"][0]["flash_opacity"] == default_config["flash_opacity"]
 
 
 def test_rules_added_to_config_dict_if_not_present_in_config(
     default_config, blank_cli_options
 ):
-    validated = merge_config_sources(
-        blank_cli_options, default_config, default_config
-    )
+    validated = merge_config_sources(blank_cli_options, default_config, default_config)
     assert "rules" in validated
 
 
-@fixture
-def configfile(tmpdir):
-    tmp = tmpdir.join("conf.yml")
-    tmp.write("default-opacity: 1\nflash-opacity: 0.5")
-    return tmp
-
-
 def test_load_config(configfile):
-    assert load_config(configfile) == {
-        "default_opacity": 1,
-        "flash_opacity": 0.5,
-    }
+    assert load_config(configfile) == {"default_opacity": 1, "flash_opacity": 0.5}
 
 
 def test_construct_rules_config_error_message(default_config):
@@ -251,3 +231,22 @@ def invalid_yaml(tmpdir):
 def test_invalid_yaml_passed_to_load_config(invalid_yaml):
     with raises(SystemExit):
         load_config(invalid_yaml)
+
+
+def test_load_merged_config_with_no_custom_config(
+    monkeypatch, blank_cli_options, configfile
+):
+    monkeypatch.setattr(
+        "flashfocus.config.init_user_configfile",
+        lambda *args, **kwargs: str(configfile),
+    )
+    config = load_merged_config(blank_cli_options)
+    assert config["flash_opacity"] == 0.5
+
+
+def test_load_merged_config_with_custom_config(
+    monkeypatch, blank_cli_options, configfile_with_02_flash_opacity
+):
+    blank_cli_options["config"] = str(configfile_with_02_flash_opacity)
+    config = load_merged_config(blank_cli_options)
+    assert config["flash_opacity"] == 0.2

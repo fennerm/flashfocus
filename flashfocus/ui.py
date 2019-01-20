@@ -9,28 +9,21 @@ import sys
 import click
 
 from flashfocus.color import green, red
-from flashfocus.config import create_user_configfile, merge_config_sources
+from flashfocus.config import load_merged_config
 from flashfocus.server import FlashServer
-from flashfocus.syspaths import RUNTIME_DIR, USER_CONFIG_FILE
+from flashfocus.syspaths import RUNTIME_DIR
 
 # Set LOGLEVEL environment variable to DEBUG or WARNING to change logging
 # verbosity.
 logging.basicConfig(
-    level=os.environ.get("LOGLEVEL", "INFO"),
-    format="%(levelname)s: %(message)s",
+    level=os.environ.get("LOGLEVEL", "INFO"), format="%(levelname)s: %(message)s"
 )
 
 if sys.stderr.isatty():
     # Colored logging categories
-    logging.addLevelName(
-        logging.WARNING, red(logging.getLevelName(logging.WARNING))
-    )
-    logging.addLevelName(
-        logging.ERROR, red(logging.getLevelName(logging.ERROR))
-    )
-    logging.addLevelName(
-        logging.INFO, green(logging.getLevelName(logging.INFO))
-    )
+    logging.addLevelName(logging.WARNING, red(logging.getLevelName(logging.WARNING)))
+    logging.addLevelName(logging.ERROR, red(logging.getLevelName(logging.ERROR)))
+    logging.addLevelName(logging.INFO, green(logging.getLevelName(logging.INFO)))
 
 
 # The pid file for flashfocus. Used to ensure that only one instance is active.
@@ -51,6 +44,9 @@ def ensure_single_instance():
 
 
 @click.command()
+@click.option(
+    "--config", "-c", required=False, default=None, help="Config file location"
+)
 @click.option(
     "--flash-opacity",
     "-o",
@@ -128,16 +124,14 @@ def init_server(cli_options):
     """Initialize the flashfocus server with given command line options."""
     ensure_single_instance()
 
-    if cli_options["opacity"]:
-        warn("--opacity is deprecated, please use --flash-opacity/-o instead")
-        if "flash_opacity" not in cli_options:
-            cli_options["flash_opacity"] = cli_options["opacity"]
-    del cli_options["opacity"]
+    if "opacity" in cli_options:
+        if cli_options["opacity"] is not None:
+            warn("--opacity is deprecated, please use --flash-opacity/-o instead")
+            if cli_options["flash_opacity"] is None:
+                cli_options["flash_opacity"] = cli_options["opacity"]
+        del cli_options["opacity"]
 
-    if USER_CONFIG_FILE is None:
-        create_user_configfile()
-
-    config = merge_config_sources(cli_options)
+    config = load_merged_config(cli_options)
 
     info("Initializing with parameters:")
     info("%s", config)

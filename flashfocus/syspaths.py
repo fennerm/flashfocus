@@ -42,9 +42,9 @@ def find_config_file():
     return None
 
 
-CONFIG_SEARCH_PATH = build_config_search_path()
-DEFAULT_CONFIG_FILE = os.path.join(
-    os.path.dirname(__file__), "default_config.yml"
-)
-USER_CONFIG_FILE = find_config_file()
+def get_default_config_file():
+    """Get the location of the default flashfocus config file."""
+    return os.path.join(os.path.dirname(__file__), "default_config.yml")
+
+
 RUNTIME_DIR = determine_runtime_dir()
