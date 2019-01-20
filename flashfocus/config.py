@@ -1,5 +1,5 @@
 """Parsing the user config file."""
-from logging import error, info
+import logging
 import os
 import re
 from shutil import copy
@@ -188,12 +188,12 @@ def construct_config_error_msg(config, errors):
 
 def validate_config(config):
     """Validate the config file and command line parameters."""
-    validated, errors = ConfigSchema().load(config)
-
-    if errors:
-        error(construct_config_error_msg(config, errors))
+    try:
+        validated = ConfigSchema(strict=True).load(config)
+    except ValidationError as err:
+        logging.error(construct_config_error_msg(config, err.messages))
         sys.exit(1)
-    return validated
+    return validated.data
 
 
 def dehyphen(config):
@@ -225,7 +225,7 @@ def merge_config_sources(cli_options, user_config, default_config):
 
     """
     if user_config:
-        info("Loading configuration from %s", user_config)
+        logging.info("Loading configuration from %s", user_config)
     config = hierarchical_merge([default_config, user_config, cli_options])
     validated_config = validate_config(config)
     return validated_config
@@ -278,7 +278,7 @@ def load_merged_config(cli_options):
     if cli_options["config"] is not None:
         config_file_path = cli_options["config"]
         if not os.path.exists(config_file_path):
-            error("%s does not exist")
+            logging.error("%s does not exist")
             sys.exit("Could not load config file, exiting...")
     else:
         config_file_path = init_user_configfile(default_config_file)
