@@ -6,6 +6,9 @@
 - More finetuned control over flash animation
 
 
+## [1.2.1] - Jan 27, 2018
+- Reverted Pyyaml requirement to >3.0
+
 ## [1.2.0] - Jan 20, 2018
 - Added: ability to set custom config file location with --config flag
 - Fixed: Use marshmallow strict mode due to deprecation warning
