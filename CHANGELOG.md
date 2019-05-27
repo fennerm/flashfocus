@@ -4,6 +4,7 @@
 - Wayland support
 
 ## [1.2.6] - May 27th, 2019
+Added support for marshmallow v3 which is in prerelease
 
 ## [1.2.5] - May 26th, 2019
 - Stopped using the deprecated inspect.getargspec API in python3
