@@ -16,6 +16,12 @@ define deploy_to_github
 	git push --tags
 endef
 
+define update_changelog
+	vim CHANGELOG.md
+	git add CHANGELOG.md
+	git commit -m "Updated changelog"
+endef
+
 run_tests:
 	docker build -t flashfocus .
 	docker run --rm -p $(TEST_PORT) -it --name flashfocus -e DISPLAY=:0.0 flashfocus
@@ -28,18 +34,21 @@ run_tests_noninteractive:
 
 patch_release:
 	set -euo pipefail
+	$(call update_changelog)
 	bumpversion patch
 	$(call deploy_to_pypi)
 	$(call deploy_to_github)
 
 minor_release:
 	set -euo pipefail
+	$(call update_changelog)
 	bumpversion minor
 	$(call deploy_to_pypi)
 	$(call deploy_to_github)
 
 major_release:
 	set -euo pipefail
+	$(call update_changelog)
 	bumpversion major
 	$(call deploy_to_pypi)
 	$(call deploy_to_github)
