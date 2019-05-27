@@ -35,6 +35,24 @@ class FlashRouter:
         parameters, `flash_on_focus` setting and `window_id` and/or
         `window_class`.
 
+    Attributes
+    ----------
+    flashers: List[flashfocus.flasher.Flasher]
+        List of flashers each with a distinct set of flash parameters. The last flasher in the list
+        is the default flasher which will be used for windows which don't match any of the user's
+        configured rules.
+    rules: List[flashfocus.rule.Rule]
+        List of rules each corresponding to a set of criteria for matching against windows. The last
+        rule in the list is the default rule which matches any window.
+    current_desktop: int
+        The id of the current focused desktop
+    prev_desktop: int
+        The id of the previously focused desktop
+    prev_focus: int
+        The id of the previously focused window. We keep track of this so that
+        the same window is never flashed consecutively. When a window is closed
+        in i3, the next window is flashed 3 times without this guard
+
     """
 
     def __init__(self, defaults, config_rules):
@@ -64,6 +82,17 @@ class FlashRouter:
         self.prev_focus = None
 
     def route_request(self, window, request_type):
+        """Match a window against rule criteria and handle the request according to it's type.
+
+
+        Parameters
+        ----------
+        window: int
+            A Xorg window id
+        request_type: str
+            One of 'new_window', 'client_request', 'window_init', 'focus_shift'
+
+        """
         if request_type == "focus_shift":
             self._route_focus_shift(window)
         elif request_type == "new_window":

@@ -48,10 +48,6 @@ class FlashServer:
 
     Attributes
     ----------
-    prev_focus: int
-        The id of the previously focused window. We keep track of this so that
-        the same window is never flashed consecutively. When a window is closed
-        in i3, the next window is flashed 3 times without this guard
     router: FlashRouter
         Object used to match window id's to flash parameters from the config
         file.
