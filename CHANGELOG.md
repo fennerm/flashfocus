@@ -3,22 +3,24 @@
 ## [Unreleased]
 - Wayland support
 
-## [1.2.5] - May 26th, 2018
+## [1.2.6] - May 27th, 2019
+
+## [1.2.5] - May 26th, 2019
 - Stopped using the deprecated inspect.getargspec API in python3
 
-## [1.2.4] - May 26th, 2018
+## [1.2.4] - May 26th, 2019
 - Bug fix (issue #25)
 
-## [1.2.3] - May 26th, 2018
+## [1.2.3] - May 26th, 2019
 - No change, please ignore
 
-## [1.2.2] - May 26th, 2018
+## [1.2.2] - May 26th, 2019
 - No change, please ignore
 
-## [1.2.1] - Jan 27, 2018
+## [1.2.1] - Jan 27, 2019
 - Reverted Pyyaml requirement to >3.0
 
-## [1.2.0] - Jan 20, 2018
+## [1.2.0] - Jan 20, 2019
 - Added: ability to set custom config file location with --config flag
 - Fixed: Use marshmallow strict mode due to deprecation warning
 - Fixed: Updated pyaml version in requirements due to security vulnerability
