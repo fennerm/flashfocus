@@ -3,6 +3,9 @@
 ## [Unreleased]
 - Wayland support
 
+## [1.2.7] - May 27th, 2019
+- Set windows to default opacity even if they're not flashed (#25)
+
 ## [1.2.6] - May 27th, 2019
 Added support for marshmallow v3 which is in prerelease
 
