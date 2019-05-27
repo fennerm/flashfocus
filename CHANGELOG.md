@@ -1,10 +1,16 @@
 # Changelog
 
 ## [Unreleased]
+- Wayland support
 
-- Ability to apply different flash rules to tabs/new windows/closed windows
-- More finetuned control over flash animation
+## [1.2.4] - May 26th, 2018
+- Bug fix (issue #25)
 
+## [1.2.3] - May 26th, 2018
+- No change, please ignore
+
+## [1.2.2] - May 26th, 2018
+- No change, please ignore
 
 ## [1.2.1] - Jan 27, 2018
 - Reverted Pyyaml requirement to >3.0
