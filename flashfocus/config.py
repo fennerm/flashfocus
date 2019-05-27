@@ -10,11 +10,7 @@ from parser import ParserError
 import yaml
 
 
-from flashfocus.syspaths import (
-    build_config_search_path,
-    find_config_file,
-    get_default_config_file,
-)
+from flashfocus.syspaths import build_config_search_path, find_config_file, get_default_config_file
 
 # Properties which may be contained both in global config and in flash rules.
 BASE_PROPERTIES = [
@@ -190,6 +186,9 @@ def validate_config(config):
     """Validate the config file and command line parameters."""
     try:
         validated = ConfigSchema(strict=True).load(config)
+    except TypeError:
+        # Strict parameter removed in the latest versions of marshmallow
+        validated = ConfigSchema().load(config)
     except ValidationError as err:
         logging.error(construct_config_error_msg(config, err.messages))
         sys.exit(1)
