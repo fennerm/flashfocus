@@ -1,7 +1,7 @@
 """Flash windows on focus."""
 from __future__ import division
 
-from logging import info, warn
+import logging
 
 try:
     from queue import Empty, Queue
@@ -14,7 +14,7 @@ import xpybutil
 import xpybutil.window
 
 from flashfocus.producer import ClientMonitor, XHandler
-from flashfocus.rule import RuleMatcher
+from flashfocus.router import FlashRouter, UnexpectedRequestType
 from flashfocus.xutil import list_mapped_windows, unset_all_window_opacity, WMError
 
 
@@ -43,9 +43,8 @@ class FlashServer:
     flash_on_focus: bool
         If True, windows will be flashed on focus. Otherwise, windows will only
         be flashed on request.
-    flash_lone_windows: bool
-        If True, windows will be flashed even if they are the only window on 
-        the desktop.
+    flash_lone_windows: str
+        One of 'never', 'always', 'on_switch', 'on_open_close'
 
     Attributes
     ----------
@@ -53,7 +52,7 @@ class FlashServer:
         The id of the previously focused window. We keep track of this so that
         the same window is never flashed consecutively. When a window is closed
         in i3, the next window is flashed 3 times without this guard
-    matcher: RuleMatcher
+    router: FlashRouter
         Object used to match window id's to flash parameters from the config
         file.
     keep_going: bool
@@ -78,7 +77,7 @@ class FlashServer:
         flash_on_focus,
         flash_lone_windows,
     ):
-        self.matcher = RuleMatcher(
+        self.router = FlashRouter(
             defaults={
                 "default_opacity": default_opacity,
                 "flash_opacity": flash_opacity,
@@ -89,14 +88,10 @@ class FlashServer:
                 "flash_on_focus": flash_on_focus,
                 "flash_lone_windows": flash_lone_windows,
             },
-            rules=rules,
+            config_rules=rules,
         )
-        self.prev_focus = 0
         self.flash_requests = Queue()
-        self.producers = [
-            ClientMonitor(self.flash_requests),
-            XHandler(self.flash_requests),
-        ]
+        self.producers = [ClientMonitor(self.flash_requests), XHandler(self.flash_requests)]
         self.keep_going = True
 
     def event_loop(self):
@@ -108,17 +103,17 @@ class FlashServer:
             while self.keep_going:
                 self._flash_queued_window()
         except (KeyboardInterrupt, SystemExit):
-            warn("Interrupt received, shutting down...")
+            logging.warn("Interrupt received, shutting down...")
             self.shutdown()
 
     def shutdown(self, disconnect_from_xorg=True):
         """Cleanup after recieving a SIGINT."""
         self.keep_going = False
         self._kill_producers()
-        info("Resetting windows to full opacity...")
+        logging.info("Resetting windows to full opacity...")
         unset_all_window_opacity()
         if disconnect_from_xorg:
-            info("Disconnecting from X session...")
+            logging.info("Disconnecting from X session...")
             xpybutil.conn.disconnect()
 
     def _flash_queued_window(self):
@@ -128,26 +123,20 @@ class FlashServer:
         except Empty:
             return None
 
-        if window != self.prev_focus or request_type != "focus_shift":
-            try:
-                self.matcher.route_request(window, request_type)
-            except (WindowError, WMError):
-                pass
-        else:
-            info("Window %s was just flashed, ignoring...", window)
-        self.prev_focus = window
+        try:
+            self.router.route_request(window, request_type)
+        except UnexpectedRequestType:
+            logging.error("Unexpected request type - {}. Aborting...".format(request_type))
+            self.shutdown()
+        except (WindowError, WMError):
+            pass
 
     def _kill_producers(self):
-        info("Terminating threads...")
+        logging.info("Terminating threads...")
         for producer in self.producers:
             producer.stop()
 
     def _set_all_window_opacity_to_default(self):
-        info("Setting all windows to their default opacity...")
+        logging.info("Setting all windows to their default opacity...")
         for window in list_mapped_windows():
-            try:
-                flasher = self.matcher.match(window)
-                flasher.set_default_opacity(window)
-            except (AttributeError, WindowError):
-                # Match returned None or window disappeared
-                pass
+            self.router.route_request(window, "window_init")

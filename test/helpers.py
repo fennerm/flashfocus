@@ -101,13 +101,14 @@ class WindowWatcher(Thread):
                 self.opacity_events.append(opacity)
         self.done = True
 
-    def report(self):
-        """Send the stop signal and report changes in _NET_WM_WINDOW_OPACITY."""
+    def stop(self):
         # Give the x server a little time to catch up with requests
         sleep(0.2)
         self.keep_going = False
         while not self.done:
             pass
+
+    def report(self):
         return self.opacity_events
 
 
@@ -140,7 +141,7 @@ def server_running(server):
         pass
     p = Thread(target=server.event_loop)
     p.start()
-    sleep(0.1)
+    sleep(0.2)
     yield
     sleep(0.01)
     server.shutdown(disconnect_from_xorg=False)
@@ -152,6 +153,20 @@ def watching_windows(windows):
     for watcher in watchers:
         watcher.start()
     yield watchers
+    for watcher in watchers:
+        watcher.stop()
+
+
+@contextmanager
+def new_watched_window():
+    """Open a new window and watch it."""
+    window_session = WindowSession(1)
+    watcher = WindowWatcher(window_session.windows[0])
+    watcher.start()
+    sleep(0.1)
+    yield window_session.windows[0], watcher
+    watcher.stop()
+    window_session.destroy()
 
 
 @contextmanager
@@ -189,26 +204,10 @@ def default_flash_param():
         "ntimepoints": {"default": 4, "type": [int], "location": "any"},
         "simple": {"default": False, "type": [bool], "location": "any"},
         "flash_on_focus": {"default": True, "type": [bool], "location": "any"},
-        "flash_lone_windows": {
-            "default": "always",
-            "type": [string_type],
-            "location": "any",
-        },
-        "rules": {
-            "default": dict(),
-            "type": [dict, type(None)],
-            "location": "config_file",
-        },
-        "window_id": {
-            "default": "window1",
-            "type": [regex_pattern_type],
-            "location": "rule",
-        },
-        "window_class": {
-            "default": "Window1",
-            "type": [regex_pattern_type],
-            "location": "rule",
-        },
+        "flash_lone_windows": {"default": "always", "type": [string_type], "location": "any"},
+        "rules": {"default": dict(), "type": [dict, type(None)], "location": "config_file"},
+        "window_id": {"default": "window1", "type": [regex_pattern_type], "location": "rule"},
+        "window_class": {"default": "Window1", "type": [regex_pattern_type], "location": "rule"},
     }
 
 

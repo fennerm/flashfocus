@@ -12,7 +12,6 @@ from pytest_factoryboy import register
 
 from flashfocus.flasher import Flasher
 from flashfocus.producer import ClientMonitor, XHandler
-from flashfocus.rule import RuleMatcher
 from flashfocus.server import FlashServer
 from flashfocus.sockets import init_client_socket, init_server_socket
 
@@ -22,6 +21,7 @@ from test.helpers import (
     fill_in_rule,
     rekey,
     StubServer,
+    switch_desktop,
     WindowSession,
 )
 
@@ -30,6 +30,7 @@ from test.helpers import (
 def windows():
     """Display session with multiple open windows."""
     clear_desktop(0)
+    switch_desktop(0)
     window_session = WindowSession(3)
     yield window_session.windows
     window_session.destroy()
@@ -39,6 +40,7 @@ def windows():
 def window(windows):
     """Single blank window."""
     clear_desktop(0)
+    switch_desktop(0)
     window_session = WindowSession(1)
     yield window_session.windows[0]
     window_session.destroy()
@@ -64,6 +66,37 @@ register(ServerFactory, "flash_server")
 
 register(ServerFactory, "transparent_flash_server", default_opacity=0.4)
 
+
+# See issue #25
+register(
+    ServerFactory,
+    "no_lone_server",
+    default_opacity=1,
+    flash_opacity=0.8,
+    flash_lone_windows="never",
+    rules=[
+        fill_in_rule(
+            {"window_class": "Window1", "default_opacity": 0.2, "flash_lone_windows": "never"}
+        )
+    ],
+)
+
+register(
+    ServerFactory,
+    "lone_on_switch_server",
+    default_opacity=1,
+    flash_opacity=0.8,
+    flash_lone_windows="on_switch",
+)
+
+register(
+    ServerFactory,
+    "lone_on_open_close_server",
+    default_opacity=1,
+    flash_opacity=0.8,
+    flash_lone_windows="on_open_close",
+)
+
 register(
     ServerFactory,
     "mult_opacity_server",
@@ -72,6 +105,18 @@ register(
         for rule in [
             {"window_class": "Window1", "default_opacity": 0.2},
             {"window_id": "window2", "default_opacity": 0.5},
+        ]
+    ],
+)
+
+register(
+    ServerFactory,
+    "mult_flash_opacity_server",
+    rules=[
+        fill_in_rule(rule)
+        for rule in [
+            {"window_class": "Window1", "flash_opacity": 0.2},
+            {"window_id": "window2", "flash_opacity": 0.5},
         ]
     ],
 )
@@ -93,53 +138,6 @@ class FlasherFactory(Factory):
 register(FlasherFactory, "flasher")
 
 register(FlasherFactory, "pointless_flasher", flash_opacity=1)
-
-
-class RuleMatcherFactory(Factory):
-    """Factory for producing RuleMatcher fixture instances."""
-
-    class Meta:
-        model = RuleMatcher
-
-    defaults = {
-        key: val["default"]
-        for key, val in default_flash_param().items()
-        if val["location"] == "any"
-    }
-    rules = [
-        # Matches window1 but not 2
-        fill_in_rule(
-            {
-                "window_id": re.compile("^.*1$"),
-                "flash_opacity": 0,
-                "default_opacity": 0.8,
-                "simple": False,
-                "flash_on_focus": False,
-            }
-        )
-    ]
-
-
-register(RuleMatcherFactory, "rule_matcher")
-register(RuleMatcherFactory, "norule_matcher", rules=[])
-register(
-    RuleMatcherFactory,
-    "no_lone_win_matcher",
-    defaults=rekey(RuleMatcherFactory.defaults, "flash_lone_windows", "never"),
-    rules=[],
-)
-register(
-    RuleMatcherFactory,
-    "lone_win_oc_matcher",
-    defaults=rekey(RuleMatcherFactory.defaults, "flash_lone_windows", "on_open_close"),
-    rules=[],
-)
-register(
-    RuleMatcherFactory,
-    "lone_win_dswitch_matcher",
-    defaults=rekey(RuleMatcherFactory.defaults, "flash_lone_windows", "on_switch"),
-    rules=[],
-)
 
 
 @fixture

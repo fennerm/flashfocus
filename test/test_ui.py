@@ -4,7 +4,7 @@ from flashfocus.ui import init_server
 
 
 def return_opacity(self, *args, **kwargs):
-    return self.matcher.flashers[-1].flash_opacity
+    return self.router.flashers[-1].flash_opacity
 
 
 def test_opacity_deprecation(monkeypatch, blank_cli_options):
