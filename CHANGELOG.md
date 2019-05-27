@@ -3,6 +3,9 @@
 ## [Unreleased]
 - Wayland support
 
+## [1.2.5] - May 26th, 2018
+- Stopped using the deprecated inspect.getargspec API in python3
+
 ## [1.2.4] - May 26th, 2018
 - Bug fix (issue #25)
 
