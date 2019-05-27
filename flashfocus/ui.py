@@ -2,7 +2,6 @@
 """flashfocus command line interface."""
 import fcntl
 import logging
-from logging import info, warn
 import os
 import sys
 
@@ -15,9 +14,7 @@ from flashfocus.syspaths import RUNTIME_DIR
 
 # Set LOGLEVEL environment variable to DEBUG or WARNING to change logging
 # verbosity.
-logging.basicConfig(
-    level=os.environ.get("LOGLEVEL", "INFO"), format="%(levelname)s: %(message)s"
-)
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"), format="%(levelname)s: %(message)s")
 
 if sys.stderr.isatty():
     # Colored logging categories
@@ -44,9 +41,7 @@ def ensure_single_instance():
 
 
 @click.command()
-@click.option(
-    "--config", "-c", required=False, default=None, help="Config file location"
-)
+@click.option("--config", "-c", required=False, default=None, help="Config file location")
 @click.option(
     "--flash-opacity",
     "-o",
@@ -63,11 +58,7 @@ def ensure_single_instance():
     "opacity to this value post-flash. (default: 1.0)",
 )
 @click.option(
-    "--time",
-    "-t",
-    type=int,
-    required=False,
-    help="Flash time interval (in milliseconds).",
+    "--time", "-t", type=int, required=False, help="Flash time interval (in milliseconds)."
 )
 @click.option(
     "--simple",
@@ -90,10 +81,7 @@ def ensure_single_instance():
     "(default: 10)",
 )
 @click.option(
-    "--opacity",
-    required=False,
-    type=float,
-    help="DEPRECATED: use --flash-opacity/-o instead",
+    "--opacity", required=False, type=float, help="DEPRECATED: use --flash-opacity/-o instead"
 )
 @click.option(
     "--flash-on-focus/--no-flash-on-focus",
@@ -126,15 +114,15 @@ def init_server(cli_options):
 
     if "opacity" in cli_options:
         if cli_options["opacity"] is not None:
-            warn("--opacity is deprecated, please use --flash-opacity/-o instead")
+            logging.warn("--opacity is deprecated, please use --flash-opacity/-o instead")
             if cli_options["flash_opacity"] is None:
                 cli_options["flash_opacity"] = cli_options["opacity"]
         del cli_options["opacity"]
 
     config = load_merged_config(cli_options)
 
-    info("Initializing with parameters:")
-    info("%s", config)
+    logging.info("Initializing with parameters:")
+    logging.info("%s", config)
     server = FlashServer(**config)
     return server.event_loop()
 

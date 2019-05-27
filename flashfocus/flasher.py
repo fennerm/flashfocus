@@ -1,7 +1,7 @@
 """Code for flashing windows."""
 from __future__ import division
 
-from logging import info
+import logging
 from threading import Thread
 from time import sleep
 
@@ -47,9 +47,7 @@ class Flasher:
 
     """
 
-    def __init__(
-        self, time, flash_opacity, default_opacity, simple, ntimepoints
-    ):
+    def __init__(self, time, flash_opacity, default_opacity, simple, ntimepoints):
         self.default_opacity = default_opacity
         self.flash_opacity = flash_opacity
         self.time = time / 1000
@@ -64,7 +62,7 @@ class Flasher:
         self.progress = dict()
 
     def flash(self, window):
-        info("Flashing window %s", str(window))
+        logging.info("Flashing window %s", str(window))
         if self.default_opacity == self.flash_opacity:
             return
 
@@ -117,13 +115,10 @@ class Flasher:
                 sleep(self.timechunk)
                 self.progress[window] += 1
 
-            info("Resetting window %s opacity to default", window)
+            logging.info("Resetting window %s opacity to default", window)
             set_opacity(window, self.default_opacity)
 
         except WindowError:
-            info(
-                "Attempted to draw to nonexistant window %s, ignoring...",
-                str(window),
-            )
+            logging.info("Attempted to draw to nonexistant window %s, ignoring...", str(window))
         finally:
             del self.progress[window]

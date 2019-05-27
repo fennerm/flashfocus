@@ -1,5 +1,5 @@
 """Produce work for the flashfocus server."""
-from logging import info
+import logging
 import socket
 from threading import Thread
 
@@ -9,11 +9,7 @@ from xpybutil.ewmh import get_active_window
 from xpybutil.icccm import set_wm_name_checked
 from xpybutil.util import get_atom_name
 
-from flashfocus.xutil import (
-    create_message_window,
-    destroy_window,
-    list_mapped_windows,
-)
+from flashfocus.xutil import create_message_window, destroy_window, list_mapped_windows
 from flashfocus.sockets import init_server_socket
 
 
@@ -50,9 +46,7 @@ class XHandler(Producer):
         self.message_window = create_message_window()
 
     def run(self):
-        xpybutil.window.listen(
-            xpybutil.root, "PropertyChange", "SubstructureNotify"
-        )
+        xpybutil.window.listen(xpybutil.root, "PropertyChange", "SubstructureNotify")
         xpybutil.window.listen(self.message_window, "PropertyChange")
         while self.keep_going:
             event = xpybutil.conn.wait_for_event()
@@ -68,21 +62,21 @@ class XHandler(Producer):
 
     def _handle_new_mapped_window(self, event):
         """Handle a new mapped window event."""
-        info("Window %s mapped...", event.window)
+        logging.info("Window %s mapped...", event.window)
         # Check that window is visible so that we don't accidentally set
         # opacity of windows which are not for display. Without this step
         # window opacity can become frozen and stop responding to flashes.
         if event.window in list_mapped_windows():
             self.queue_window(event.window, "new_window")
         else:
-            info("Window %s is not visible, ignoring...", event.window)
+            logging.info("Window %s is not visible, ignoring...", event.window)
 
     def _handle_property_change(self, event):
         """Handle a property change on a watched window."""
         atom_name = get_atom_name(event.atom)
         if atom_name == "_NET_ACTIVE_WINDOW":
             focused_window = get_active_window().reply()
-            info("Focus shifted to %s", focused_window)
+            logging.info("Focus shifted to %s", focused_window)
             self.queue_window(focused_window, "focus_shift")
         elif atom_name == "WM_NAME" and event.window == self.message_window:
             # Received kill signal from server -> terminate the thread
@@ -105,11 +99,11 @@ class ClientMonitor(Producer):
             except socket.timeout:
                 pass
             else:
-                info("Received a flash request from client...")
+                logging.info("Received a flash request from client...")
                 focused = xpybutil.ewmh.get_active_window().reply()
                 self.queue_window(focused, "client_request")
 
     def stop(self):
         super(ClientMonitor, self).stop()
-        info("Disconnecting socket...")
+        logging.info("Disconnecting socket...")
         self.sock.close()
