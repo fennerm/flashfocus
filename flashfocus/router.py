@@ -148,6 +148,8 @@ class FlashRouter:
             rule, flasher = self._match(window)
             if self._config_allows_flash(window, rule):
                 flasher.flash(window)
+            else:
+                flasher.set_default_opacity(window)
         else:
             logging.info("Window %s was just flashed, ignoring...", window)
 

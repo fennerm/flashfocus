@@ -66,6 +66,7 @@ class XHandler(Producer):
         # Check that window is visible so that we don't accidentally set
         # opacity of windows which are not for display. Without this step
         # window opacity can become frozen and stop responding to flashes.
+        # TODO this doesn't actually seem to work if the window is on another desktop, not sure why.
         if event.window in list_mapped_windows():
             self.queue_window(event.window, "new_window")
         else:
