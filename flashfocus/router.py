@@ -9,8 +9,8 @@ passes the request on to the Flasher whose criteria match the window.
 import logging
 
 from flashfocus.flasher import Flasher
-from flashfocus.misc import list_param
 from flashfocus.rule import Rule
+from flashfocus.util import list_param
 from flashfocus.xutil import count_windows, get_current_desktop, get_wm_class
 
 
