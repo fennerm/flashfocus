@@ -1,6 +1,9 @@
 """Routes requests from the server to the Flasher which matches the window.
 
-Each rule in the user config specifies a set;
+In the case that no rules are present in the user's config, just one Flasher instance will exist and
+all flash requests will be routed to that flasher. If rules are present, then a Flasher instance is
+created for each rule. Each time a request comes in the router iterates through all of its rules and
+passes the request on to the Flasher whose criteria match the window.
 
 """
 import logging
