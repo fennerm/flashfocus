@@ -1,5 +1,8 @@
 """Utility functions."""
-from inspect import getargspec
+try:
+    from inspect import getfullargspec as getargspec
+except ImportError:
+    from inspect import getargspec
 import os
 
 
@@ -10,6 +13,5 @@ def list_param(f):
 
 def cmd_exists(cmd):
     return any(
-        os.access(os.path.join(path, cmd), os.X_OK)
-        for path in os.environ["PATH"].split(os.pathsep)
+        os.access(os.path.join(path, cmd), os.X_OK) for path in os.environ["PATH"].split(os.pathsep)
     )
