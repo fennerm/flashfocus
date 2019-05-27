@@ -2,7 +2,8 @@ FROM fennerm/arch-i3-novnc
 
 LABEL maintainer="fmacrae.dev@gmail.com"
 
-RUN pacman -Syu --noconfirm
+RUN pacman -Sy --noconfirm archlinux-keyring
+RUN pacman -Syyu --noconfirm
 RUN pacman -S --noconfirm \
         gcc \
         glib2 \
