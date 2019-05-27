@@ -13,5 +13,4 @@
 .testmondata
 dist
 __LAST__
-Makefile
 .prospector.yaml
