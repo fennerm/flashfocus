@@ -13,7 +13,8 @@ from xcffib.xproto import WindowError
 import xpybutil
 import xpybutil.window
 
-from flashfocus.producer import ClientMonitor, XHandler
+from flashfocus.client import ClientMonitor
+from flashfocus.protocol import DisplayHandler
 from flashfocus.router import FlashRouter, UnexpectedRequestType
 from flashfocus.xutil import list_mapped_windows, unset_all_window_opacity, WMError
 
@@ -87,7 +88,7 @@ class FlashServer:
             config_rules=rules,
         )
         self.flash_requests = Queue()
-        self.producers = [ClientMonitor(self.flash_requests), XHandler(self.flash_requests)]
+        self.producers = [ClientMonitor(self.flash_requests), DisplayHandler(self.flash_requests)]
         self.keep_going = True
 
     def event_loop(self):
