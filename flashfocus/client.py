@@ -1,14 +1,16 @@
 """Communicating with the flashfocus server via unix socket."""
+from queue import Queue
 import logging
 import socket
+from threading import Thread
 
-import xpybutil
 
-from flashfocus.producer import Producer
+from flashfocus.compat import get_focused_window, Window
+from flashfocus.display import WMMessage, WMMessageType
 from flashfocus.sockets import init_client_socket, init_server_socket
 
 
-def client_request_flash():
+def client_request_flash() -> None:
     """Request that the server flashes the current window."""
     logging.info("Connecting to the flashfocus daemon...")
     sock = init_client_socket()
@@ -17,15 +19,16 @@ def client_request_flash():
     sock.sendall(bytearray("1", encoding="UTF-8"))
 
 
-class ClientMonitor(Producer):
+class ClientMonitor(Thread):
     """Queue flash requests from clients."""
 
-    def __init__(self, queue):
-        super(ClientMonitor, self).__init__(queue)
-        self.type = "client_request"
+    def __init__(self, queue: Queue) -> None:
+        super(ClientMonitor, self).__init__()
+        self.queue = queue
+        self.keep_going = True
         self.sock = init_server_socket()
 
-    def run(self):
+    def run(self) -> None:
         """Queue client request flashes."""
         while self.keep_going:
             try:
@@ -34,10 +37,15 @@ class ClientMonitor(Producer):
                 pass
             else:
                 logging.info("Received a flash request from client...")
-                focused = xpybutil.ewmh.get_active_window().reply()
-                self.queue_window(focused, "client_request")
+                focused = get_focused_window()
+                self.queue_window(focused, WMMessageType.CLIENT_REQUEST)
 
-    def stop(self):
-        super(ClientMonitor, self).stop()
+    def queue_window(self, window: Window, type: WMMessageType):
+        """Add a window to the queue."""
+        self.queue.put(WMMessage(window=window, type=type))
+
+    def stop(self) -> None:
+        self.keep_going = False
+        self.join()
         logging.info("Disconnecting socket...")
         self.sock.close()

@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 """flashfocus command line interface."""
-import fcntl
 import logging
 import os
 import sys
+from typing import Dict
 
 import click
 
 from flashfocus.color import green, red
-from flashfocus.config import load_merged_config
+from flashfocus.config import config
+from flashfocus.pid import ensure_single_instance
 from flashfocus.server import FlashServer
-from flashfocus.syspaths import RUNTIME_DIR
 
 # Set LOGLEVEL environment variable to DEBUG or WARNING to change logging
 # verbosity.
@@ -21,23 +21,6 @@ if sys.stderr.isatty():
     logging.addLevelName(logging.WARNING, red(logging.getLevelName(logging.WARNING)))
     logging.addLevelName(logging.ERROR, red(logging.getLevelName(logging.ERROR)))
     logging.addLevelName(logging.INFO, green(logging.getLevelName(logging.INFO)))
-
-
-# The pid file for flashfocus. Used to ensure that only one instance is active.
-PID = open(os.path.join(RUNTIME_DIR, "flashfocus.pid"), "a")
-
-
-def lock_pid_file():
-    """Lock the flashfocus PID file."""
-    fcntl.lockf(PID, fcntl.LOCK_EX | fcntl.LOCK_NB)
-
-
-def ensure_single_instance():
-    """Ensure that no other flashfocus instances are running."""
-    try:
-        lock_pid_file()
-    except IOError:
-        sys.exit("Another flashfocus instance is running.")
 
 
 @click.command()
@@ -103,27 +86,18 @@ def ensure_single_instance():
         "One of [never, always, on_open_close, on_switch]."
     ),
 )
-def cli(*args, **kwargs):
+def cli(*args, **kwargs) -> None:
     """Simple focus animations for tiling window managers."""
     init_server(kwargs)
 
 
-def init_server(cli_options):
+def init_server(cli_options: Dict) -> None:
     """Initialize the flashfocus server with given command line options."""
     ensure_single_instance()
-
-    if "opacity" in cli_options:
-        if cli_options["opacity"] is not None:
-            logging.warn("--opacity is deprecated, please use --flash-opacity/-o instead")
-            if cli_options["flash_opacity"] is None:
-                cli_options["flash_opacity"] = cli_options["opacity"]
-        del cli_options["opacity"]
-
-    config = load_merged_config(cli_options)
-
+    config.load_merged_config(cli_options)
     logging.info("Initializing with parameters:")
-    logging.info("%s", config)
-    server = FlashServer(**config)
+    logging.info(f"{config}")
+    server = FlashServer()
     return server.event_loop()
 
 

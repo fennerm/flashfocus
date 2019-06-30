@@ -2,21 +2,19 @@
 from __future__ import division
 
 import logging
-
-try:
-    from queue import Empty, Queue
-except ImportError:
-    from Queue import Empty, Queue
+from queue import Empty, Queue
 from signal import default_int_handler, SIGINT, signal
 
-from xcffib.xproto import WindowError
-import xpybutil
-import xpybutil.window
 
 from flashfocus.client import ClientMonitor
-from flashfocus.protocol import DisplayHandler
-from flashfocus.router import FlashRouter, UnexpectedRequestType
-from flashfocus.xutil import list_mapped_windows, unset_all_window_opacity, WMError
+from flashfocus.compat import (
+    disconnect_display_conn,
+    DisplayHandler,
+    list_mapped_windows,
+    unset_all_window_opacity,
+)
+from flashfocus.display import WMError, WMMessage, WMMessageType
+from flashfocus.router import FlashRouter, UnexpectedMessageType
 
 
 # Ensure that SIGINTs are handled correctly
@@ -63,35 +61,13 @@ class FlashServer:
 
     """
 
-    def __init__(
-        self,
-        default_opacity,
-        flash_opacity,
-        time,
-        ntimepoints,
-        simple,
-        rules,
-        flash_on_focus,
-        flash_lone_windows,
-    ):
-        self.router = FlashRouter(
-            defaults={
-                "default_opacity": default_opacity,
-                "flash_opacity": flash_opacity,
-                "simple": simple,
-                "rules": rules,
-                "time": time,
-                "ntimepoints": ntimepoints,
-                "flash_on_focus": flash_on_focus,
-                "flash_lone_windows": flash_lone_windows,
-            },
-            config_rules=rules,
-        )
-        self.flash_requests = Queue()
+    def __init__(self) -> None:
+        self.router = FlashRouter()
+        self.flash_requests: Queue = Queue()
         self.producers = [ClientMonitor(self.flash_requests), DisplayHandler(self.flash_requests)]
         self.keep_going = True
 
-    def event_loop(self):
+    def event_loop(self) -> None:
         """Wait for changes in focus or client requests and queues flashes."""
         self._set_all_window_opacity_to_default()
         try:
@@ -103,37 +79,37 @@ class FlashServer:
             logging.warn("Interrupt received, shutting down...")
             self.shutdown()
 
-    def shutdown(self, disconnect_from_xorg=True):
+    def shutdown(self, disconnect_from_wm: bool = True) -> None:
         """Cleanup after recieving a SIGINT."""
         self.keep_going = False
         self._kill_producers()
         logging.info("Resetting windows to full opacity...")
         unset_all_window_opacity()
-        if disconnect_from_xorg:
+        if disconnect_from_wm:
             logging.info("Disconnecting from X session...")
-            xpybutil.conn.disconnect()
+            disconnect_display_conn()
 
-    def _flash_queued_window(self):
+    def _flash_queued_window(self) -> None:
         """Pop a window from the flash_requests queue and initiate flash."""
         try:
-            window, request_type = self.flash_requests.get(timeout=1)
+            message = self.flash_requests.get(timeout=1)
         except Empty:
             return None
 
         try:
-            self.router.route_request(window, request_type)
-        except UnexpectedRequestType:
-            logging.error("Unexpected request type - {}. Aborting...".format(request_type))
+            self.router.route_request(message)
+        except UnexpectedMessageType:
+            logging.error(f"Unexpected request type - {message.type}. Aborting...")
             self.shutdown()
-        except (WindowError, WMError):
+        except WMError:
             pass
 
-    def _kill_producers(self):
+    def _kill_producers(self) -> None:
         logging.info("Terminating threads...")
         for producer in self.producers:
             producer.stop()
 
-    def _set_all_window_opacity_to_default(self):
+    def _set_all_window_opacity_to_default(self) -> None:
         logging.info("Setting all windows to their default opacity...")
         for window in list_mapped_windows():
-            self.router.route_request(window, "window_init")
+            self.router.route_request(WMMessage(window=window, type=WMMessageType.WINDOW_INIT))

@@ -1,8 +1,11 @@
 """Handle window-specific flash rules."""
 import re
+from typing import Optional
+
+from flashfocus.compat import Window
 
 
-def _match_regex(regex, target):
+def _match_regex(regex: str, target: str) -> bool:
     try:
         return bool(re.match(regex, target))
     except TypeError:
@@ -23,14 +26,18 @@ class Rule:
     """
 
     def __init__(
-        self, id_regex=None, class_regex=None, flash_on_focus=None, flash_lone_windows=None
-    ):
+        self,
+        id_regex: Optional[str] = None,
+        class_regex: Optional[str] = None,
+        flash_on_focus: bool = False,
+        flash_lone_windows: bool = False,
+    ) -> None:
         self.id_regex = id_regex
         self.class_regex = class_regex
         self.flash_on_focus = flash_on_focus
         self.flash_lone_windows = flash_lone_windows
 
-    def match(self, window_id, window_class):
+    def match(self, window: Window) -> bool:
         """Match a window id and class.
 
         Parameters
@@ -39,7 +46,8 @@ class Rule:
             ID and class of a window
 
         """
-        for regex, property in zip([self.id_regex, self.class_regex], [window_id, window_class]):
+        window_title, window_class = window.wm_class
+        for regex, property in zip([self.id_regex, self.class_regex], [window_title, window_class]):
             if regex:
                 if not _match_regex(regex, property):
                     return False

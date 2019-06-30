@@ -4,13 +4,14 @@ import os
 import re
 from shutil import copy
 import sys
+from typing import Any, Dict, Iterator, List, Optional, Pattern, Union
 
 from marshmallow import fields, post_load, Schema, validates_schema, ValidationError
 from parser import ParserError
 import yaml
+from yaml.scanner import ScannerError
 
-
-from flashfocus.syspaths import build_config_search_path, find_config_file, get_default_config_file
+from flashfocus.types import Number
 
 # Properties which may be contained both in global config and in flash rules.
 BASE_PROPERTIES = [
@@ -24,35 +25,34 @@ BASE_PROPERTIES = [
 ]
 
 
-def validate_positive_number(data):
+def validate_positive_number(data: Number) -> None:
     """Check that a value is a positive number."""
     if not data > 0:
         raise ValidationError("Not a positive number", data)
 
 
-def validate_decimal(data):
-    """Check that a value is a decimal between 0 and 1 inclusive."""
+def validate_decimal(data: Number) -> None:
+    """Check that a value is a float between 0 and 1 inclusive."""
     if not 0 <= data <= 1:
         raise ValidationError("Not in valid range, expected a float between 0 and 1")
 
 
-def validate_flash_lone_windows(data):
+def validate_flash_lone_windows(data: str) -> None:
     accepted_values = ["never", "on_open_close", "on_switch", "always"]
-    if not data in accepted_values:
+    if data not in accepted_values:
         raise ValidationError(
-            "Invalid 'flash-lone-windows' value, expected one of {}".format(
-                ", ".join(accepted_values), data
-            )
+            f"Invalid 'flash-lone-windows' value, expected one of {', '.join(accepted_values)}",
+            data,
         )
 
 
 class Regex(fields.Field):
     """Schema field for validating a regex."""
 
-    def _deserialize(self, value, attr, obj):
+    def _deserialize(self, value: str, attr, obj) -> Pattern[str]:
         try:
             return re.compile(value)
-        except:
+        except Exception:
             raise ValidationError("Invalid regex")
 
 
@@ -107,20 +107,18 @@ class ConfigSchema(BaseSchema):
     rules = fields.Nested(RulesSchema, many=True)
 
     @post_load()
-    def set_rule_defaults(self, config):
+    def set_rule_defaults(self, config: Dict) -> None:
         """Set default values for the nested `RulesSchema`."""
         if "rules" not in config:
             config["rules"] = None
-        try:
+        else:
             for rule in config["rules"]:
                 for property in BASE_PROPERTIES:
                     if property not in rule:
                         rule[property] = config[property]
-        except TypeError:
-            pass
 
 
-def load_config(config_file):
+def load_config(config_file: str) -> Dict[str, str]:
     """Load the config file into a dictionary.
 
     Returns
@@ -133,19 +131,19 @@ def load_config(config_file):
             with open(str(config_file), "r") as f:
                 config = yaml.load(f)
                 dehyphen(config)
-        except (yaml.scanner.ScannerError, ParserError) as e:
+        except (ScannerError, ParserError) as e:
             sys.exit("Error in config file:\n" + str(e))
     else:
         config = None
     return config
 
 
-def indent(n):
+def indent(n: int) -> str:
     """Return `n` indents."""
     return "  " * n
 
 
-def parse_config_error(option, err, ntabs=1):
+def parse_config_error(option: Union[int, str], err: Union[List, Dict], ntabs: int = 1) -> str:
     """Parse Marshmallow schema error."""
     if isinstance(option, int):
         option = "rule " + str(option + 1)
@@ -160,15 +158,15 @@ def parse_config_error(option, err, ntabs=1):
     return output
 
 
-def construct_config_error_msg(config, errors):
+def construct_config_error_msg(errors: Dict[str, Any]) -> str:
     """Construct an error message for an invalid configuration setup.
 
     Parameters
     ----------
-    config: Dict[str, Any]
+    config
         Merged dictionary of configuration options from CLI, user configfile and
         default configfile
-    errors: Dict[str, Any]
+    errors
         Dictionary of schema validation errors passed by Marshmallow
 
     Returns
@@ -182,7 +180,7 @@ def construct_config_error_msg(config, errors):
     return error_msg
 
 
-def validate_config(config):
+def validate_config(config: Dict) -> Dict:
     """Validate the config file and command line parameters."""
     try:
         validated = ConfigSchema(strict=True).load(config)
@@ -190,12 +188,12 @@ def validate_config(config):
         # Strict parameter removed in the latest versions of marshmallow
         validated = ConfigSchema().load(config)
     except ValidationError as err:
-        logging.error(construct_config_error_msg(config, err.messages))
+        logging.error(construct_config_error_msg(err.messages))
         sys.exit(1)
     return validated.data
 
 
-def dehyphen(config):
+def dehyphen(config: Dict) -> Dict:
     """Replace hyphens in config dictionary with underscores."""
     for option in list(config.keys()):
         if option == "rules":
@@ -206,16 +204,15 @@ def dehyphen(config):
             config[new_key] = config.pop(option)
 
 
-def merge_config_sources(cli_options, user_config, default_config):
-    """Parse configuration by merging the default and user config files.
-
+def merge_config_sources(cli_options: Dict, user_config: Dict, default_config: Dict) -> Dict:
+    """
     Parameters
     ----------
-    cli_options: Dict[str, Any]
+    cli_options
         Dictionary of command line options
-    default_config: Dict[str, str]
+    default_config
         Dictionary of options from the default configfile
-    user_config: Dict[str, str]
+    user_config
         Dictionary of options from the user configfile
 
     Returns
@@ -230,7 +227,7 @@ def merge_config_sources(cli_options, user_config, default_config):
     return validated_config
 
 
-def hierarchical_merge(dicts):
+def hierarchical_merge(dicts: List[Dict]) -> Dict:
     """Merge a list of dictionaries.
 
     Parameters
@@ -257,7 +254,7 @@ def hierarchical_merge(dicts):
     return outdict
 
 
-def init_user_configfile(default_config_file):
+def init_user_configfile(default_config_path: str) -> str:
     """Create the initial user config file if it doesn't exist."""
     config_file_path = find_config_file()
     if config_file_path is None:
@@ -266,23 +263,76 @@ def init_user_configfile(default_config_file):
             os.makedirs(os.path.dirname(config_file_path))
         except OSError:
             pass
-        copy(default_config_file, config_file_path)
+        copy(default_config_path, config_file_path)
 
     return config_file_path
 
 
-def load_merged_config(cli_options):
-    """Merge the CLI options with the user and default config files and return as a dict."""
-    default_config_file = get_default_config_file()
-    if cli_options["config"] is not None:
-        config_file_path = cli_options["config"]
+def build_config_search_path() -> List[str]:
+    """Return a list of user config locations in order of search priority."""
+    xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
+    home_dir = os.path.expanduser("~")
+    search_path = []
+    if xdg_config_home is not None:
+        search_path.append(os.path.join(xdg_config_home, "flashfocus", "flashfocus.yml"))
+
+    search_path += [
+        os.path.join(home_dir, ".config", "flashfocus", "flashfocus.yml"),
+        os.path.join(home_dir, ".flashfocus.yml"),
+    ]
+    return search_path
+
+
+def find_config_file() -> Optional[str]:
+    """Find the flashfocus config file if it exists."""
+    for location in build_config_search_path():
+        if os.path.exists(location):
+            return location
+
+    return None
+
+
+def get_default_config_file() -> str:
+    """Get the location of the default flashfocus config file."""
+    return os.path.join(os.path.dirname(__file__), "default_config.yml")
+
+
+class Config:
+    def __init__(self):
+        self._config: Dict[str, str] = dict()
+
+    def __getitem__(self, key: str) -> str:
+        return self._config[key]
+
+    def __contains__(self, item: str) -> bool:
+        return item in self._config
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._config)
+
+    def __repr__(self) -> str:
+        return repr(self._config)
+
+    def get(self, key: str, default_value: Any = None) -> Any:
+        return self._config.get(key, default_value)
+
+    def load_merged_config(self, cli_options: Dict) -> None:
+        """Merge the CLI options with the user and default config files and return as a dict."""
+        default_config_path = get_default_config_file()
+        if cli_options.get("config") is None:
+            config_file_path = init_user_configfile(default_config_path)
+        else:
+            config_file_path = cli_options["config"]
+
         if not os.path.exists(config_file_path):
-            logging.error("%s does not exist")
+            logging.error(f"{config_file_path} does not exist")
             sys.exit("Could not load config file, exiting...")
-    else:
-        config_file_path = init_user_configfile(default_config_file)
-    del cli_options["config"]
-    default_config = load_config(default_config_file)
-    user_config = load_config(config_file_path)
-    config = merge_config_sources(cli_options, user_config, default_config)
-    return config
+        del cli_options["config"]
+        default_config = load_config(default_config_path)
+        user_config = load_config(config_file_path)
+        self._config = merge_config_sources(
+            cli_options=cli_options, user_config=user_config, default_config=default_config
+        )
+
+
+config = Config()
