@@ -13,6 +13,7 @@ from flashfocus.compat import (
     list_mapped_windows,
     unset_all_window_opacity,
 )
+from flashfocus.config import Config
 from flashfocus.display import WMError, WMMessage, WMMessageType
 from flashfocus.router import FlashRouter, UnexpectedMessageType
 
@@ -61,18 +62,27 @@ class FlashServer:
 
     """
 
-    def __init__(self) -> None:
-        self.router = FlashRouter()
-        self.flash_requests: Queue = Queue()
-        self.producers = [ClientMonitor(self.flash_requests), DisplayHandler(self.flash_requests)]
+    def __init__(self, config: Config) -> None:
+        self.config = config
+        self.router = FlashRouter(config)
+        self.events: Queue = Queue()
+        self.producers = [ClientMonitor(self.events), DisplayHandler(self.events)]
         self.keep_going = True
+        self.ready = False
 
     def event_loop(self) -> None:
         """Wait for changes in focus or client requests and queues flashes."""
+        logging.info("Initializing default window opacity...")
         self._set_all_window_opacity_to_default()
         try:
+            logging.info("Initializing threads...")
             for producer in self.producers:
                 producer.start()
+            for producer in self.producers:
+                while not producer.ready:
+                    pass
+            self.ready = True
+            logging.info("Threads initialized, waiting for events...")
             while self.keep_going:
                 self._flash_queued_window()
         except (KeyboardInterrupt, SystemExit):
@@ -92,7 +102,7 @@ class FlashServer:
     def _flash_queued_window(self) -> None:
         """Pop a window from the flash_requests queue and initiate flash."""
         try:
-            message = self.flash_requests.get(timeout=1)
+            message = self.events.get(timeout=1)
         except Empty:
             return None
 

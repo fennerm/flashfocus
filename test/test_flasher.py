@@ -10,6 +10,7 @@ from pytest import approx, mark
 
 from test.helpers import change_focus, watching_windows
 
+from flashfocus.compat import Window
 from flashfocus.flasher import Flasher
 
 
@@ -29,7 +30,7 @@ def test_flash_stress_test(flasher, window):
 
 
 def test_flash_nonexistant_window_ignored(flasher):
-    flasher.flash(0)
+    flasher.flash(Window(0))
 
 
 def test_flash_conflicts_are_restarted(flasher, window):

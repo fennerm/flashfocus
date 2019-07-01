@@ -1,6 +1,7 @@
 """Parsing the user config file."""
 import logging
 import os
+from pathlib import Path
 import re
 from shutil import copy
 import sys
@@ -49,7 +50,7 @@ def validate_flash_lone_windows(data: str) -> None:
 class Regex(fields.Field):
     """Schema field for validating a regex."""
 
-    def _deserialize(self, value: str, attr, obj) -> Pattern[str]:
+    def deserialize(self, value: str, attr, obj) -> Pattern[str]:
         try:
             return re.compile(value)
         except Exception:
@@ -118,7 +119,7 @@ class ConfigSchema(BaseSchema):
                         rule[property] = config[property]
 
 
-def load_config(config_file: str) -> Dict[str, str]:
+def load_config(config_file: Path) -> Dict[str, str]:
     """Load the config file into a dictionary.
 
     Returns
@@ -193,7 +194,7 @@ def validate_config(config: Dict) -> Dict:
     return validated.data
 
 
-def dehyphen(config: Dict) -> Dict:
+def dehyphen(config: Dict) -> None:
     """Replace hyphens in config dictionary with underscores."""
     for option in list(config.keys()):
         if option == "rules":
@@ -254,7 +255,7 @@ def hierarchical_merge(dicts: List[Dict]) -> Dict:
     return outdict
 
 
-def init_user_configfile(default_config_path: str) -> str:
+def init_user_configfile() -> Path:
     """Create the initial user config file if it doesn't exist."""
     config_file_path = find_config_file()
     if config_file_path is None:
@@ -263,42 +264,43 @@ def init_user_configfile(default_config_path: str) -> str:
             os.makedirs(os.path.dirname(config_file_path))
         except OSError:
             pass
+        assert config_file_path is not None
+        default_config_path = get_default_config_file()
         copy(default_config_path, config_file_path)
 
     return config_file_path
 
 
-def build_config_search_path() -> List[str]:
+def build_config_search_path() -> List[Path]:
     """Return a list of user config locations in order of search priority."""
     xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
-    home_dir = os.path.expanduser("~")
     search_path = []
     if xdg_config_home is not None:
-        search_path.append(os.path.join(xdg_config_home, "flashfocus", "flashfocus.yml"))
+        search_path.append(Path(xdg_config_home) / "flashfocus" / "flashfocus.yml")
 
     search_path += [
-        os.path.join(home_dir, ".config", "flashfocus", "flashfocus.yml"),
-        os.path.join(home_dir, ".flashfocus.yml"),
+        Path.home() / ".config" / "flashfocus" / "flashfocus.yml",
+        Path.home() / ".flashfocus.yml",
     ]
     return search_path
 
 
-def find_config_file() -> Optional[str]:
+def find_config_file() -> Optional[Path]:
     """Find the flashfocus config file if it exists."""
     for location in build_config_search_path():
-        if os.path.exists(location):
+        if location.exists():
             return location
 
     return None
 
 
-def get_default_config_file() -> str:
+def get_default_config_file() -> Path:
     """Get the location of the default flashfocus config file."""
-    return os.path.join(os.path.dirname(__file__), "default_config.yml")
+    return Path(__file__).parent / "default_config.yml"
 
 
 class Config:
-    def __init__(self):
+    def __init__(self) -> None:
         self._config: Dict[str, str] = dict()
 
     def __getitem__(self, key: str) -> str:
@@ -316,23 +318,15 @@ class Config:
     def get(self, key: str, default_value: Any = None) -> Any:
         return self._config.get(key, default_value)
 
-    def load_merged_config(self, cli_options: Dict) -> None:
+    def load(self, config_file_path: Path, cli_options: Dict) -> None:
         """Merge the CLI options with the user and default config files and return as a dict."""
         default_config_path = get_default_config_file()
-        if cli_options.get("config") is None:
-            config_file_path = init_user_configfile(default_config_path)
-        else:
-            config_file_path = cli_options["config"]
 
         if not os.path.exists(config_file_path):
             logging.error(f"{config_file_path} does not exist")
             sys.exit("Could not load config file, exiting...")
-        del cli_options["config"]
         default_config = load_config(default_config_path)
         user_config = load_config(config_file_path)
         self._config = merge_config_sources(
             cli_options=cli_options, user_config=user_config, default_config=default_config
         )
-
-
-config = Config()

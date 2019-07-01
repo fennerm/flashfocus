@@ -8,7 +8,7 @@ from typing import Dict
 import click
 
 from flashfocus.color import green, red
-from flashfocus.config import config
+from flashfocus.config import Config, init_user_configfile
 from flashfocus.pid import ensure_single_instance
 from flashfocus.server import FlashServer
 
@@ -94,10 +94,14 @@ def cli(*args, **kwargs) -> None:
 def init_server(cli_options: Dict) -> None:
     """Initialize the flashfocus server with given command line options."""
     ensure_single_instance()
-    config.load_merged_config(cli_options)
+    config_file_path = cli_options.pop("config")
+    if config_file_path is None:
+        config_file_path = init_user_configfile()
+    config = Config()
+    config.load(config_file_path=config_file_path, cli_options=cli_options)
     logging.info("Initializing with parameters:")
     logging.info(f"{config}")
-    server = FlashServer()
+    server = FlashServer(config)
     return server.event_loop()
 
 

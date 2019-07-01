@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from collections import namedtuple
 from enum import auto, Enum
 from typing import TYPE_CHECKING
 
@@ -19,7 +19,4 @@ class WMMessageType(Enum):
     WINDOW_INIT = auto()
 
 
-@dataclass
-class WMMessage:
-    window: "Window"
-    type: WMMessageType
+WMMessage = namedtuple("WMMessage", ["window", "type"])

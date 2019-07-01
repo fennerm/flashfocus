@@ -1,27 +1,41 @@
 """Xorg utility code."""
 import logging
+from queue import Queue
 import struct
 from threading import Thread
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
-from xcffib.xproto import CreateNotifyEvent, CW, EventMask, PropertyNotifyEvent, WindowClass
+from xcffib.xproto import (
+    CreateNotifyEvent,
+    CW,
+    EventMask,
+    PropertyNotifyEvent,
+    WindowClass,
+    WindowError,
+)
 from xpybutil import conn, root
 from xpybutil.ewmh import (
     get_active_window,
     get_client_list,
     get_current_desktop,
     get_wm_desktop,
+    get_wm_window_opacity,
     set_wm_window_opacity_checked,
 )
-from xpybutil.icccm import get_wm_class, set_wm_name_checked
+from xpybutil.icccm import get_wm_class, set_wm_class_checked, set_wm_name_checked
 import xpybutil.window
 from xpybutil.util import get_atom_name
 
 from flashfocus.display import WMError, WMMessage, WMMessageType
 
 
+Event = Union[CreateNotifyEvent, PropertyNotifyEvent]
+
+
 class Window:
-    def __init__(self, window_id):
+    def __init__(self, window_id: int) -> None:
+        if window_id is None:
+            raise WMError("Undefined window")
         self.id = window_id
 
     def __eq__(self, other) -> bool:
@@ -47,12 +61,16 @@ class Window:
         """
         try:
             reply = get_wm_class(self.id).reply()
-        except struct.error:
-            raise WMError("Invalid window: %s", self.id)
+        except (struct.error, WindowError) as e:
+            raise WMError("Invalid window: %s", self.id) from e
         try:
             return reply[0], reply[1]
         except TypeError:
             return None, None
+
+    @property
+    def opacity(self) -> float:
+        return get_wm_window_opacity(self.id).reply()
 
     def set_opacity(self, opacity: Optional[float]) -> None:
         # If opacity is None just silently ignore the request
@@ -60,11 +78,20 @@ class Window:
             cookie = set_wm_window_opacity_checked(self.id, opacity)
             cookie.check()
 
+    def set_class(self, title: str, class_: str) -> None:
+        set_wm_class_checked(self.id, title, class_).check()
+
+    def set_name(self, name: str) -> None:
+        set_wm_name_checked(self.id, name).check()
+
     def destroy(self) -> None:
-        conn.core.DestroyWindow(self.id, True).check()
+        try:
+            conn.core.DestroyWindow(self.id, True).check()
+        except WindowError as e:
+            raise WMError from e
 
 
-def _create_message_window():
+def _create_message_window() -> Window:
     """Create a hidden window for sending X client-messages.
 
     The window's properties can be used to send messages between threads.
@@ -98,15 +125,34 @@ def _create_message_window():
 class DisplayHandler(Thread):
     """Parse events from the X-server and pass them on to FlashServer"""
 
-    def __init__(self, queue):
+    def __init__(self, queue: Queue) -> None:
+        # This is set to True when initialization of the thread is complete and its ready to begin
+        # the event loop
+        self.ready = False
+
         super(DisplayHandler, self).__init__()
-        self.queue = queue
-        self.keep_going = True
+
+        # Queue of messages to be handled by the flash server
+        self.queue: Queue = queue
+
+        # This property is set by the server during shutdown and signals that the display handler
+        # should disconnect from XCB
+        self.keep_going: bool = True
+
+        # In order to interrupt the event loop we need to map a special message-passing window.
+        # When it comes time to exit we set the name of the window to 'KILL'. This is then
+        # picked up as an event in the event loop. See https://xcb.freedesktop.org/tutorial/events/
         self.message_window: Window = _create_message_window()
 
-    def run(self):
+    def run(self) -> None:
+        # PropertyChange is for detecting changes in focus
+        # SubstructureNotify is for detecting new mapped windows
         xpybutil.window.listen(xpybutil.root, "PropertyChange", "SubstructureNotify")
+
+        # Also listen to property changes in the message window
         xpybutil.window.listen(self.message_window.id, "PropertyChange")
+
+        self.ready = True
         while self.keep_going:
             event = conn.wait_for_event()
             if isinstance(event, PropertyNotifyEvent):
@@ -114,17 +160,17 @@ class DisplayHandler(Thread):
             elif isinstance(event, CreateNotifyEvent):
                 self._handle_new_mapped_window(event)
 
-    def stop(self):
+    def stop(self) -> None:
         set_wm_name_checked(self.message_window.id, "KILL").check()
         self.keep_going = False
         self.join()
         self.message_window.destroy()
 
-    def queue_window(self, window: Window, type: WMMessageType):
+    def queue_window(self, window: Window, type: WMMessageType) -> None:
         """Add a window to the queue."""
         self.queue.put(WMMessage(window=window, type=type))
 
-    def _handle_new_mapped_window(self, event):
+    def _handle_new_mapped_window(self, event: Event) -> None:
         """Handle a new mapped window event."""
         logging.info(f"Window {event.window} mapped...")
         # Check that window is visible so that we don't accidentally set
@@ -136,7 +182,7 @@ class DisplayHandler(Thread):
         else:
             logging.info(f"Window {window.id} is not visible, ignoring...")
 
-    def _handle_property_change(self, event):
+    def _handle_property_change(self, event: Event) -> None:
         """Handle a property change on a watched window."""
         atom_name = get_atom_name(event.atom)
         if atom_name == "_NET_ACTIVE_WINDOW":
@@ -148,7 +194,7 @@ class DisplayHandler(Thread):
             self.keep_going = False
 
 
-def get_focused_window():
+def get_focused_window() -> Window:
     return Window(get_active_window().reply())
 
 
@@ -169,11 +215,11 @@ def get_focused_desktop() -> int:
     return get_current_desktop().reply()
 
 
-def unset_all_window_opacity():
+def unset_all_window_opacity() -> None:
     """Unset the opacity of all mapped windows."""
     for window in list_mapped_windows():
         window.set_opacity(1)
 
 
-def disconnect_display_conn():
+def disconnect_display_conn() -> None:
     conn.disconnect()

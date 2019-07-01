@@ -28,6 +28,6 @@ from test.helpers import to_regex
         (None, None, True),
     ],
 )
-def test_rule_matching(id_regex, class_regex, should_match):
+def test_rule_matching(id_regex, window, class_regex, should_match):
     rule = Rule(to_regex(id_regex), to_regex(class_regex))
-    assert rule.match("window1", "Window1") == should_match
+    assert rule.match(window) == should_match

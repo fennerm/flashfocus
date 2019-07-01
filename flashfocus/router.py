@@ -7,10 +7,10 @@ passes the request on to the Flasher whose criteria match the window.
 
 """
 import logging
-from typing import Tuple
+from typing import List, Tuple
 
 from flashfocus.compat import get_focused_desktop, list_mapped_windows, Window
-from flashfocus.config import config
+from flashfocus.config import Config
 from flashfocus.display import WMMessage, WMMessageType
 from flashfocus.flasher import Flasher
 from flashfocus.rule import Rule
@@ -57,9 +57,9 @@ class FlashRouter:
 
     """
 
-    def __init__(self):
-        self.rules = []
-        self.flashers = []
+    def __init__(self, config: Config):
+        self.rules: List[Rule] = []
+        self.flashers: List[Flasher] = []
         if config.get("rules"):
             for rule_config in config.get("rules"):
                 rule = Rule(

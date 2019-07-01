@@ -3,112 +3,91 @@ from __future__ import division
 
 import copy
 from contextlib import contextmanager
+from queue import Queue
 import re
+import socket
 from threading import Thread
 from time import sleep
-import subprocess
-import sys
+from typing import Dict, Generator, List, Union
 
-import xcffib
-import xcffib.xproto
-from xcffib.xproto import WindowError
-import xpybutil
-import xpybutil.ewmh
-from xpybutil.ewmh import set_active_window_checked
-from xpybutil.icccm import set_wm_class_checked, set_wm_name_checked
+from flashfocus.client import ClientMonitor
+from flashfocus.compat import DisplayHandler, get_focused_window, list_mapped_windows, Window
+from flashfocus.display import WMError
+from flashfocus.server import FlashServer
+from test.compat import change_focus, clear_event_queue, create_blank_window
 
 
-from flashfocus.xutil import destroy_window, list_mapped_windows
+RegexType = type(re.compile("x"))
+Producer = Union[ClientMonitor, DisplayHandler]
 
 
-def create_blank_window(wm_name=None, wm_class=None):
-    """Create a blank Xorg window."""
-    setup = xpybutil.conn.get_setup()
-    window = xpybutil.conn.generate_id()
-    xpybutil.conn.core.CreateWindow(
-        setup.roots[0].root_depth,
-        window,
-        setup.roots[0].root,
-        0,
-        0,
-        640,
-        480,
-        0,
-        xcffib.xproto.WindowClass.InputOutput,
-        setup.roots[0].root_visual,
-        xcffib.xproto.CW.BackPixel | xcffib.xproto.CW.EventMask,
-        [
-            setup.roots[0].white_pixel,
-            xcffib.xproto.EventMask.Exposure | xcffib.xproto.EventMask.KeyPress,
-        ],
+def quick_conf() -> Dict:
+    return dict(
+        default_opacity=1,
+        flash_opacity=0.8,
+        time=100,
+        ntimepoints=4,
+        simple=False,
+        rules=None,
+        flash_on_focus=True,
+        flash_lone_windows="always",
     )
-    xpybutil.conn.core.MapWindow(window)
-    xpybutil.conn.flush()
-    cookies = []
-    if wm_class:
-        cookies.append(set_wm_class_checked(window, wm_class[0], wm_class[1]))
-    if wm_name:
-        cookies.append(set_wm_name_checked(window, wm_name))
-    for cookie in cookies:
-        cookie.check()
-    return window
 
 
 class WindowSession:
     """A session of blank windows for testing."""
 
-    def __init__(self, num_windows=2):
+    def __init__(self, num_windows: int = 2) -> None:
         wm_names = ["window" + str(i) for i in range(1, num_windows + 1)]
         wm_classes = zip(wm_names, [name.capitalize() for name in wm_names])
         self.windows = [
             create_blank_window(wm_name, wm_class)
             for wm_name, wm_class in zip(wm_names, wm_classes)
         ]
-        sleep(0.1)
+        # Wait for all of the windows to be mapped
+        for window in self.windows:
+            while window not in list_mapped_windows():
+                pass
         change_focus(self.windows[0])
-        sleep(0.4)
+        # Wait for the focus to actually be changed
+        while get_focused_window() != self.windows[0]:
+            pass
 
-    def destroy(self):
+    def destroy(self) -> None:
         """Tear down the window session."""
         for window in self.windows:
             try:
-                destroy_window(window)
-            except:
+                window.destroy()
+            except Exception:
                 pass
-
-
-def change_focus(window):
-    """Change the active window."""
-    set_active_window_checked(window).check()
-    sleep(0.01)
 
 
 class WindowWatcher(Thread):
     """Watch a window for changes in opacity."""
 
-    def __init__(self, window):
+    def __init__(self, window: Window):
         super(WindowWatcher, self).__init__()
-        self.window = window
-        self.opacity_events = [xpybutil.ewmh.get_wm_window_opacity(self.window).reply()]
-        self.keep_going = True
-        self.done = False
+        self.window: Window = window
+        self.opacity_events: List[float] = [window.opacity]
+        self.keep_going: bool = True
+        self.done: bool = False
 
-    def run(self):
+    def run(self) -> None:
         """Record opacity changes until stop signal received."""
         while self.keep_going:
-            opacity = xpybutil.ewmh.get_wm_window_opacity(self.window).reply()
+            opacity = self.window.opacity
             if opacity != self.opacity_events[-1]:
                 self.opacity_events.append(opacity)
         self.done = True
 
-    def stop(self):
+    def stop(self) -> None:
         # Give the x server a little time to catch up with requests
         sleep(0.2)
         self.keep_going = False
         while not self.done:
             pass
 
-    def report(self):
+    def report(self) -> List[float]:
         return self.opacity_events
 
 
@@ -118,16 +97,16 @@ class StubServer:
     Used to test that clients are making correct requests.
     """
 
-    def __init__(self, socket):
+    def __init__(self, socket: socket.socket):
         self.socket = socket
-        self.data = []
+        self.data: List[bytes] = []
 
     def await_data(self):
         """Wait for a single piece of data from a client and store it."""
         self.data.append(self.socket.recv(1))
 
 
-def queue_to_list(queue):
+def queue_to_list(queue: Queue) -> List:
     """Convert a Queue to a list."""
     result = []
     while queue.qsize() != 0:
@@ -136,19 +115,20 @@ def queue_to_list(queue):
 
 
 @contextmanager
-def server_running(server):
-    while xpybutil.conn.poll_for_event():
-        pass
+def server_running(server: FlashServer) -> Generator:
+    clear_event_queue()
     p = Thread(target=server.event_loop)
     p.start()
-    sleep(0.2)
+    while not server.ready:
+        pass
     yield
-    sleep(0.01)
-    server.shutdown(disconnect_from_xorg=False)
+    while not server.events.empty():
+        pass
+    server.shutdown(disconnect_from_wm=False)
 
 
 @contextmanager
-def watching_windows(windows):
+def watching_windows(windows: List[Window]) -> Generator:
     watchers = [WindowWatcher(window) for window in windows]
     for watcher in watchers:
         watcher.start()
@@ -158,7 +138,7 @@ def watching_windows(windows):
 
 
 @contextmanager
-def new_watched_window():
+def new_watched_window() -> Generator:
     """Open a new window and watch it."""
     window_session = WindowSession(1)
     watcher = WindowWatcher(window_session.windows[0])
@@ -170,15 +150,16 @@ def new_watched_window():
 
 
 @contextmanager
-def producer_running(producer):
+def producer_running(producer: Producer) -> Generator:
     producer.start()
+    # TODO - replace these sleep calls
     sleep(0.01)
     yield
     sleep(0.01)
     producer.stop()
 
 
-def to_regex(x):
+def to_regex(x: str) -> RegexType:
     """Convert a string to a regex (returns None if `x` is None)"""
     try:
         return re.compile(x)
@@ -186,32 +167,23 @@ def to_regex(x):
         return None
 
 
-def default_flash_param():
-    try:
-        regex_pattern_type = re.Pattern
-    except:
-        regex_pattern_type = re._pattern_type
-    if sys.version[0] == "2":
-        string_type = basestring
-    else:
-        string_type = str
-
+def default_flash_param() -> Dict:
     return {
-        "config": {"default": None, "type": [string_type], "location": "cli"},
+        "config": {"default": None, "type": [str], "location": "cli"},
         "default_opacity": {"default": 1, "type": [float], "location": "any"},
         "flash_opacity": {"default": 0.8, "type": [float], "location": "any"},
         "time": {"default": 100, "type": [float], "location": "any"},
         "ntimepoints": {"default": 4, "type": [int], "location": "any"},
         "simple": {"default": False, "type": [bool], "location": "any"},
         "flash_on_focus": {"default": True, "type": [bool], "location": "any"},
-        "flash_lone_windows": {"default": "always", "type": [string_type], "location": "any"},
+        "flash_lone_windows": {"default": "always", "type": [str], "location": "any"},
         "rules": {"default": dict(), "type": [dict, type(None)], "location": "config_file"},
-        "window_id": {"default": "window1", "type": [regex_pattern_type], "location": "rule"},
-        "window_class": {"default": "Window1", "type": [regex_pattern_type], "location": "rule"},
+        "window_id": {"default": "window1", "type": [RegexType], "location": "rule"},
+        "window_class": {"default": "Window1", "type": [RegexType], "location": "rule"},
     }
 
 
-def fill_in_rule(partial_rule):
+def fill_in_rule(partial_rule: Dict) -> Dict:
     """Fill in default param for a rule given a partial rule definition."""
     default_rules = {
         key: val["default"]
@@ -224,21 +196,16 @@ def fill_in_rule(partial_rule):
     return partial_rule
 
 
-def switch_desktop(desktop_index):
-    # unfortunately need to use i3 specific command here because i3 blocks
-    # external desktop switch requests
-    subprocess.check_output(["i3-msg", "workspace", str(desktop_index + 1)])
-
-
-def rekey(dic, key, val):
+def rekey(dic: Dict, new_vals: Dict) -> Dict:
     dic_copy = copy.deepcopy(dic)
-    dic_copy[key] = val
+    for key, val in new_vals.items():
+        dic_copy[key] = val
     return dic_copy
 
 
-def clear_desktop(desktop_index):
+def clear_desktop(desktop_index: int) -> None:
     for window in list_mapped_windows():
         try:
-            destroy_window(window)
-        except WindowError:
+            window.destroy()
+        except WMError:
             pass

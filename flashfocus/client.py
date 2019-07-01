@@ -23,10 +23,12 @@ class ClientMonitor(Thread):
     """Queue flash requests from clients."""
 
     def __init__(self, queue: Queue) -> None:
+        self.ready = False
         super(ClientMonitor, self).__init__()
         self.queue = queue
         self.keep_going = True
         self.sock = init_server_socket()
+        self.ready = True
 
     def run(self) -> None:
         """Queue client request flashes."""

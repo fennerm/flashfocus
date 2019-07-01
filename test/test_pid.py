@@ -1,7 +1,7 @@
-"""Test suite for flashfocus.syspaths."""
+"""Test suite for flashfocus.pid."""
 import os
 
-from flashfocus.syspaths import *
+from flashfocus.pid import determine_runtime_dir
 
 
 def test_determine_runtime_dir_with_xdg():
