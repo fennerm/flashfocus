@@ -14,7 +14,7 @@ from flashfocus.syspaths import RUNTIME_DIR
 
 # Set LOGLEVEL environment variable to DEBUG or WARNING to change logging
 # verbosity.
-logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"), format="%(levelname)s: %(message)s")
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "ERROR"), format="%(levelname)s: %(message)s")
 
 if sys.stderr.isatty():
     # Colored logging categories
