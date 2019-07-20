@@ -49,9 +49,8 @@ if sys.stderr.isatty():
     required=False,
     is_flag=True,
     default=None,
-    help="Don't animate flashes. Setting this parameter improves "
-    "performance but causes rougher opacity transitions. "
-    "(default: false)",
+    help="Don't animate flashes. Setting this parameter improves performance but causes rougher "
+    "opacity transitions. (default: false)",
 )
 @click.option(
     "--ntimepoints",

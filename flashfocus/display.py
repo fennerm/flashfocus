@@ -1,9 +1,5 @@
 from collections import namedtuple
 from enum import auto, Enum
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flashfocus.compat import Window
 
 
 class WMError(ValueError):
