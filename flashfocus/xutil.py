@@ -74,7 +74,7 @@ def set_opacity(window, opacity, checked=True):
     If opacity is None, request is ignored.
 
     """
-    if opacity:
+    if opacity >= 0:
         cookie = set_wm_window_opacity_checked(window, opacity)
         if checked:
             return cookie.check()
