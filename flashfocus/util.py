@@ -1,17 +1,15 @@
-"""Utility functions."""
-try:
-    from inspect import getfullargspec as getargspec
-except ImportError:
-    from inspect import getargspec
-import os
+import re
+from typing import Pattern
 
 
-def list_param(f):
-    """List the parameters of a function or method."""
-    return [x for x in getargspec(f).args if x != "self"]
+def match_regex(regex: Pattern, target: str) -> bool:
+    try:
+        return bool(re.match(regex, target))
+    except TypeError:
+        # For our purposes, target is probably None
+        return False
 
 
-def cmd_exists(cmd):
-    return any(
-        os.access(os.path.join(path, cmd), os.X_OK) for path in os.environ["PATH"].split(os.pathsep)
-    )
+def indent(n: int) -> str:
+    """Return `n` indents."""
+    return "  " * n

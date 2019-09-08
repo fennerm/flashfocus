@@ -1,16 +1,12 @@
 """Test suite for flashfocus.flasher."""
 from time import sleep
-
-try:
-    from unittest.mock import MagicMock
-except ImportError:
-    from mock import MagicMock
+from unittest.mock import MagicMock
 
 from pytest import approx, mark
 
-from test.helpers import change_focus, watching_windows
-
+from flashfocus.compat import Window
 from flashfocus.flasher import Flasher
+from test.helpers import change_focus, watching_windows
 
 
 def test_flash(flasher, window):
@@ -29,7 +25,7 @@ def test_flash_stress_test(flasher, window):
 
 
 def test_flash_nonexistant_window_ignored(flasher):
-    flasher.flash(0)
+    flasher.flash(Window(0))
 
 
 def test_flash_conflicts_are_restarted(flasher, window):
@@ -57,9 +53,7 @@ def test_flash_conflicts_are_restarted(flasher, window):
         (0.8, 1, 1, [0.8, None]),
     ],
 )
-def test_compute_flash_series(
-    flash_opacity, default_opacity, ntimepoints, expected_result, flash_server
-):
+def test_compute_flash_series(flash_opacity, default_opacity, ntimepoints, expected_result):
     flasher = Flasher(
         flash_opacity=flash_opacity,
         default_opacity=default_opacity,

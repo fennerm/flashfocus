@@ -7,15 +7,12 @@ passes the request on to the Flasher whose criteria match the window.
 
 """
 import logging
+from typing import Dict, List, Tuple
 
+from flashfocus.compat import get_focused_workspace, list_mapped_windows, Window
+from flashfocus.errors import UnexpectedMessageType
+from flashfocus.display import WMEvent, WMEventType
 from flashfocus.flasher import Flasher
-from flashfocus.rule import Rule
-from flashfocus.util import list_param
-from flashfocus.xutil import count_windows, get_current_desktop, get_wm_class
-
-
-class UnexpectedRequestType(ValueError):
-    pass
 
 
 class FlashRouter:
@@ -37,17 +34,17 @@ class FlashRouter:
 
     Attributes
     ----------
-    flashers: List[flashfocus.flasher.Flasher]
+    flashers
         List of flashers each with a distinct set of flash parameters. The last flasher in the list
         is the default flasher which will be used for windows which don't match any of the user's
         configured rules.
-    rules: List[flashfocus.rule.Rule]
+    rules
         List of rules each corresponding to a set of criteria for matching against windows. The last
         rule in the list is the default rule which matches any window.
-    current_desktop: int
-        The id of the current focused desktop
-    prev_desktop: int
-        The id of the previously focused desktop
+    current_workspace: int
+        The id of the current focused workspace
+    prev_workspace: int
+        The id of the previously focused workspace
     prev_focus: int
         The id of the previously focused window. We keep track of this so that
         the same window is never flashed consecutively. When a window is closed
@@ -55,95 +52,73 @@ class FlashRouter:
 
     """
 
-    def __init__(self, defaults, config_rules):
-        self.rules = []
-        self.flashers = []
-        flasher_param = list_param(Flasher.__init__)
-        if config_rules:
-            for rule in config_rules:
-                self.rules.append(
-                    Rule(
-                        id_regex=rule.get("window_id"),
-                        class_regex=rule.get("window_class"),
-                        flash_lone_windows=rule.get("flash_lone_windows"),
-                        flash_on_focus=rule.get("flash_on_focus"),
-                    )
-                )
-                self.flashers.append(Flasher(**{k: rule[k] for k in flasher_param}))
-        default_rule = Rule(
-            flash_on_focus=defaults["flash_on_focus"],
-            flash_lone_windows=defaults["flash_lone_windows"],
-        )
-        default_flasher = Flasher(**{k: defaults[k] for k in flasher_param})
-        self.rules.append(default_rule)
-        self.flashers.append(default_flasher)
-        self.current_desktop = get_current_desktop()
-        self.prev_desktop = None
-        self.prev_focus = None
-
-    def route_request(self, window, request_type):
-        """Match a window against rule criteria and handle the request according to it's type.
-
-
-        Parameters
-        ----------
-        window: int
-            A Xorg window id
-        request_type: str
-            One of 'new_window', 'client_request', 'window_init', 'focus_shift'
-
-        """
-        if request_type == "focus_shift":
-            self._route_focus_shift(window)
-        elif request_type == "new_window":
-            self._route_new_window(window)
-        elif request_type == "client_request":
-            self._route_client_request(window)
-        elif request_type == "window_init":
-            self._route_window_init(window)
+    def __init__(self, config: Dict):
+        if config.get("rules") is None:
+            self.rules: List[Dict] = list()
         else:
-            raise UnexpectedRequestType()
+            self.rules = config["rules"]
+        self.flashers: List[Flasher] = list()
+        # We only need to track the user's workspace if the user config requires it
+        self.track_workspaces = config["flash_lone_windows"] != "always"
+        for rule_config in self.rules:
+            if rule_config["flash_lone_windows"] != "always":
+                self.track_workspaces = True
+            rule_flasher = Flasher(
+                default_opacity=rule_config.get("default_opacity", config["default_opacity"]),
+                flash_opacity=rule_config.get("flash_opacity", config["flash_opacity"]),
+                simple=rule_config.get("simple", config["simple"]),
+                ntimepoints=rule_config.get("ntimepoints", config["ntimepoints"]),
+                time=rule_config.get("time", config["time"]),
+            )
+            self.flashers.append(rule_flasher)
+        default_rule = {
+            "flash_on_focus": config["flash_on_focus"],
+            "flash_lone_windows": config["flash_lone_windows"],
+        }
+        self.rules.append(default_rule)
+        default_flasher = Flasher(
+            default_opacity=config["default_opacity"],
+            flash_opacity=config["flash_opacity"],
+            simple=config["simple"],
+            ntimepoints=config["ntimepoints"],
+            time=config["time"],
+        )
+        self.flashers.append(default_flasher)
+        self.prev_focus = None
+        if self.track_workspaces:
+            self.current_workspace = get_focused_workspace()
+            self.prev_workspace = self.current_workspace
 
-    def _route_new_window(self, window):
-        """Direct a request to the appropriate flasher.
+    def route_request(self, message: WMEvent) -> None:
+        """Match a window against rule criteria and handle the request according to it's type."""
+        if message.event_type is WMEventType.FOCUS_SHIFT:
+            self._route_focus_shift(message.window)
+        elif message.event_type is WMEventType.NEW_WINDOW:
+            self._route_new_window(message.window)
+        elif message.event_type is WMEventType.CLIENT_REQUEST:
+            self._route_client_request(message.window)
+        elif message.event_type is WMEventType.WINDOW_INIT:
+            self._route_window_init(message.window)
+        else:
+            raise UnexpectedMessageType()
 
-        Parameters
-        ----------
-        window: int
-            A Xorg window id
-        rule, flasher = self._match(window)
-
-        """
+    def _route_new_window(self, window: Window) -> None:
+        """Handle a new window being mapped."""
         rule, flasher = self._match(window)
         if self._config_allows_flash(window, rule):
+            # This will set the window to the default opacity afterwards
             flasher.flash(window)
         else:
             flasher.set_default_opacity(window)
 
-    def _route_window_init(self, window):
-        """Direct a request to the appropriate flasher.
-
-        Parameters
-        ----------
-        window: int
-            A Xorg window id
-        rule, flasher = self._match(window)
-
-        """
+    def _route_window_init(self, window: Window) -> None:
+        """Handle a window initialization event (this happens at startup)."""
         rule, flasher = self._match(window)
         flasher.set_default_opacity(window)
 
-    def _route_focus_shift(self, window):
-        """Direct a request to the appropriate flasher.
-
-        Parameters
-        ----------
-        window: int
-            A Xorg window id
-        rule, flasher = self._match(window)
-
-        """
-        if self.prev_focus != window:
+    def _route_focus_shift(self, window: Window) -> None:
+        """Handle a shift in the focused window."""
+        if self.prev_focus is None or self.prev_focus != window:
             self.prev_focus = window
             rule, flasher = self._match(window)
             if self._config_allows_flash(window, rule):
@@ -151,69 +126,56 @@ class FlashRouter:
             else:
                 flasher.set_default_opacity(window)
         else:
-            logging.info("Window %s was just flashed, ignoring...", window)
+            logging.info(f"Window {window.id} was just flashed, ignoring...")
 
-    def _route_client_request(self, window):
+    def _route_client_request(self, window: Window) -> None:
+        """Handle a manual flash request from the user."""
         rule, flasher = self._match(window)
         flasher.flash(window)
 
-    def _match(self, window):
-        """Find a flash rule which matches `window`.
-
-        Parameters
-        ----------
-        window: int
-            A Xorg window id
-
-        Returns
-        -------
-        Tuple[Rule, Flasher]
-            The matching rule and flasher. Returns None if
-            request_type=='focus_shift' and flash_on_focus is False for the rule
-
-        """
-        window_id, window_class = get_wm_class(window)
-        self.prev_desktop = self.current_desktop
-        self.current_desktop = get_current_desktop()
+    def _match(self, window: Window) -> Tuple[Dict, Flasher]:
+        """Find a flash rule which matches window."""
         for i, (rule, flasher) in enumerate(zip(self.rules, self.flashers)):
-            if rule.match(window_id, window_class):
+            if window.match(rule):
                 if i < len(self.rules) - 1:
-                    logging.info("Window %s matches criteria of rule %s", window, i)
+                    logging.info(f"Window {window.id} matches criteria of rule {i}")
                 return rule, flasher
+        return rule, flasher
 
-    def _config_allows_flash(self, window, rule):
-        """Check whether a config parameter prevents a window from flashing.
-
-        Parameters
-        ----------
-        window: int
-            A Xorg window id
-        rule: Rule
-            A configured rule associated with the current window
+    def _config_allows_flash(self, window: Window, rule: Dict) -> bool:
+        """Check whether a config parameter disallows a window from flashing.
 
         Returns
         -------
         If window should be flashed, this function returns True, else False.
 
         """
-        if not rule.flash_on_focus:
-            logging.info("flash_on_focus is False for window %s, ignoring...", window)
+        if self.track_workspaces:
+            self.prev_workspace = self.current_workspace
+            self.current_workspace = get_focused_workspace()
+
+        if not rule.get("flash_on_focus"):
+            logging.info(f"flash_on_focus is False for window {window.id}, ignoring...")
             return False
-        elif rule.flash_lone_windows != "always" and count_windows(self.current_desktop) < 2:
+
+        if rule.get("flash_lone_windows") == "always":
+            return True
+
+        if len(list_mapped_windows(self.current_workspace)) < 2:
             if (
-                rule.flash_lone_windows == "never"
+                rule.get("flash_lone_windows") == "never"
                 or (
-                    self.current_desktop != self.prev_desktop
-                    and rule.flash_lone_windows == "on_open_close"
+                    self.current_workspace != self.prev_workspace
+                    and rule.get("flash_lone_windows") == "on_open_close"
                 )
                 or (
-                    self.current_desktop == self.prev_desktop
-                    and rule.flash_lone_windows == "on_switch"
+                    self.current_workspace == self.prev_workspace
+                    and rule.get("flash_lone_windows") == "on_switch"
                 )
             ):
-                logging.info("Current desktop has <2 windows, ignoring...")
+                logging.info("Current workspace has <2 windows, ignoring...")
                 return False
             else:
                 return True
-        else:
-            return True
+
+        return True

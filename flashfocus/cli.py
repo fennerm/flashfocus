@@ -1,19 +1,20 @@
 #!/usr/bin/env python
-"""flashfocus command line interface."""
-import fcntl
+"""Command line interface."""
 import logging
 import os
+from pathlib import Path
 import sys
+from typing import Dict
 
 import click
 
 from flashfocus.color import green, red
-from flashfocus.config import load_merged_config
+from flashfocus.config import init_user_configfile, load_merged_config
+from flashfocus.errors import ConfigInitError, ConfigLoadError
+from flashfocus.pid import ensure_single_instance
 from flashfocus.server import FlashServer
-from flashfocus.syspaths import RUNTIME_DIR
 
-# Set LOGLEVEL environment variable to DEBUG or WARNING to change logging
-# verbosity.
+# Set LOGLEVEL environment variable to DEBUG or WARNING to change logging verbosity.
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"), format="%(levelname)s: %(message)s")
 
 if sys.stderr.isatty():
@@ -21,23 +22,6 @@ if sys.stderr.isatty():
     logging.addLevelName(logging.WARNING, red(logging.getLevelName(logging.WARNING)))
     logging.addLevelName(logging.ERROR, red(logging.getLevelName(logging.ERROR)))
     logging.addLevelName(logging.INFO, green(logging.getLevelName(logging.INFO)))
-
-
-# The pid file for flashfocus. Used to ensure that only one instance is active.
-PID = open(os.path.join(RUNTIME_DIR, "flashfocus.pid"), "a")
-
-
-def lock_pid_file():
-    """Lock the flashfocus PID file."""
-    fcntl.lockf(PID, fcntl.LOCK_EX | fcntl.LOCK_NB)
-
-
-def ensure_single_instance():
-    """Ensure that no other flashfocus instances are running."""
-    try:
-        lock_pid_file()
-    except IOError:
-        sys.exit("Another flashfocus instance is running.")
 
 
 @click.command()
@@ -66,9 +50,8 @@ def ensure_single_instance():
     required=False,
     is_flag=True,
     default=None,
-    help="Don't animate flashes. Setting this parameter improves "
-    "performance but causes rougher opacity transitions. "
-    "(default: false)",
+    help="Don't animate flashes. Setting this parameter improves performance but causes rougher "
+    "opacity transitions. (default: false)",
 )
 @click.option(
     "--ntimepoints",
@@ -103,27 +86,27 @@ def ensure_single_instance():
         "One of [never, always, on_open_close, on_switch]."
     ),
 )
-def cli(*args, **kwargs):
+def cli(*args, **kwargs) -> None:
     """Simple focus animations for tiling window managers."""
     init_server(kwargs)
 
 
-def init_server(cli_options):
+def init_server(cli_options: Dict) -> None:
     """Initialize the flashfocus server with given command line options."""
     ensure_single_instance()
-
-    if "opacity" in cli_options:
-        if cli_options["opacity"] is not None:
-            logging.warn("--opacity is deprecated, please use --flash-opacity/-o instead")
-            if cli_options["flash_opacity"] is None:
-                cli_options["flash_opacity"] = cli_options["opacity"]
-        del cli_options["opacity"]
-
-    config = load_merged_config(cli_options)
-
-    logging.info("Initializing with parameters:")
-    logging.info("%s", config)
-    server = FlashServer(**config)
+    config_file_path = cli_options.pop("config")
+    if config_file_path is None:
+        try:
+            config_file_path = init_user_configfile()
+        except (ConfigInitError, ConfigLoadError) as error:
+            if str(error):
+                logging.error(str(error))
+            sys.exit("Could not load config file, exiting...")
+    config = load_merged_config(config_file_path=Path(config_file_path), cli_options=cli_options)
+    logging.info(f"Initializing with parameters:\n{config}")
+    server = FlashServer(config)
+    # The return statement is a hack for testing purposes. It allows us to mock the return of
+    # the function.
     return server.event_loop()
 
 

@@ -8,31 +8,37 @@ RUN pacman -S --noconfirm \
         gcc \
         glib2 \
         gtk3 \
-        python-cairo \
-        python2-cairo \
-        python-gobject \
-        python2-gobject \
         python-pip \
-        python2-pip \
         libxcb
-        
 
 USER user
 ENV PATH="/home/user/.local/bin:${PATH}"
 
-RUN pip3 install --no-cache-dir --user pytest pytest-cov pytest-runner \
-        pytest-factoryboy pytest-lazy-fixture pdbpp
-RUN pip2 install --no-cache-dir --user pytest pytest-cov pytest-runner mock \
-        pytest-factoryboy pytest-lazy-fixture pdbpp
+RUN pip install --user \
+    flake8 \
+    flake8-bugbear \
+    flake8-blind-except \
+    flake8-builtins \
+    mypy \
+    pdbpp \
+    pytest \
+    pytest-cov \
+    pytest-factoryboy \
+    pytest-runner \
+    pytest-lazy-fixture \
+    vulture
 
 COPY --chown=user requirements.txt requirements.txt
-RUN pip3 install --user -r requirements.txt
-RUN pip2 install --user -r requirements.txt
+RUN pip install --user -r requirements.txt
 
-COPY --chown=user . flashfocus
-WORKDIR flashfocus
+COPY --chown=user . /home/user/flashfocus
+WORKDIR /home/user/flashfocus
 RUN pip3 install --no-deps -e . --user .
-RUN pip2 install -e . --no-deps --user .
 
-
-CMD test/docker_startup.sh
+CMD supervisord </dev/null &>/dev/null \
+    & sleep 1 \
+    && pytest --failed-first --verbose --cov-report term-missing \
+        --cov="$PWD" --color yes --showlocals --durations 10 --pdb \
+    && flake8 --exclude "./build,./.eggs" \
+    && mypy --ignore-missing-imports . \
+    && vulture flashfocus test

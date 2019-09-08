@@ -1,13 +1,11 @@
-"""Code for flashing windows."""
-from __future__ import division
-
+"""Flashing windows."""
 import logging
 from threading import Thread
 from time import sleep
+from typing import Dict, List
 
-from xcffib.xproto import WindowError
-
-from flashfocus.xutil import set_opacity
+from flashfocus.compat import Window
+from flashfocus.types import Number
 
 
 class Flasher:
@@ -47,28 +45,35 @@ class Flasher:
 
     """
 
-    def __init__(self, time, flash_opacity, default_opacity, simple, ntimepoints):
+    def __init__(
+        self,
+        time: Number,
+        flash_opacity: float,
+        default_opacity: float,
+        simple: bool,
+        ntimepoints: int,
+    ) -> None:
         self.default_opacity = default_opacity
         self.flash_opacity = flash_opacity
         self.time = time / 1000
         if simple:
             self.ntimepoints = 1
-            self.timechunk = time
+            self.timechunk = self.time
             self.flash_series = [flash_opacity]
         else:
             self.ntimepoints = ntimepoints
             self.timechunk = self.time / self.ntimepoints
             self.flash_series = self._compute_flash_series()
-        self.progress = dict()
+        self.progress: Dict[int, int] = dict()
 
-    def flash(self, window):
-        logging.info("Flashing window %s", str(window))
+    def flash(self, window: Window) -> None:
+        logging.info(f"Flashing window {window.id}")
         if self.default_opacity == self.flash_opacity:
             return
 
-        if window in self.progress:
+        if window.id in self.progress:
             try:
-                self.progress[window] = 0
+                self.progress[window.id] = 0
             except KeyError:
                 # This happens in rare case that window is deleted from progress
                 # after first if statement
@@ -78,15 +83,15 @@ class Flasher:
             p.daemon = True
             p.start()
 
-    def set_default_opacity(self, window):
+    def set_default_opacity(self, window: Window) -> None:
         """Set the opacity of a window to its default."""
         # This needs to occur in a separate thread or Xorg freaks out and
         # doesn't allow further changes to window properties
-        p = Thread(target=set_opacity, args=(window, self.default_opacity))
+        p = Thread(target=window.set_opacity, args=[self.default_opacity])
         p.daemon = True
         p.start()
 
-    def _compute_flash_series(self):
+    def _compute_flash_series(self) -> List[float]:
         """Calculate the series of opacity values for the flash animation.
 
         Given the default window opacity, and the flash opacity, this method
@@ -100,25 +105,20 @@ class Flasher:
         ]
         return flash_series
 
-    def _flash(self, window):
+    def _flash(self, window: Window) -> None:
         """Flash a window.
 
         This function just iterates across `self.flash_series` and modifies the
         window opacity accordingly. It waits `self.timechunk` between
         modifications.
         """
-        try:
-            self.progress[window] = 0
-            while self.progress[window] < self.ntimepoints:
-                target_opacity = self.flash_series[self.progress[window]]
-                set_opacity(window, target_opacity)
-                sleep(self.timechunk)
-                self.progress[window] += 1
+        self.progress[window.id] = 0
+        while self.progress[window.id] < self.ntimepoints:
+            target_opacity = self.flash_series[self.progress[window.id]]
+            window.set_opacity(target_opacity)
+            sleep(self.timechunk)
+            self.progress[window.id] += 1
 
-            logging.info("Resetting window %s opacity to default", window)
-            set_opacity(window, self.default_opacity)
-
-        except WindowError:
-            logging.info("Attempted to draw to nonexistant window %s, ignoring...", str(window))
-        finally:
-            del self.progress[window]
+        logging.info(f"Resetting window {window.id} opacity to default")
+        window.set_opacity(self.default_opacity)
+        del self.progress[window.id]
