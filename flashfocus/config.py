@@ -87,7 +87,7 @@ class BaseSchema(Schema):
     flash_lone_windows: fields.String = fields.String(validate=validate_flash_lone_windows)
 
     @validates_schema(pass_original=True)
-    def check_unknown_fields(self, data: Dict, original_data: Dict) -> None:
+    def check_unknown_fields(self, data: Dict, original_data: Dict, **kwargs) -> None:
         """Check that unknown options were not passed by the user."""
         try:
             unknown = set(original_data) - set(self.fields)
@@ -106,7 +106,7 @@ class RulesSchema(BaseSchema):
     window_name = Regex()
 
     @validates_schema()
-    def check_for_matching_criteria(self, data: Dict) -> None:
+    def check_for_matching_criteria(self, data: Dict, **kwargs) -> None:
         """Check that rule contains at least one method for matching a window."""
         if not any([prop in data for prop in WINDOW_MATCH_PROPERTIES]):
             raise ValidationError(
@@ -125,7 +125,7 @@ class ConfigSchema(BaseSchema):
     rules: fields.Nested = fields.Nested(RulesSchema, many=True)
 
     @post_load()
-    def set_rule_defaults(self, config: Dict) -> None:
+    def set_rule_defaults(self, config: Dict, **kwargs) -> None:
         """Set default values for the nested `RulesSchema`."""
         if "rules" not in config:
             config["rules"] = None
@@ -312,7 +312,7 @@ def load_merged_config(config_file_path: Path, cli_options: Dict) -> Dict:
     default_config = load_config(default_config_path)
     user_config = load_config(config_file_path)
     if user_config:
-        logging.info("Loading configuration from %s", user_config)
+        logging.info(f"Loading configuration from {config_file_path}")
     config = merge_config_sources(
         user_config=user_config, default_config=default_config, cli_options=cli_options
     )
