@@ -1,5 +1,8 @@
 # Changelog
 
+## [2.0.1] - September 8th, 2019
+- Temporarily pin marshmallow to v2
+
 ## [2.0.0] - September 7th, 2019
 - Added sway support
 - Dropped python2 support
