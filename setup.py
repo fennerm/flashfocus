@@ -2,7 +2,7 @@ from io import open
 from setuptools import find_packages, setup
 
 # This speeds up the flash_window script
-import fastentrypoints
+import fastentrypoints  # noqa: F401
 
 setup(
     name="flashfocus",
@@ -17,14 +17,23 @@ setup(
     py_modules=["flashfocus"],
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
-    install_requires=["xcffib", "click", "cffi", "xpybutil", "marshmallow", "pyyaml"],
+    python_requires=">=3.6",
+    install_requires=[
+        "xcffib",
+        "click",
+        "cffi",
+        "xpybutil",
+        "marshmallow",
+        "pyyaml>=5.1",
+        "i3ipc>=2.1.1",
+    ],
     packages=find_packages(exclude=["*test*"]),
     keywords="xorg flash focus i3 bspwm awesomewm herbsluftwm",
     scripts=["bin/nc_flash_window"],
     include_package_data=True,
     entry_points="""
         [console_scripts]
-        flashfocus=flashfocus.ui:cli
+        flashfocus=flashfocus.cli:cli
         flash_window=flashfocus.client:client_request_flash
     """,
 )

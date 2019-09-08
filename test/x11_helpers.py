@@ -52,7 +52,7 @@ def create_blank_window(wm_name=None, wm_class=None):
     return window
 
 
-def switch_desktop(desktop_index):
+def switch_workspace(workspace: int) -> None:
     # unfortunately need to use i3 specific command here because i3 blocks
     # external desktop switch requests
-    subprocess.check_output(["i3-msg", "workspace", str(desktop_index + 1)])
+    subprocess.check_output(["i3-msg", "workspace", str(workspace)])

@@ -4,9 +4,8 @@ import logging
 import socket
 from threading import Thread
 
-
 from flashfocus.compat import get_focused_window, Window
-from flashfocus.display import WMMessage, WMMessageType
+from flashfocus.display import WMEvent, WMEventType
 from flashfocus.sockets import init_client_socket, init_server_socket
 
 
@@ -40,11 +39,11 @@ class ClientMonitor(Thread):
             else:
                 logging.info("Received a flash request from client...")
                 focused = get_focused_window()
-                self.queue_window(focused, WMMessageType.CLIENT_REQUEST)
+                self.queue_window(focused, WMEventType.CLIENT_REQUEST)
 
-    def queue_window(self, window: Window, type: WMMessageType):
+    def queue_window(self, window: Window, event_type: WMEventType):
         """Add a window to the queue."""
-        self.queue.put(WMMessage(window=window, type=type))
+        self.queue.put(WMEvent(window=window, event_type=event_type))
 
     def stop(self) -> None:
         self.keep_going = False

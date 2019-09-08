@@ -1,9 +1,12 @@
+"""A pid file is used to ensure only one flashfocus instance is running."""
+
 import fcntl
+from pathlib import Path
 import os
 import sys
 
 
-def determine_runtime_dir() -> str:
+def determine_runtime_dir() -> Path:
     """Determine the runtime dir.
 
     Uses XDG_RUNTIME_DIR if defined, otherwise falls back to /tmp
@@ -14,15 +17,24 @@ def determine_runtime_dir() -> str:
         runtime_dir = xdg_runtime_dir
     else:
         runtime_dir = "/tmp"
-    return runtime_dir
+    return Path(runtime_dir)
 
 
-def lock_pid_file():
-    """Lock the flashfocus PID file."""
-    # The pid file for flashfocus. Used to ensure that only one instance is active.
+def get_pid_file() -> Path:
     runtime_dir = determine_runtime_dir()
-    pid = open(os.path.join(runtime_dir, "flashfocus.pid"), "a")
-    fcntl.lockf(pid, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    return runtime_dir / "flashfocus.pid"
+
+
+# This must be declared globally or else the file is closed when it goes out of scope
+PID = get_pid_file().open("a")
+
+
+def lock_pid_file() -> None:
+    fcntl.lockf(PID, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def unlock_pid_file() -> None:
+    fcntl.lockf(PID, fcntl.LOCK_UN)
 
 
 def ensure_single_instance():

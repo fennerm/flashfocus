@@ -9,8 +9,8 @@ from pytest import approx, mark
 
 from flashfocus.client import client_request_flash
 from flashfocus.compat import Window
-from flashfocus.display import WMMessage, WMMessageType
-from test.compat import change_focus, switch_desktop
+from flashfocus.display import WMEvent, WMEventType
+from test.compat import change_focus, switch_workspace
 from test.helpers import new_watched_window, server_running, watching_windows, WindowSession
 
 
@@ -24,12 +24,12 @@ from test.helpers import new_watched_window, server_running, watching_windows, W
 def test_event_loop(flash_server, windows, focus_indices, flash_indices, monkeypatch):
     focus_shifts = [windows[i] for i in focus_indices]
     expected_calls = (
-        [call(WMMessage(window=window, type=WMMessageType.WINDOW_INIT)) for window in windows]
+        [call(WMEvent(window=window, event_type=WMEventType.WINDOW_INIT)) for window in windows]
         + [
-            call(WMMessage(window=windows[i], type=WMMessageType.FOCUS_SHIFT))
+            call(WMEvent(window=windows[i], event_type=WMEventType.FOCUS_SHIFT))
             for i in flash_indices
         ]
-        + [call(WMMessage(window=focus_shifts[-1], type=WMMessageType.CLIENT_REQUEST))]
+        + [call(WMEvent(window=focus_shifts[-1], event_type=WMEventType.CLIENT_REQUEST))]
     )
     flash_server.router.route_request = MagicMock()
     with server_running(flash_server):
@@ -40,7 +40,7 @@ def test_event_loop(flash_server, windows, focus_indices, flash_indices, monkeyp
 
 
 def test_second_consecutive_focus_requests_ignored(flash_server, windows):
-    expected_calls = [call(WMMessage(window=windows[1], type=WMMessageType.FOCUS_SHIFT))] * 2
+    expected_calls = [call(WMEvent(window=windows[1], event_type=WMEventType.FOCUS_SHIFT))] * 2
     flash_server.router.route_request = MagicMock()
     with watching_windows(windows) as watchers:
         with server_running(flash_server):
@@ -79,7 +79,7 @@ def test_new_window_opacity_set_to_default(transparent_flash_server, list_only_t
 
 def test_server_handles_nonexistant_window(flash_server):
     with server_running(flash_server):
-        flash_server.events.put(WMMessage(Window(0), WMMessageType.CLIENT_REQUEST))
+        flash_server.events.put(WMEvent(Window(0), WMEventType.CLIENT_REQUEST))
         sleep(0.01)
 
 
@@ -116,17 +116,18 @@ def test_flash_lone_windows_set_to_never_for_new_window(no_lone_server):
             change_focus(window)
 
     # The report might contain None or 0.2 depending on whether server or watcher initialized first
-    assert len(watcher.opacity_events) == 1
+    assert len(watcher.opacity_events) < 3
 
 
 def test_flash_lone_windows_set_to_never_with_desktop_switching(no_lone_server):
     with server_running(no_lone_server):
         with new_watched_window() as (window, watcher):
-            switch_desktop(1)
-            switch_desktop(0)
+            switch_workspace(1)
+            change_focus(window)
 
-    # The report might contain None or 0.2 depending on whether server or watcher initialized first
-    assert len(watcher.opacity_events) == 1
+    switch_workspace(0)
+    # report might contain 1 or 2 events depending on whether server or watcher initialized first
+    assert len(watcher.opacity_events) < 3
 
 
 def test_lone_windows_flash_on_switch_if_flash_lone_windows_is_on_switch(
@@ -134,9 +135,10 @@ def test_lone_windows_flash_on_switch_if_flash_lone_windows_is_on_switch(
 ):
     with watching_windows([window]) as watchers:
         with server_running(lone_on_switch_server):
-            switch_desktop(1)
+            switch_workspace(1)
             change_focus(window)
 
+    switch_workspace(0)
     assert len(watchers[0].opacity_events) > 2
 
 
@@ -145,8 +147,9 @@ def test_lone_windows_dont_flash_on_switch_if_flash_lone_windows_is_on_open_clos
 ):
     with watching_windows([window]) as watchers:
         with server_running(lone_on_open_close_server):
-            switch_desktop(1)
+            switch_workspace(1)
             change_focus(window)
 
-    # The report might contain None or 0.2 depending on whether server or watcher initialized first
-    assert len(watchers[0].opacity_events) == 2
+    switch_workspace(0)
+    # report might contain 1 or 2 events depending on whether server or watcher initialized first
+    assert len(watchers[0].opacity_events) < 3

@@ -1,10 +1,8 @@
-"""Code for flashing windows."""
+"""Flashing windows."""
 import logging
 from threading import Thread
 from time import sleep
 from typing import Dict, List
-
-from xcffib.xproto import WindowError
 
 from flashfocus.compat import Window
 from flashfocus.types import Number
@@ -60,7 +58,7 @@ class Flasher:
         self.time = time / 1000
         if simple:
             self.ntimepoints = 1
-            self.timechunk = time
+            self.timechunk = self.time
             self.flash_series = [flash_opacity]
         else:
             self.ntimepoints = ntimepoints
@@ -114,18 +112,13 @@ class Flasher:
         window opacity accordingly. It waits `self.timechunk` between
         modifications.
         """
-        try:
-            self.progress[window.id] = 0
-            while self.progress[window.id] < self.ntimepoints:
-                target_opacity = self.flash_series[self.progress[window.id]]
-                window.set_opacity(target_opacity)
-                sleep(self.timechunk)
-                self.progress[window.id] += 1
+        self.progress[window.id] = 0
+        while self.progress[window.id] < self.ntimepoints:
+            target_opacity = self.flash_series[self.progress[window.id]]
+            window.set_opacity(target_opacity)
+            sleep(self.timechunk)
+            self.progress[window.id] += 1
 
-            logging.info(f"Resetting window {window.id} opacity to default")
-            window.set_opacity(self.default_opacity)
-
-        except WindowError:
-            logging.info(f"Attempted to draw to nonexistant window {window.id}, ignoring...")
-        finally:
-            del self.progress[window.id]
+        logging.info(f"Resetting window {window.id} opacity to default")
+        window.set_opacity(self.default_opacity)
+        del self.progress[window.id]

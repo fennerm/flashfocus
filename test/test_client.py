@@ -8,7 +8,7 @@ from time import sleep
 from pytest import raises
 
 from flashfocus.client import client_request_flash
-from flashfocus.display import WMMessage, WMMessageType
+from flashfocus.display import WMEvent, WMEventType
 from test.helpers import producer_running, queue_to_list
 
 
@@ -27,8 +27,8 @@ def test_client_monitor_handles_client_requests(client_monitor, windows):
         client_request_flash()
     queued = queue_to_list(client_monitor.queue)
     assert queued == [
-        WMMessage(window=windows[0], type=WMMessageType.CLIENT_REQUEST),
-        WMMessage(window=windows[0], type=WMMessageType.CLIENT_REQUEST),
+        WMEvent(window=windows[0], event_type=WMEventType.CLIENT_REQUEST),
+        WMEvent(window=windows[0], event_type=WMEventType.CLIENT_REQUEST),
     ]
 
 

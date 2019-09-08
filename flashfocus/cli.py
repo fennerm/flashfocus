@@ -1,19 +1,20 @@
 #!/usr/bin/env python
-"""flashfocus command line interface."""
+"""Command line interface."""
 import logging
 import os
+from pathlib import Path
 import sys
 from typing import Dict
 
 import click
 
 from flashfocus.color import green, red
-from flashfocus.config import Config, init_user_configfile
+from flashfocus.config import init_user_configfile, load_merged_config
+from flashfocus.errors import ConfigInitError, ConfigLoadError
 from flashfocus.pid import ensure_single_instance
 from flashfocus.server import FlashServer
 
-# Set LOGLEVEL environment variable to DEBUG or WARNING to change logging
-# verbosity.
+# Set LOGLEVEL environment variable to DEBUG or WARNING to change logging verbosity.
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"), format="%(levelname)s: %(message)s")
 
 if sys.stderr.isatty():
@@ -95,12 +96,17 @@ def init_server(cli_options: Dict) -> None:
     ensure_single_instance()
     config_file_path = cli_options.pop("config")
     if config_file_path is None:
-        config_file_path = init_user_configfile()
-    config = Config()
-    config.load(config_file_path=config_file_path, cli_options=cli_options)
-    logging.info("Initializing with parameters:")
-    logging.info(f"{config}")
+        try:
+            config_file_path = init_user_configfile()
+        except (ConfigInitError, ConfigLoadError) as error:
+            if str(error):
+                logging.error(str(error))
+            sys.exit("Could not load config file, exiting...")
+    config = load_merged_config(config_file_path=Path(config_file_path), cli_options=cli_options)
+    logging.info(f"Initializing with parameters:\n{config}")
     server = FlashServer(config)
+    # The return statement is a hack for testing purposes. It allows us to mock the return of
+    # the function.
     return server.event_loop()
 
 

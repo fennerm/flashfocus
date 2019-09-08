@@ -1,7 +1,10 @@
 # Changelog
 
-## [Unreleased]
-- Wayland support
+## [2.0.0] - September 7th, 2019
+- Added sway support
+- Dropped python3 support
+- Increased minimum pyyaml version to 5.1
+- Added i3ipc requirement
 
 ## [1.2.6] - May 27th, 2019
 Added support for marshmallow v3 which is in prerelease

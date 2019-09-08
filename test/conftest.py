@@ -1,6 +1,5 @@
 """Unit test fixtures."""
 from queue import Queue
-import sys
 
 from factory import Factory
 from pytest import fixture
@@ -12,9 +11,9 @@ from flashfocus.compat import DisplayHandler
 from flashfocus.server import FlashServer
 from flashfocus.sockets import init_client_socket, init_server_socket
 
-from test.compat import switch_desktop
+from test.compat import switch_workspace
 from test.helpers import (
-    clear_desktop,
+    clear_workspace,
     default_flash_param,
     fill_in_rule,
     quick_conf,
@@ -27,8 +26,8 @@ from test.helpers import (
 @fixture
 def windows():
     """Display session with multiple open windows."""
-    clear_desktop(0)
-    switch_desktop(0)
+    clear_workspace(0)
+    switch_workspace(0)
     window_session = WindowSession(3)
     yield window_session.windows
     window_session.destroy()
@@ -37,8 +36,8 @@ def windows():
 @fixture
 def window(windows):
     """Single blank window."""
-    clear_desktop(0)
-    switch_desktop(0)
+    clear_workspace(0)
+    switch_workspace(0)
     window_session = WindowSession(1)
     yield window_session.windows[0]
     window_session.destroy()
@@ -172,14 +171,6 @@ def client_socket(server_socket):
 def stub_server(server_socket):
     """StubServer instance."""
     return StubServer(server_socket)
-
-
-@fixture
-def string_type():
-    if sys.version_info[0] < 3:
-        return basestring
-    else:
-        return str
 
 
 @fixture

@@ -24,12 +24,12 @@ endef
 
 run_tests:
 	docker build -t flashfocus .
-	docker run --rm -p $(TEST_PORT) -it --name flashfocus -e DISPLAY=:0.0 flashfocus
+	docker run --rm -p $(TEST_PORT) -it --name flashfocus -e DISPLAY=${DISPLAY} flashfocus
 	docker rm --force flashfocus || true
 
 run_tests_noninteractive:
 	docker build -t flashfocus .
-	docker run --rm -p $(TEST_PORT) --name flashfocus -e DISPLAY=:0.0 flashfocus
+	docker run --rm -p $(TEST_PORT) --name flashfocus -e DISPLAY=${DISPLAY} flashfocus
 	docker rm --force flashfocus || true
 
 patch_release:

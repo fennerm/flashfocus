@@ -1,122 +1,150 @@
+"""Interacting with Sway-wm.
+
+All submodules in flashfocus.display_protocols are expected to contain a minimal set of
+functions/classes for abstracting across various display protocols. See list in flashfocus.compat
+
+"""
 import logging
 from queue import Queue
 from threading import Thread
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import i3ipc
 
-from flashfocus.display import WMError, WMMessage, WMMessageType
+from flashfocus.display import WMEvent, WMEventType
+from flashfocus.errors import WMError
+from flashfocus.util import match_regex
 
 
+# This connection is shared by all classes/functions in the module. It is not thread-safe to
+# maintain multiple connections to sway through the same socket.
 SWAY = i3ipc.Connection()
 
 
 class Window:
-    def __init__(self, container: i3ipc.i3ipc.Con) -> None:
-        self.container = container
-        if self.container.id is None:
-            raise WMError("Invalid window ID")
-        self.id = self.container.id
+    """Represents a sway window.
 
-    def __eq__(self, other) -> bool:
+    Parameters
+    ----------
+    container
+        The i3ipc Con object for the window.
+
+    Attributes
+    ----------
+    id
+        The unique id of the window's sway container.
+    properties
+        A dictionary of window properties. If the window is from a native wayland app, it will
+        contain the window's app_id and name. If the window is running under XWayland it will
+        contain the window's ID (instance) and class.
+    """
+
+    def __init__(self, container: i3ipc.Con) -> None:
+        self._container = container
+        if self._container.id is None:
+            raise WMError("Invalid window ID")
+        self.id: int = self._container.id
+        self.properties = {
+            "window_name": self._container.name,
+            "window_class": self._container.window_class,
+            "window_id": self._container.window_instance,
+            "app_id": self._container.app_id,
+        }
+
+    def __eq__(self, other: object) -> bool:
+        if type(self) != type(other):
+            raise TypeError("Arguments must be of the same type")
         if other is None:
             return False
         else:
-            return self.container.id == other.container.id
+            return self._container.id == other._container.id
 
-    def __ne__(self, other) -> bool:
+    def __ne__(self, other: object) -> bool:
+        if type(self) != type(other):
+            raise TypeError("Arguments must be of the same type")
         if other is None:
             return True
         else:
             return self.id != other.id
 
-    @property
-    def wm_class(self) -> Tuple[str, str]:
-        """Get the title and class of a window
+    def match(self, criteria: Dict) -> bool:
+        """Determine whether the window matches a set of criteria.
 
-        Returns
-        -------
-        (window title, window class)
+        Parameters
+        ----------
+        criteria
+            Dictionary of regexes of the form {PROPERTY: REGEX} e.g {"window_id": r"termite"}
 
         """
-        return self.container.window_class, self.container.window_instance
-
-    @property
-    def opacity(self) -> float:
-        # TODO
-        pass
+        for prop in self.properties.keys():
+            if criteria.get(prop) and not match_regex(criteria[prop], self.properties[prop]):
+                return False
+        return True
 
     def set_opacity(self, opacity: float) -> None:
         # If opacity is None just silently ignore the request
-        self.container.command(f"opacity {opacity}")
-
-    def set_class(self, title: str, class_: str) -> None:
-        # TODO
-        pass
-        # set_wm_class_checked(self.id, title, class_).check()
-
-    def set_name(self, name: str) -> None:
-        # TODO
-        pass
+        self._container.command(f"opacity {opacity}")
 
     def destroy(self) -> None:
-        self.container.command("kill")
+        self._container.command("kill")
 
 
 class DisplayHandler(Thread):
+    """Parse events from sway and pass them on to FlashServer"""
+
     def __init__(self, queue: Queue) -> None:
         # This is set to True when initialization of the thread is complete and its ready to begin
         # the event loop
         self.ready = False
         super(DisplayHandler, self).__init__()
-        self.conn = i3ipc.Connection()
         self.queue = queue
 
     def run(self) -> None:
-        self.conn.on("window::focus", self._handle_focus_shift)
-        self.conn.on("window::new", self._handle_new_mapped_window)
+        # We need to share one global sway connection in order to be thread-safe
+        SWAY.on(i3ipc.Event.WINDOW_FOCUS, self._handle_focus_shift)
+        SWAY.on(i3ipc.Event.WINDOW_NEW, self._handle_new_mapped_window)
         self.ready = True
-        self.conn.main()
+        SWAY.main()
 
     def stop(self) -> None:
         self.keep_going = False
-        self.conn.main_quit()
+        SWAY.main_quit()
         self.join()
 
-    def queue_window(self, window: Window, type: WMMessageType) -> None:
-        """Add a window to the queue."""
-        self.queue.put(WMMessage(window=window, type=type))
+    def queue_window(self, window: Window, event_type: WMEventType) -> None:
+        self.queue.put(WMEvent(window=window, event_type=event_type))
 
-    def _handle_focus_shift(self, _, event: i3ipc.model.Event) -> None:
+    def _handle_focus_shift(self, _: i3ipc.Connection, event: i3ipc.Event) -> None:
         if _is_mapped_window(event.container):
             logging.info("Focus shifted to %s", event.container.id)
-            self.queue_window(Window(event.container), WMMessageType.FOCUS_SHIFT)
+            self.queue_window(Window(event.container), WMEventType.FOCUS_SHIFT)
 
-    def _handle_new_mapped_window(self, _, event: i3ipc.model.Event) -> None:
-        """Handle a new mapped window event."""
+    def _handle_new_mapped_window(self, _: i3ipc.Connection, event: i3ipc.Event) -> None:
         if _is_mapped_window(event.container):
             logging.info("Window %s mapped...", event.container.id)
-            self.queue_window(Window(event.container), WMMessageType.NEW_WINDOW)
+            self.queue_window(Window(event.container), WMEventType.NEW_WINDOW)
 
 
-def _is_mapped_window(container: i3ipc.con.Con) -> bool:
-    return (
-        container
-        and container.id
-        and container.parent.type != "dockarea"
-        and container.window_rect.width != 0
-    )
+def _is_mapped_window(container: i3ipc.Con) -> bool:
+    """Determine whether a window is displayed on the screen with nonzero size."""
+    return container and container.id and container.window_rect.width != 0  # type: ignore
 
 
-def get_focused_window():
+def get_focused_window() -> Window:
     return Window(SWAY.get_tree().find_focused())
 
 
-def list_mapped_windows(desktop: Optional[int] = None) -> List[Window]:
-    windows = list()
-    for con in SWAY.get_tree():
-        if _is_mapped_window(con):
-            windows.append(Window(con))
+def get_workspace(workspace: int) -> i3ipc.Con:
+    return next(filter(lambda ws: ws.num == workspace, SWAY.get_tree().workspaces()), None)
+
+
+def list_mapped_windows(workspace: Optional[int] = None) -> List[Window]:
+    if workspace is not None:
+        containers = get_workspace(workspace)
+    else:
+        containers = SWAY.get_tree().leaves()
+
+    windows = [Window(con) for con in containers if _is_mapped_window(con)]
     return windows
 
 
@@ -124,11 +152,6 @@ def disconnect_display_conn() -> None:
     SWAY.main_quit()
 
 
-def get_focused_desktop() -> str:
-    return SWAY.get_tree().find_focused().workspace().name
-
-
-def unset_all_window_opacity() -> None:
-    windows = list_mapped_windows()
-    for window in windows:
-        window.set_opacity(1)
+def get_focused_workspace() -> int:
+    workspace: int = SWAY.get_tree().find_focused().workspace().num
+    return workspace

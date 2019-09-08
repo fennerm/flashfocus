@@ -1,9 +1,15 @@
-"""Xorg utility code."""
+"""Xorg utility code.
+
+All submodules in flashfocus.display_protocols are expected to contain a minimal set of
+functions/classes for abstracting across various display protocols. See list in flashfocus.compat
+
+"""
+import functools
 import logging
 from queue import Queue
 import struct
 from threading import Thread
-from typing import List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from xcffib.xproto import (
     CreateNotifyEvent,
@@ -24,66 +30,115 @@ from xpybutil.ewmh import (
 )
 from xpybutil.icccm import get_wm_class, set_wm_class_checked, set_wm_name_checked
 import xpybutil.window
-from xpybutil.util import get_atom_name
+from xpybutil.util import get_atom_name, PropertyCookieSingle
 
-from flashfocus.display import WMError, WMMessage, WMMessageType
+from flashfocus.display import WMEvent, WMEventType
+from flashfocus.errors import WMError
+from flashfocus.util import match_regex
 
 
 Event = Union[CreateNotifyEvent, PropertyNotifyEvent]
 
 
+def ignore_window_error(function: Callable) -> Callable:
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        try:
+            return function(*args, **kwargs)
+        except WindowError:
+            pass
+
+    return wrapper
+
+
 class Window:
     def __init__(self, window_id: int) -> None:
+        """Represents an Xorg window.
+
+        Parameters
+        ----------
+        window_id
+            The XORG window ID
+
+        Attributes
+        ----------
+        id
+            The XORG window ID
+        """
         if window_id is None:
             raise WMError("Undefined window")
         self.id = window_id
+        self._properties: Dict = dict()
 
     def __eq__(self, other) -> bool:
+        if type(self) != type(other):
+            raise TypeError("Arguments must be of the same type")
         if other is None:
             return False
         else:
             return self.id == other.id
 
     def __ne__(self, other) -> bool:
+        if type(self) != type(other):
+            raise TypeError("Arguments must be of the same type")
         if other is None:
             return True
         else:
             return self.id != other.id
 
     @property
-    def wm_class(self) -> Tuple[Optional[str], Optional[str]]:
-        """Get the title and class of a window
+    def properties(self) -> Dict:
+        """Get a dictionary with the window class and instance."""
+        # Properties are cached after the first call to this function and so might not necessarily
+        # be correct if the properties are changed between calls. This is acceptable for our
+        # purposes because Windows are short-lived objects.
+        if not self._properties:
+            try:
+                reply = get_wm_class(self.id).reply()
+            except (struct.error, WindowError) as e:
+                raise WMError("Invalid window: %s", self.id) from e
+            try:
+                self._properties = {"window_id": reply[0], "window_class": reply[1]}
+            except TypeError:
+                pass
+        return self._properties
 
-        Returns
-        -------
-        (window title, window class)
+    def match(self, criteria: Dict) -> bool:
+        """Determine whether the window matches a set of criteria.
+
+        Parameters
+        ----------
+        criteria
+            Dictionary of regexes of the form {PROPERTY: REGEX} e.g {"window_id": r"termite"}
 
         """
-        try:
-            reply = get_wm_class(self.id).reply()
-        except (struct.error, WindowError) as e:
-            raise WMError("Invalid window: %s", self.id) from e
-        try:
-            return reply[0], reply[1]
-        except TypeError:
-            return None, None
+        if not criteria.get("window_id") and not criteria.get("window_class"):
+            return True
+        for prop in ["window_id", "window_class"]:
+            if criteria.get(prop) and not match_regex(criteria[prop], self.properties[prop]):
+                return False
+        return True
 
     @property
     def opacity(self) -> float:
         return get_wm_window_opacity(self.id).reply()
 
+    @ignore_window_error
     def set_opacity(self, opacity: Optional[float]) -> None:
         # If opacity is None just silently ignore the request
-        if opacity:
+        if opacity is not None:
             cookie = set_wm_window_opacity_checked(self.id, opacity)
             cookie.check()
 
+    @ignore_window_error
     def set_class(self, title: str, class_: str) -> None:
         set_wm_class_checked(self.id, title, class_).check()
 
+    @ignore_window_error
     def set_name(self, name: str) -> None:
         set_wm_name_checked(self.id, name).check()
 
+    @ignore_window_error
     def destroy(self) -> None:
         try:
             conn.core.DestroyWindow(self.id, True).check()
@@ -166,19 +221,17 @@ class DisplayHandler(Thread):
         self.join()
         self.message_window.destroy()
 
-    def queue_window(self, window: Window, type: WMMessageType) -> None:
-        """Add a window to the queue."""
-        self.queue.put(WMMessage(window=window, type=type))
+    def queue_window(self, window: Window, event_type: WMEventType) -> None:
+        self.queue.put(WMEvent(window=window, event_type=event_type))
 
     def _handle_new_mapped_window(self, event: Event) -> None:
-        """Handle a new mapped window event."""
         logging.info(f"Window {event.window} mapped...")
         # Check that window is visible so that we don't accidentally set
         # opacity of windows which are not for display. Without this step
         # window opacity can become frozen and stop responding to flashes.
         window = Window(event.window)
         if window in list_mapped_windows():
-            self.queue_window(window, WMMessageType.NEW_WINDOW)
+            self.queue_window(window, WMEventType.NEW_WINDOW)
         else:
             logging.info(f"Window {window.id} is not visible, ignoring...")
 
@@ -188,38 +241,44 @@ class DisplayHandler(Thread):
         if atom_name == "_NET_ACTIVE_WINDOW":
             focused_window = get_focused_window()
             logging.info(f"Focus shifted to {focused_window.id}")
-            self.queue_window(focused_window, WMMessageType.FOCUS_SHIFT)
+            self.queue_window(focused_window, WMEventType.FOCUS_SHIFT)
         elif atom_name == "WM_NAME" and event.window == self.message_window.id:
             # Received kill signal from server -> terminate the thread
             self.keep_going = False
 
 
+@ignore_window_error
 def get_focused_window() -> Window:
     return Window(get_active_window().reply())
 
 
-def list_mapped_windows(desktop: Optional[int] = None) -> List[Window]:
+def _try_unwrap(cookie: PropertyCookieSingle) -> Optional[Any]:
+    """Try reading a reply from the X server, ignoring any errors encountered."""
+    try:
+        return cookie.reply()
+    except WindowError:
+        return None
+
+
+@ignore_window_error
+def list_mapped_windows(workspace: Optional[int] = None) -> List[Window]:
     mapped_window_ids = get_client_list().reply()
     if mapped_window_ids is None:
-        mapped_window_ids = []
-    mapped_windows = [Window(window_id) for window_id in mapped_window_ids]
+        mapped_window_ids = list()
 
-    if desktop is not None:
-        cookies = [get_wm_desktop(window.id) for window in list_mapped_windows()]
-        window_desktops = [cookie.reply() for cookie in cookies]
-        mapped_windows = [win for win, dt in zip(mapped_windows, window_desktops) if dt == desktop]
+    mapped_windows = [Window(window_id) for window_id in mapped_window_ids]
+    if workspace is not None:
+        cookies = [get_wm_desktop(window) for window in mapped_window_ids]
+        workspaces = [_try_unwrap(cookie) for cookie in cookies]
+        mapped_windows = [win for win, ws in zip(mapped_windows, workspaces) if ws == workspace]
     return mapped_windows
 
 
-def get_focused_desktop() -> int:
+@ignore_window_error
+def get_focused_workspace() -> int:
     return get_current_desktop().reply()
 
 
-def unset_all_window_opacity() -> None:
-    """Unset the opacity of all mapped windows."""
-    for window in list_mapped_windows():
-        window.set_opacity(1)
-
-
+@ignore_window_error
 def disconnect_display_conn() -> None:
     conn.disconnect()

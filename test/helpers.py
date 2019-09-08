@@ -4,20 +4,18 @@ from __future__ import division
 import copy
 from contextlib import contextmanager
 from queue import Queue
-import re
 import socket
 from threading import Thread
 from time import sleep
-from typing import Dict, Generator, List, Union
+from typing import Dict, Generator, List, Pattern, Union
 
 from flashfocus.client import ClientMonitor
 from flashfocus.compat import DisplayHandler, get_focused_window, list_mapped_windows, Window
-from flashfocus.display import WMError
+from flashfocus.errors import WMError
 from flashfocus.server import FlashServer
 from test.compat import change_focus, clear_event_queue, create_blank_window
 
 
-RegexType = type(re.compile("x"))
 Producer = Union[ClientMonitor, DisplayHandler]
 
 
@@ -49,7 +47,7 @@ class WindowSession:
             while window not in list_mapped_windows():
                 pass
         change_focus(self.windows[0])
-        # Wait for the focus to actually be changed
+        # Wait for the focus to actually change
         while get_focused_window() != self.windows[0]:
             pass
 
@@ -159,14 +157,6 @@ def producer_running(producer: Producer) -> Generator:
     producer.stop()
 
 
-def to_regex(x: str) -> RegexType:
-    """Convert a string to a regex (returns None if `x` is None)"""
-    try:
-        return re.compile(x)
-    except TypeError:
-        return None
-
-
 def default_flash_param() -> Dict:
     return {
         "config": {"default": None, "type": [str], "location": "cli"},
@@ -177,9 +167,9 @@ def default_flash_param() -> Dict:
         "simple": {"default": False, "type": [bool], "location": "any"},
         "flash_on_focus": {"default": True, "type": [bool], "location": "any"},
         "flash_lone_windows": {"default": "always", "type": [str], "location": "any"},
-        "rules": {"default": dict(), "type": [dict, type(None)], "location": "config_file"},
-        "window_id": {"default": "window1", "type": [RegexType], "location": "rule"},
-        "window_class": {"default": "Window1", "type": [RegexType], "location": "rule"},
+        "rules": {"default": None, "type": [list, type(None)], "location": "config_file"},
+        "window_id": {"default": "window1", "type": [Pattern], "location": "rule"},
+        "window_class": {"default": "Window1", "type": [Pattern], "location": "rule"},
     }
 
 
@@ -192,7 +182,7 @@ def fill_in_rule(partial_rule: Dict) -> Dict:
     }
     for key, value in default_rules.items():
         if key not in partial_rule.keys():
-            partial_rule[key] = value
+            partial_rule[key] = copy.deepcopy(value)
     return partial_rule
 
 
@@ -203,8 +193,8 @@ def rekey(dic: Dict, new_vals: Dict) -> Dict:
     return dic_copy
 
 
-def clear_desktop(desktop_index: int) -> None:
-    for window in list_mapped_windows():
+def clear_workspace(workspace: int) -> None:
+    for window in list_mapped_windows(workspace):
         try:
             window.destroy()
         except WMError:

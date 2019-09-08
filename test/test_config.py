@@ -3,14 +3,16 @@ from pytest import fixture, mark, raises
 from pytest_lazyfixture import lazy_fixture
 
 from flashfocus.config import (
-    Config,
     construct_config_error_msg,
     dehyphen,
     get_default_config_file,
     hierarchical_merge,
     load_config,
+    load_merged_config,
     merge_config_sources,
+    validate_config,
 )
+from flashfocus.errors import ConfigLoadError
 
 
 @fixture
@@ -57,7 +59,7 @@ def test_invalid_param(option, values, input_type, blank_cli_options, default_co
         defaults = default_config
         blanks = blank_cli_options
         config = {option: value}
-        with raises(SystemExit):
+        with raises(ConfigLoadError):
             if input_type == "cli":
                 merge_config_sources(cli_options=config, user_config=None, default_config=defaults)
             else:
@@ -91,7 +93,7 @@ def check_validated_config(config, expected_types):
 )
 @mark.parametrize("input_type", ["cli", "file"])
 def test_valid_param(
-    option, values, input_type, blank_cli_options, string_type, default_config, valid_config_types
+    option, values, input_type, blank_cli_options, default_config, valid_config_types
 ):
     for value in values:
         config = {option: value}
@@ -134,7 +136,7 @@ def test_rules_validation(rules, blank_cli_options, default_config, valid_config
 
 
 @mark.parametrize(
-    "input,expected",
+    "arg,expected",
     [
         ({"foo-bar": 1, "car": 2}, {"foo_bar": 1, "car": 2}),
         ({"car": 2}, {"car": 2}),
@@ -142,9 +144,9 @@ def test_rules_validation(rules, blank_cli_options, default_config, valid_config
         (dict(), dict()),
     ],
 )
-def test_dehyphen(input, expected):
-    dehyphen(input)
-    assert input == expected
+def test_dehyphen(arg, expected):
+    dehyphen(arg)
+    assert arg == expected
 
 
 @mark.parametrize(
@@ -185,6 +187,12 @@ def test_load_config(configfile):
     assert load_config(configfile) == {"default_opacity": 1, "flash_opacity": 0.5}
 
 
+def test_if_x11_wayland_rules_are_dropped_during_validation(default_config):
+    default_config["rules"] = [{"app_id": "foo", "default_opacity": 0.8}]
+    config = validate_config(default_config)
+    assert config["rules"] is None
+
+
 def test_construct_rules_config_error_message():
     errors = {"rules": {0: ["msg"]}}
     expected = "Failed to parse config\n"
@@ -210,19 +218,19 @@ def invalid_yaml(tmpdir):
 
 
 def test_invalid_yaml_passed_to_load_config(invalid_yaml):
-    with raises(SystemExit):
+    with raises(ConfigLoadError):
         load_config(invalid_yaml)
 
 
 def test_load_merged_config_with_no_custom_config(monkeypatch, blank_cli_options, configfile):
-    conf = Config()
-    conf.load(config_file_path=configfile, cli_options=blank_cli_options)
+    conf = load_merged_config(config_file_path=configfile, cli_options=blank_cli_options)
     assert conf.get("flash_opacity") == 0.5
 
 
 def test_load_merged_config_with_custom_config(
     monkeypatch, blank_cli_options, configfile_with_02_flash_opacity
 ):
-    conf = Config()
-    conf.load(configfile_with_02_flash_opacity, blank_cli_options)
+    conf = load_merged_config(
+        config_file_path=configfile_with_02_flash_opacity, cli_options=blank_cli_options
+    )
     assert conf.get("flash_opacity") == 0.2

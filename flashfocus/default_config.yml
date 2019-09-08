@@ -28,18 +28,22 @@ flash-on-focus: true
 #   'never':
 #      Never flash lone windows
 #   'on_open_close':
-#      Lone windows will be flashed only if a) if they were just opened and b) if 
-#      another window was just closed. 
+#      Lone windows will be flashed only if a) if they were just opened and b)
+#      if another window was just closed. 
 #   'on_switch':
 #      Lone windows will be flashed only upon switching desktops.
 flash-lone-windows: 'always'
 
+
 # Defining window-specific flash rules
 #
-# Flash rules are defined by matching the WM_CLASS property of a window.
-# To get the WM_CLASS property of a window use 'xprop WM_CLASS' and click on a
-# window. The property is a tuple of the form (window-id, window-class). The
-# window-class is usually the name of the application, but not always.
+# X11-based window managers (e.g i3, bspwm)
+# -----------------------------------------
+# Flash rules are defined by matching the WM_CLASS property of a window. To get
+# the WM_CLASS property use 'xprop WM_CLASS' and click on a window. The
+# property is a tuple of the form (window-id, window-class). The window-class
+# is usually the name of the application, but not always.
+#
 #
 # Say I'd like to set all 'termite' windows to 80% opacity but leave other
 # windows at full opacity:
@@ -52,7 +56,7 @@ flash-lone-windows: 'always'
 # I also would prefer that firefox windows are not flashed on focus:
 #
 # rules:
-#   - window-class: Firefox
+#   - window-class: firefox
 #     flash-on-focus: False
 #   - window-class: Termite
 #     default-opacity: 0.8
@@ -62,4 +66,24 @@ flash-lone-windows: 'always'
 #
 # rules:
 #   - window-id: ^(?!termite)$
+#     default-opacity: 0.8
+#
+#
+# Sway
+# ----
+# Native wayland apps can be matched using the app_id and window name. These
+# can be found using `swaymsg -t get_tree`. XWayland apps are matched with
+# using WM_CLASS as above (this can also be found with `swaymsg`)
+#
+# Given that termite is wayland native and firefox is not, the rules above 
+# could instead be written:
+#
+# rules:
+#   - window-class: firefox
+#     flash-on-focus: False
+#   - app-id: termite
+#     default-opacity: 0.8
+#
+# rules:
+#   - window-name: ^(?!termite)$
 #     default-opacity: 0.8

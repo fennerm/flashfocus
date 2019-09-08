@@ -4,18 +4,13 @@ from __future__ import division
 import logging
 from queue import Empty, Queue
 from signal import default_int_handler, SIGINT, signal
-
+from typing import Dict
 
 from flashfocus.client import ClientMonitor
-from flashfocus.compat import (
-    disconnect_display_conn,
-    DisplayHandler,
-    list_mapped_windows,
-    unset_all_window_opacity,
-)
-from flashfocus.config import Config
-from flashfocus.display import WMError, WMMessage, WMMessageType
-from flashfocus.router import FlashRouter, UnexpectedMessageType
+from flashfocus.compat import disconnect_display_conn, DisplayHandler, list_mapped_windows
+from flashfocus.display import WMEvent, WMEventType
+from flashfocus.errors import UnexpectedMessageType, WMError
+from flashfocus.router import FlashRouter
 
 
 # Ensure that SIGINTs are handled correctly
@@ -27,24 +22,8 @@ class FlashServer:
 
     Parameters
     ----------
-    flash_opacity: float (between 0 and 1)
-        Flash opacity.
-    default_opacity: float (between 0 and 1)
-        Windows are restored to this opacity post-flash.
-    time: float > 0
-        Flash interval in milliseconds.
-    ntimepoints: int
-        Number of timepoints in the flash animation. Higher values will lead to
-        smoother animations at the cost of increased X server requests.
-        Ignored if simple is True.
-    simple: bool
-        If True, don't animate flashes. Setting this parameter improves
-        performance but opacity transitions are less smooth.
-    flash_on_focus: bool
-        If True, windows will be flashed on focus. Otherwise, windows will only
-        be flashed on request.
-    flash_lone_windows: str
-        One of 'never', 'always', 'on_switch', 'on_open_close'
+    config
+        A config dictionary read from the user config file/CLI options
 
     Attributes
     ----------
@@ -62,7 +41,7 @@ class FlashServer:
 
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Dict) -> None:
         self.config = config
         self.router = FlashRouter(config)
         self.events: Queue = Queue()
@@ -94,7 +73,8 @@ class FlashServer:
         self.keep_going = False
         self._kill_producers()
         logging.info("Resetting windows to full opacity...")
-        unset_all_window_opacity()
+        for window in list_mapped_windows():
+            window.set_opacity(1)
         if disconnect_from_wm:
             logging.info("Disconnecting from X session...")
             disconnect_display_conn()
@@ -109,7 +89,7 @@ class FlashServer:
         try:
             self.router.route_request(message)
         except UnexpectedMessageType:
-            logging.error(f"Unexpected request type - {message.type}. Aborting...")
+            logging.error(f"Unexpected request type - {message.event_type}. Aborting...")
             self.shutdown()
         except WMError:
             pass
@@ -122,4 +102,4 @@ class FlashServer:
     def _set_all_window_opacity_to_default(self) -> None:
         logging.info("Setting all windows to their default opacity...")
         for window in list_mapped_windows():
-            self.router.route_request(WMMessage(window=window, type=WMMessageType.WINDOW_INIT))
+            self.router.route_request(WMEvent(window=window, event_type=WMEventType.WINDOW_INIT))
