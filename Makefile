@@ -22,10 +22,23 @@ define update_changelog
 	git commit -m "Updated changelog"
 endef
 
-run_tests:
+define run_tests
 	docker build -t flashfocus .
 	docker run --rm -p $(TEST_PORT) -it --name flashfocus -e DISPLAY=${DISPLAY} flashfocus
 	docker rm --force flashfocus || true
+endef
+
+define deploy
+	set -euo pipefail
+	$(call run_tests)
+	$(call update_changelog)
+	bumpversion ${1}
+	$(call deploy_to_pypi)
+	$(call deploy_to_github)
+endef
+
+run_tests:
+	$(call run_tests)
 
 run_tests_noninteractive:
 	docker build -t flashfocus .
@@ -33,22 +46,10 @@ run_tests_noninteractive:
 	docker rm --force flashfocus || true
 
 patch_release:
-	set -euo pipefail
-	$(call update_changelog)
-	bumpversion patch
-	$(call deploy_to_pypi)
-	$(call deploy_to_github)
+	$(call deploy,"patch")
 
 minor_release:
-	set -euo pipefail
-	$(call update_changelog)
-	bumpversion minor
-	$(call deploy_to_pypi)
-	$(call deploy_to_github)
+	$(call deploy,"minor")
 
 major_release:
-	set -euo pipefail
-	$(call update_changelog)
-	bumpversion major
-	$(call deploy_to_pypi)
-	$(call deploy_to_github)
+	$(call deploy,"major")

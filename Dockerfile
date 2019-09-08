@@ -36,9 +36,9 @@ WORKDIR /home/user/flashfocus
 RUN pip3 install --no-deps -e . --user .
 
 CMD supervisord </dev/null &>/dev/null \
-    & sleep 1 \
-    && pytest --failed-first --verbose --cov-report term-missing \
-        --cov="$PWD" --color yes --showlocals --durations 10 --pdb \
-    && flake8 --exclude "./build,./.eggs" \
-    && mypy --ignore-missing-imports . \
-    && vulture flashfocus test
+    & sleep 1; \
+    flake8 --exclude "./build,./.eggs"; \
+    mypy --ignore-missing-imports .; \
+    vulture flashfocus test; \
+    pytest --failed-first --verbose --cov-report term-missing \
+        --cov="$PWD" --color yes --showlocals --durations 10 --pdb
