@@ -23,7 +23,7 @@ setup(
         "click",
         "cffi",
         "xpybutil",
-        "marshmallow",
+        "marshmallow>=2.0,<3.0",
         "pyyaml>=5.1",
         "i3ipc>=2.1.1",
     ],
