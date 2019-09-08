@@ -6,7 +6,7 @@ Simple focus animations for tiling window managers.
 
 <br>
 
-Compatible with all X based window managers (i3, bspwm, awesome-wm, xmonad...).
+Compatible with sway as well as all X based window managers (i3, bspwm, awesome-wm, xmonad...).
 
 
 Flashfocus is currently pretty stable and I don't have any major features in
@@ -15,9 +15,9 @@ requests are always welcome :)
 
 ## Installation
 
-An active window compositor is required for the effects of flashfocus to be
-noticeable. If you don't have one setup already, I recommend
-[compton](https://github.com/chjj/compton).
+For X based window managers, an active window compositor is required for the effects of flashfocus
+to be noticeable. If you don't have one setup already, I recommend
+[compton](https://github.com/chjj/compton). It should work with sway out of the box.
 
 ### Arch
 
