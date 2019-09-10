@@ -1,5 +1,8 @@
 # Changelog
 
+## [2.0.2] - September 9th, 2019
+- Add __init__.py to display_protocols submodule (due to issue with AUR package)
+
 ## [2.0.1] - September 8th, 2019
 - Temporarily pin marshmallow to v2
 
