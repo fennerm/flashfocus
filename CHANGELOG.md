@@ -1,4 +1,6 @@
 # Changelog
+## [2.0.3] - September 9th, 2019
+- Fix typo in marshmallow pin
 
 ## [2.0.2] - September 9th, 2019
 - Add __init__.py to display_protocols submodule (due to issue with AUR package)
