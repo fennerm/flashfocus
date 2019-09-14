@@ -64,7 +64,7 @@ def validate_flash_lone_windows(data: str) -> None:
 class Regex(fields.Field):
     """Schema field for validating a regex."""
 
-    def deserialize(self, value: str, attr: str, obj: Dict) -> Pattern[str]:
+    def _deserialize(self, value: str, attr: str, obj: Dict, **kwargs) -> Pattern[str]:
         try:
             return re.compile(value)
         except Exception:
@@ -125,7 +125,7 @@ class ConfigSchema(BaseSchema):
     rules: fields.Nested = fields.Nested(RulesSchema, many=True)
 
     @post_load()
-    def set_rule_defaults(self, config: Dict, **kwargs) -> None:
+    def set_rule_defaults(self, config: Dict, **kwargs) -> Dict:
         """Set default values for the nested `RulesSchema`."""
         if "rules" not in config:
             config["rules"] = None
@@ -134,6 +134,7 @@ class ConfigSchema(BaseSchema):
                 for prop in BASE_PROPERTIES:
                     if prop not in rule:
                         rule[prop] = config[prop]
+        return config
 
 
 def load_config(config_file: Path) -> Dict:
@@ -210,10 +211,18 @@ def validate_config(config: Dict) -> Dict:
     except TypeError:
         # Strict parameter removed in the latest versions of marshmallow
         schema = ConfigSchema()
+
     try:
-        validated: Dict = schema.load(config).data
+        loaded: Dict = schema.load(config)
     except ValidationError as err:
         raise ConfigLoadError(construct_config_error_msg(err.messages))
+
+    try:
+        # In marshmallow v2 the validated data needed to be accessed from the tuple after load
+        validated = loaded.data
+    except AttributeError:
+        # In marshmallow v3 the validated data is returned directly from load
+        validated = loaded
 
     if get_display_protocol() == DisplayProtocol.X11:
         purge_invalid_wayland_rules(validated)

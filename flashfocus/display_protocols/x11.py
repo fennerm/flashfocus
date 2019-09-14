@@ -81,10 +81,7 @@ class Window:
     def __ne__(self, other) -> bool:
         if type(self) != type(other):
             raise TypeError("Arguments must be of the same type")
-        if other is None:
-            return True
-        else:
-            return self.id != other.id
+        return self.id != other.id
 
     @property
     def properties(self) -> Dict:

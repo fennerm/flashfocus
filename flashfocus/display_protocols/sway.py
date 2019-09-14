@@ -54,18 +54,12 @@ class Window:
     def __eq__(self, other: object) -> bool:
         if type(self) != type(other):
             raise TypeError("Arguments must be of the same type")
-        if other is None:
-            return False
-        else:
-            return self._container.id == other._container.id
+        return self._container.id == other._container.id
 
     def __ne__(self, other: object) -> bool:
         if type(self) != type(other):
             raise TypeError("Arguments must be of the same type")
-        if other is None:
-            return True
-        else:
-            return self.id != other.id
+        return self.id != other.id
 
     def match(self, criteria: Dict) -> bool:
         """Determine whether the window matches a set of criteria.
