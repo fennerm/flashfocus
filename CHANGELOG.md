@@ -1,4 +1,7 @@
 # Changelog
+## [2.0.4] - September 14th, 2019
+- Add support for marshmallow v3
+
 ## [2.0.3] - September 9th, 2019
 - Fix typo in marshmallow pin
 
