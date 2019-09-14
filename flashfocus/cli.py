@@ -1,27 +1,16 @@
 #!/usr/bin/env python
 """Command line interface."""
 import logging
-import os
 from pathlib import Path
 import sys
 from typing import Dict
 
 import click
 
-from flashfocus.color import green, red
-from flashfocus.config import init_user_configfile, load_merged_config
 from flashfocus.errors import ConfigInitError, ConfigLoadError
+from flashfocus.config import init_user_configfile, load_merged_config
 from flashfocus.pid import ensure_single_instance
 from flashfocus.server import FlashServer
-
-# Set LOGLEVEL environment variable to DEBUG or WARNING to change logging verbosity.
-logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"), format="%(levelname)s: %(message)s")
-
-if sys.stderr.isatty():
-    # Colored logging categories
-    logging.addLevelName(logging.WARNING, red(logging.getLevelName(logging.WARNING)))
-    logging.addLevelName(logging.ERROR, red(logging.getLevelName(logging.ERROR)))
-    logging.addLevelName(logging.INFO, green(logging.getLevelName(logging.INFO)))
 
 
 @click.command()

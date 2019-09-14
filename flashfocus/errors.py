@@ -20,3 +20,9 @@ class UnexpectedMessageType(Exception):
     """I don't know what to do with this type of message."""
 
     pass
+
+
+class UnsupportedWM(Exception):
+    """I don't work with this window manager yet."""
+
+    pass
