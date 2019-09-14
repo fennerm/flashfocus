@@ -73,10 +73,7 @@ class Window:
     def __eq__(self, other) -> bool:
         if type(self) != type(other):
             raise TypeError("Arguments must be of the same type")
-        if other is None:
-            return False
-        else:
-            return self.id == other.id
+        return self.id == other.id
 
     def __ne__(self, other) -> bool:
         if type(self) != type(other):
