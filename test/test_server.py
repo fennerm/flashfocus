@@ -10,7 +10,7 @@ from pytest import approx, mark
 from flashfocus.client import client_request_flash
 from flashfocus.compat import Window
 from flashfocus.display import WMEvent, WMEventType
-from test.compat import change_focus, switch_workspace
+from test.compat import change_focus, set_fullscreen, switch_workspace
 from test.helpers import new_watched_window, server_running, watching_windows, WindowSession
 
 
@@ -50,8 +50,7 @@ def test_second_consecutive_focus_requests_ignored(flash_server, windows):
     assert flash_server.router.route_request.call_args_list[3:] == expected_calls
 
     # Window will only be flashed once though
-    num_completions = sum([x == 1 for x in watchers[1].opacity_events])
-    assert num_completions == 1
+    watchers[0].count_flashes() == 1
 
 
 def test_window_opacity_set_to_default_on_startup(
@@ -107,7 +106,9 @@ def test_flash_lone_windows_set_to_never_with_existing_window(no_lone_server, wi
             change_focus(window)
             assert window.opacity == approx(0.2)
 
-    assert watchers[0].opacity_events == [None, 0.2, 1]
+    # Window has opacity=1 before server starts, then set to 0.2, then set back to 1 when server
+    # quits
+    assert watchers[0].opacity_events == [1, 0.2, 1]
 
 
 def test_flash_lone_windows_set_to_never_for_new_window(no_lone_server):
@@ -116,7 +117,7 @@ def test_flash_lone_windows_set_to_never_for_new_window(no_lone_server):
             change_focus(window)
 
     # The report might contain None or 0.2 depending on whether server or watcher initialized first
-    assert len(watcher.opacity_events) < 3
+    assert watcher.count_flashes() == 0
 
 
 def test_flash_lone_windows_set_to_never_with_desktop_switching(no_lone_server):
@@ -125,31 +126,46 @@ def test_flash_lone_windows_set_to_never_with_desktop_switching(no_lone_server):
             switch_workspace(1)
             change_focus(window)
 
-    switch_workspace(0)
-    # report might contain 1 or 2 events depending on whether server or watcher initialized first
-    assert len(watcher.opacity_events) < 3
+    assert watcher.count_flashes() == 0
 
 
-def test_lone_windows_flash_on_switch_if_flash_lone_windows_is_on_switch(
-    lone_on_switch_server, window
-):
-    with watching_windows([window]) as watchers:
+def test_lone_windows_flash_on_switch_if_flash_lone_windows_is_on_switch(lone_on_switch_server):
+    with new_watched_window() as (window, watcher):
         with server_running(lone_on_switch_server):
             switch_workspace(1)
             change_focus(window)
 
-    switch_workspace(0)
-    assert len(watchers[0].opacity_events) > 2
+    assert watcher.count_flashes() == 1
 
 
 def test_lone_windows_dont_flash_on_switch_if_flash_lone_windows_is_on_open_close(
-    lone_on_open_close_server, window
+    lone_on_open_close_server
 ):
-    with watching_windows([window]) as watchers:
+    with new_watched_window() as (window, watcher):
         with server_running(lone_on_open_close_server):
             switch_workspace(1)
             change_focus(window)
 
-    switch_workspace(0)
-    # report might contain 1 or 2 events depending on whether server or watcher initialized first
-    assert len(watchers[0].opacity_events) < 3
+    assert watcher.count_flashes() == 0
+
+
+def test_flash_fullscreen_server_flashes_fullscreen_windows(flash_server):
+    with new_watched_window() as (window, watcher):
+        set_fullscreen(window)
+        with server_running(flash_server):
+            switch_workspace(1)
+            change_focus(window)
+
+    assert watcher.count_flashes() == 1
+
+
+def test_no_flash_fullscreen_false_server_doesnt_flash_fullscreen_windows(
+    no_flash_fullscreen_server
+):
+    with new_watched_window() as (window, watcher):
+        set_fullscreen(window)
+        with server_running(no_flash_fullscreen_server):
+            switch_workspace(1)
+            change_focus(window)
+
+    assert watcher.count_flashes() == 0

@@ -9,5 +9,7 @@ else:
         change_focus as change_focus,
         clear_event_queue as clear_event_queue,
         create_blank_window as create_blank_window,
+        set_fullscreen as set_fullscreen,
         switch_workspace as switch_workspace,
+        unset_fullscreen as unset_fullscreen,
     )

@@ -5,7 +5,8 @@ import xcffib
 import xcffib.xproto
 import xpybutil
 import xpybutil.ewmh
-from xpybutil.ewmh import set_active_window_checked
+from xpybutil.ewmh import request_wm_state_checked, set_active_window_checked
+from xpybutil.util import get_atom
 
 
 from flashfocus.compat import Window
@@ -56,3 +57,15 @@ def switch_workspace(workspace: int) -> None:
     # unfortunately need to use i3 specific command here because i3 blocks
     # external desktop switch requests
     subprocess.check_output(["i3-msg", "workspace", str(workspace)])
+
+
+def set_fullscreen(window: Window) -> None:
+    request_wm_state_checked(
+        window.id, action=1, first=get_atom("_NET_WM_STATE_FULLSCREEN")
+    ).check()
+
+
+def unset_fullscreen(window: Window) -> None:
+    request_wm_state_checked(
+        window.id, action=0, first=get_atom("_NET_WM_STATE_FULLSCREEN")
+    ).check()

@@ -18,8 +18,11 @@ simple: false
 # Number of animation frames in a flash.
 ntimepoints: 10
 
-# Set this to False if you don't want windows to flash on focus.
+# Set this to false if you don't want windows to flash on focus.
 flash-on-focus: true
+
+# Set this to false if you don't want fullscreen windows to flash.
+flash-fullscreen: true
 
 # Whether or not to flash windows if they are the only window on the desktop.
 # Possible values:

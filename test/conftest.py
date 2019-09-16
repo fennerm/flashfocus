@@ -11,9 +11,7 @@ from flashfocus.compat import DisplayHandler
 from flashfocus.server import FlashServer
 from flashfocus.sockets import init_client_socket, init_server_socket
 
-from test.compat import switch_workspace
 from test.helpers import (
-    clear_workspace,
     default_flash_param,
     fill_in_rule,
     quick_conf,
@@ -26,18 +24,14 @@ from test.helpers import (
 @fixture
 def windows():
     """Display session with multiple open windows."""
-    clear_workspace(0)
-    switch_workspace(0)
     window_session = WindowSession(3)
     yield window_session.windows
     window_session.destroy()
 
 
 @fixture
-def window(windows):
+def window():
     """Single blank window."""
-    clear_workspace(0)
-    switch_workspace(0)
     window_session = WindowSession(1)
     yield window_session.windows[0]
     window_session.destroy()
@@ -131,6 +125,14 @@ register(
                 ]
             ]
         },
+    ),
+)
+
+register(
+    ServerFactory,
+    "no_flash_fullscreen_server",
+    config=rekey(
+        quick_conf(), {"default_opacity": 1, "flash_opacity": 0.8, "flash_fullscreen": False}
     ),
 )
 

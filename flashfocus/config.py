@@ -34,6 +34,7 @@ BASE_PROPERTIES = [
     "flash_lone_windows",
 ]
 
+FLASH_LONE_WINDOWS_OPTS = ["never", "on_open_close", "on_switch", "always"]
 X11_MATCH_PROPERTIES = {"window_class", "window_id"}
 WAYLAND_MATCH_PROPERTIES = {"window_name", "app_id"}
 WINDOW_MATCH_PROPERTIES = X11_MATCH_PROPERTIES | WAYLAND_MATCH_PROPERTIES
@@ -53,10 +54,10 @@ def validate_decimal(data: Number) -> None:
 
 
 def validate_flash_lone_windows(data: str) -> None:
-    accepted_values = ["never", "on_open_close", "on_switch", "always"]
-    if data not in accepted_values:
+    if data not in FLASH_LONE_WINDOWS_OPTS:
         raise ValidationError(
-            f"Invalid 'flash-lone-windows' value, expected one of {', '.join(accepted_values)}",
+            f"Invalid 'flash-lone-windows' value, expected one of "
+            "{', '.join(FLASH_LONE_WINDOWS_OPTS)}",
             data,
         )
 
@@ -85,6 +86,7 @@ class BaseSchema(Schema):
     ntimepoints: fields.Integer = fields.Integer(validate=validate_positive_number)
     flash_on_focus: fields.Boolean = fields.Boolean()
     flash_lone_windows: fields.String = fields.String(validate=validate_flash_lone_windows)
+    flash_fullscreen: fields.Boolean = fields.Boolean()
 
     @validates_schema(pass_original=True)
     def check_unknown_fields(self, data: Dict, original_data: Dict, **kwargs) -> None:

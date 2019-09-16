@@ -74,6 +74,7 @@ class FlashRouter:
         default_rule = {
             "flash_on_focus": config["flash_on_focus"],
             "flash_lone_windows": config["flash_lone_windows"],
+            "flash_fullscreen": config["flash_fullscreen"],
         }
         self.rules.append(default_rule)
         default_flasher = Flasher(
@@ -158,24 +159,25 @@ class FlashRouter:
             logging.info(f"flash_on_focus is False for window {window.id}, ignoring...")
             return False
 
-        if rule.get("flash_lone_windows") == "always":
-            return True
+        if rule.get("flash_lone_windows") != "always":
+            if len(list_mapped_windows(self.current_workspace)) < 2:
+                if (
+                    rule.get("flash_lone_windows") == "never"
+                    or (
+                        self.current_workspace != self.prev_workspace
+                        and rule.get("flash_lone_windows") == "on_open_close"
+                    )
+                    or (
+                        self.current_workspace == self.prev_workspace
+                        and rule.get("flash_lone_windows") == "on_switch"
+                    )
+                ):
+                    logging.info("Current workspace has <2 windows, ignoring...")
+                    return False
 
-        if len(list_mapped_windows(self.current_workspace)) < 2:
-            if (
-                rule.get("flash_lone_windows") == "never"
-                or (
-                    self.current_workspace != self.prev_workspace
-                    and rule.get("flash_lone_windows") == "on_open_close"
-                )
-                or (
-                    self.current_workspace == self.prev_workspace
-                    and rule.get("flash_lone_windows") == "on_switch"
-                )
-            ):
-                logging.info("Current workspace has <2 windows, ignoring...")
+        if rule.get("flash_fullscreen") is not True:
+            if window.is_fullscreen():
+                logging.info("Window is fullscreen, ignoring...")
                 return False
-            else:
-                return True
 
         return True

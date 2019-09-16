@@ -82,6 +82,9 @@ class Window:
     def destroy(self) -> None:
         self._container.command("kill")
 
+    def is_fullscreen(self) -> bool:
+        return self._container.fullscreen_mode == 1
+
 
 class DisplayHandler(Thread):
     """Parse events from sway and pass them on to FlashServer"""

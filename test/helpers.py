@@ -10,10 +10,16 @@ from time import sleep
 from typing import Dict, Generator, List, Pattern, Union
 
 from flashfocus.client import ClientMonitor
-from flashfocus.compat import DisplayHandler, get_focused_window, list_mapped_windows, Window
+from flashfocus.compat import (
+    DisplayHandler,
+    get_focused_window,
+    get_focused_workspace,
+    list_mapped_windows,
+    Window,
+)
 from flashfocus.errors import WMError
 from flashfocus.server import FlashServer
-from test.compat import change_focus, clear_event_queue, create_blank_window
+from test.compat import change_focus, clear_event_queue, create_blank_window, switch_workspace
 
 
 Producer = Union[ClientMonitor, DisplayHandler]
@@ -29,7 +35,25 @@ def quick_conf() -> Dict:
         rules=None,
         flash_on_focus=True,
         flash_lone_windows="always",
+        flash_fullscreen=True,
     )
+
+
+def default_flash_param() -> Dict:
+    return {
+        "config": {"default": None, "type": [str], "location": "cli"},
+        "default_opacity": {"default": 1, "type": [float], "location": "any"},
+        "flash_opacity": {"default": 0.8, "type": [float], "location": "any"},
+        "time": {"default": 100, "type": [float], "location": "any"},
+        "ntimepoints": {"default": 4, "type": [int], "location": "any"},
+        "simple": {"default": False, "type": [bool], "location": "any"},
+        "flash_on_focus": {"default": True, "type": [bool], "location": "any"},
+        "flash_lone_windows": {"default": "always", "type": [str], "location": "any"},
+        "flash_fullscreen": {"default": True, "type": [bool], "location": "any"},
+        "rules": {"default": None, "type": [list, type(None)], "location": "config_file"},
+        "window_id": {"default": "window1", "type": [Pattern], "location": "rule"},
+        "window_class": {"default": "Window1", "type": [Pattern], "location": "rule"},
+    }
 
 
 class WindowSession:
@@ -38,6 +62,7 @@ class WindowSession:
     def __init__(self, num_windows: int = 2) -> None:
         wm_names = ["window" + str(i) for i in range(1, num_windows + 1)]
         wm_classes = zip(wm_names, [name.capitalize() for name in wm_names])
+        clear_desktops()
         self.windows = [
             create_blank_window(wm_name, wm_class)
             for wm_name, wm_class in zip(wm_names, wm_classes)
@@ -84,9 +109,15 @@ class WindowWatcher(Thread):
         self.keep_going = False
         while not self.done:
             pass
+        self.opacity_events = [1 if event is None else event for event in self.opacity_events]
 
-    def report(self) -> List[float]:
-        return self.opacity_events
+    def count_flashes(self):
+        num_flashes = 0
+        for i, event in enumerate(self.opacity_events):
+            if 0 < i < len(self.opacity_events) - 1:
+                if event < self.opacity_events[i - 1] and event < self.opacity_events[i + 1]:
+                    num_flashes += 1
+        return num_flashes
 
 
 class StubServer:
@@ -135,6 +166,14 @@ def watching_windows(windows: List[Window]) -> Generator:
         watcher.stop()
 
 
+def clear_desktops():
+    for workspace in range(5):
+        clear_workspace(workspace)
+    switch_workspace(0)
+    while not get_focused_workspace() == 0:
+        pass
+
+
 @contextmanager
 def new_watched_window() -> Generator:
     """Open a new window and watch it."""
@@ -155,22 +194,6 @@ def producer_running(producer: Producer) -> Generator:
     yield
     sleep(0.01)
     producer.stop()
-
-
-def default_flash_param() -> Dict:
-    return {
-        "config": {"default": None, "type": [str], "location": "cli"},
-        "default_opacity": {"default": 1, "type": [float], "location": "any"},
-        "flash_opacity": {"default": 0.8, "type": [float], "location": "any"},
-        "time": {"default": 100, "type": [float], "location": "any"},
-        "ntimepoints": {"default": 4, "type": [int], "location": "any"},
-        "simple": {"default": False, "type": [bool], "location": "any"},
-        "flash_on_focus": {"default": True, "type": [bool], "location": "any"},
-        "flash_lone_windows": {"default": "always", "type": [str], "location": "any"},
-        "rules": {"default": None, "type": [list, type(None)], "location": "config_file"},
-        "window_id": {"default": "window1", "type": [Pattern], "location": "rule"},
-        "window_class": {"default": "Window1", "type": [Pattern], "location": "rule"},
-    }
 
 
 def fill_in_rule(partial_rule: Dict) -> Dict:

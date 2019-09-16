@@ -66,6 +66,13 @@ from flashfocus.server import FlashServer
     ),
 )
 @click.option(
+    "--flash-fullscreen/--no-flash-fullscreen",
+    required=False,
+    is_flag=True,
+    default=None,
+    help=("If True, fullscreen windows are flashed (default: True)."),
+)
+@click.option(
     "--flash-lone-windows",
     "-l",
     required=False,

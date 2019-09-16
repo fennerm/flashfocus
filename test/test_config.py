@@ -24,8 +24,9 @@ def default_config():
 def invalid_rules():
     rules = [
         # No window_class or window_id present
-        [{"flash_on_focus": "True"}],
+        [{"flash_on_focus": True}],
         [{"flash_lone_windows": "always"}],
+        [{"flash_fullscreen": True}],
         # Invalid values
         [{"window_class": "foo", "flash_on_focus": 2}],
         [{"window_class": "foo", "flash_on_focus": "bar"}],
@@ -47,6 +48,7 @@ def invalid_rules():
         ("ntimepoints", ["0", "-1", "foo", 0, -1]),
         ("simple", ["foo", "10"]),
         ("flash_lone_windows", ["foo", "true"]),
+        ("flash_fullscreen", ["foo", 3]),
         ("rules", lazy_fixture("invalid_rules")),
     ],
 )
@@ -87,7 +89,8 @@ def check_validated_config(config, expected_types):
         ("time", ["200", "50.5", 200, 50.5]),
         ("ntimepoints", ["10", 10]),
         ("simple", lazy_fixture("valid_bool")),
-        ("flash_on_focus", ["True"]),
+        ("flash_on_focus", lazy_fixture("valid_bool")),
+        ("flash_fullscreen", lazy_fixture("valid_bool")),
         ("flash_lone_windows", ["always", "never", "on_open_close", "on_switch"]),
     ],
 )
@@ -118,12 +121,13 @@ def test_valid_param(
         [{"window_id": "bar", "flash_opacity": "0.2"}, {"window_class": "foo", "simple": "True"}],
         # Check that global params are accepted
         [{"window_class": "foo", "default_opacity": "0.5"}],
-        [{"window_class": "foo", "simple": "True"}],
+        [{"window_class": "foo", "simple": True}],
         [{"window_class": "foo", "ntimepoints": "10"}],
         [{"window_class": "foo", "time": "100"}],
         [{"window_class": "foo", "flash_opacity": "0.2"}],
         [{"window_class": "foo", "flash_on_focus": True}],
         [{"window_class": "foo", "flash_lone_windows": "always"}],
+        [{"window_class": "foo", "flash_fullscreen": False}],
         # Regexes are valid
         [{"window_class": "^indo.*$", "time": "100"}],
     ],

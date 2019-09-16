@@ -25,6 +25,7 @@ from xpybutil.ewmh import (
     get_client_list,
     get_current_desktop,
     get_wm_desktop,
+    get_wm_state,
     get_wm_window_opacity,
     set_wm_window_opacity_checked,
 )
@@ -138,6 +139,14 @@ class Window:
             conn.core.DestroyWindow(self.id, True).check()
         except WindowError as e:
             raise WMError from e
+
+    @ignore_window_error
+    def is_fullscreen(self) -> bool:
+        wm_states = get_wm_state(self.id).reply()
+        for wm_state in wm_states:
+            if get_atom_name(wm_state) == "_NET_WM_STATE_FULLSCREEN":
+                return True
+        return False
 
 
 def _create_message_window() -> Window:

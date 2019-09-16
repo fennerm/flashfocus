@@ -4,7 +4,8 @@ from pytest import approx, mark, raises
 from flashfocus.compat import Window
 from flashfocus.display import WMEvent, WMEventType
 from flashfocus.errors import WMError
-from test.helpers import change_focus, producer_running, queue_to_list
+from test.compat import change_focus, set_fullscreen, unset_fullscreen
+from test.helpers import producer_running, queue_to_list
 
 
 def test_window_raises_wm_error_if_window_is_none():
@@ -50,3 +51,10 @@ def test_window_nonequality_to_none_raises_error():
 def test_none_windows_raise_error():
     with raises(WMError):
         Window(None)
+
+
+def test_is_fullscreen(window):
+    assert not window.is_fullscreen()
+    set_fullscreen(window)
+    assert window.is_fullscreen()
+    unset_fullscreen(window)
