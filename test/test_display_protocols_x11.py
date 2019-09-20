@@ -1,4 +1,5 @@
 """Testing X11-specific details which don't apply to the sway implementation."""
+from collections import namedtuple
 from unittest.mock import MagicMock
 
 import pytest
@@ -9,6 +10,7 @@ from flashfocus.compat import DisplayProtocol, get_display_protocol, list_mapped
 from flashfocus.display import WMEvent, WMEventType
 from test.helpers import producer_running, queue_to_list
 
+Event = namedtuple("Event", "window,atom")
 
 if get_display_protocol() == DisplayProtocol.WAYLAND:
     pytest.skip("Skipping X11 tests", allow_module_level=True)
@@ -78,3 +80,16 @@ def test_properties(window):
 def test_list_mapped_windows(windows):
     assert list_mapped_windows(0) == windows
     assert list_mapped_windows(2) == list()
+
+
+def test_display_handler_handle_property_change_ignores_null_windows(display_handler, monkeypatch):
+    monkeypatch.setattr("xpybutil.util.get_atom_name", lambda _: "_NET_ACTIVE_WINDOW")
+    event = Event(window=None, atom=1)
+    display_handler._handle_property_change(event)
+    assert display_handler.queue.empty()
+
+
+def test_display_handler_handle_new_window_ignores_null_windows(display_handler):
+    event = Event(window=None, atom=1)
+    display_handler._handle_new_mapped_window(event)
+    assert display_handler.queue.empty()

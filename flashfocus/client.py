@@ -35,11 +35,13 @@ class ClientMonitor(Thread):
             try:
                 self.sock.recv(1)
             except socket.timeout:
-                pass
-            else:
-                logging.info("Received a flash request from client...")
-                focused = get_focused_window()
+                continue
+            logging.info("Received a flash request from client...")
+            focused = get_focused_window()
+            if focused is not None:
                 self.queue_window(focused, WMEventType.CLIENT_REQUEST)
+            else:
+                logging.warning("Focused window is undefined, ignoring request...")
 
     def queue_window(self, window: Window, event_type: WMEventType):
         """Add a window to the queue."""

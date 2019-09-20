@@ -229,14 +229,15 @@ class DisplayHandler(Thread):
 
     def _handle_new_mapped_window(self, event: Event) -> None:
         logging.info(f"Window {event.window} mapped...")
-        # Check that window is visible so that we don't accidentally set
-        # opacity of windows which are not for display. Without this step
-        # window opacity can become frozen and stop responding to flashes.
-        window = Window(event.window)
-        if window in list_mapped_windows():
-            self.queue_window(window, WMEventType.NEW_WINDOW)
-        else:
-            logging.info(f"Window {window.id} is not visible, ignoring...")
+        if event.window is not None:
+            window = Window(event.window)
+            # Check that window is visible so that we don't accidentally set
+            # opacity of windows which are not for display. Without this step
+            # window opacity can become frozen and stop responding to flashes.
+            if window in list_mapped_windows():
+                self.queue_window(window, WMEventType.NEW_WINDOW)
+            else:
+                logging.info(f"Window {window.id} is not visible, ignoring...")
 
     def _handle_property_change(self, event: Event) -> None:
         """Handle a property change on a watched window."""
@@ -251,8 +252,12 @@ class DisplayHandler(Thread):
 
 
 @ignore_window_error
-def get_focused_window() -> Window:
-    return Window(get_active_window().reply())
+def get_focused_window() -> Optional[Window]:
+    window_id = get_active_window().reply()
+    if window_id is not None:
+        return Window(window_id)
+    else:
+        return None
 
 
 def _try_unwrap(cookie: PropertyCookieSingle) -> Optional[Any]:
@@ -269,9 +274,9 @@ def list_mapped_windows(workspace: Optional[int] = None) -> List[Window]:
     if mapped_window_ids is None:
         mapped_window_ids = list()
 
-    mapped_windows = [Window(window_id) for window_id in mapped_window_ids]
+    mapped_windows = [Window(wid) for wid in mapped_window_ids if wid is not None]
     if workspace is not None:
-        cookies = [get_wm_desktop(window) for window in mapped_window_ids]
+        cookies = [get_wm_desktop(wid) for wid in mapped_window_ids]
         workspaces = [_try_unwrap(cookie) for cookie in cookies]
         mapped_windows = [win for win, ws in zip(mapped_windows, workspaces) if ws == workspace]
     return mapped_windows
