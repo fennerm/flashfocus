@@ -1,4 +1,9 @@
 # Changelog
+## [2.1.0] - September 20th, 2019
+- Added: flash-fullscreen/no-flash-fullscreen config options
+- Fixed: #39 Crashes when switching tags on dwm
+- Fixed: Exit without traceback for non-supported wayland WMs
+
 ## [2.0.5] - September 14th, 2019
 - Add support for marshmallow v3
 
