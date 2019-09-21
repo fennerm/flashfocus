@@ -1,7 +1,11 @@
 # Changelog
+
+## [2.1.1] - September 20th, 2019
+- Fixed: #39 Crashes when switching tags on dwm
+- Handle null NET_WM_STATE when detecting fullscreen
+
 ## [2.1.0] - September 20th, 2019
 - Added: flash-fullscreen/no-flash-fullscreen config options
-- Fixed: #39 Crashes when switching tags on dwm
 - Fixed: Exit without traceback for non-supported wayland WMs
 - Fixed: Cleaned up flakey tests
 

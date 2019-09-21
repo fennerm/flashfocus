@@ -6,7 +6,7 @@ import pytest
 from pytest import mark
 from xcffib.xproto import CreateNotifyEvent
 
-from flashfocus.compat import DisplayProtocol, get_display_protocol, list_mapped_windows
+from flashfocus.compat import DisplayProtocol, get_display_protocol, list_mapped_windows, Window
 from flashfocus.display import WMEvent, WMEventType
 from test.helpers import producer_running, queue_to_list
 
@@ -84,6 +84,7 @@ def test_list_mapped_windows(windows):
 
 def test_display_handler_handle_property_change_ignores_null_windows(display_handler, monkeypatch):
     monkeypatch.setattr("xpybutil.util.get_atom_name", lambda _: "_NET_ACTIVE_WINDOW")
+    monkeypatch.setattr("flashfocus.display_protocols.x11.get_focused_window", lambda: None)
     event = Event(window=None, atom=1)
     display_handler._handle_property_change(event)
     assert display_handler.queue.empty()
@@ -93,3 +94,13 @@ def test_display_handler_handle_new_window_ignores_null_windows(display_handler)
     event = Event(window=None, atom=1)
     display_handler._handle_new_mapped_window(event)
     assert display_handler.queue.empty()
+
+
+def test_is_fullscreen_handles_none_wm_states(monkeypatch):
+    class WMStateResponse:
+        def reply(self):
+            return None
+
+    monkeypatch.setattr("xpybutil.ewmh.get_wm_state", lambda _: WMStateResponse())
+    win = Window(123)
+    win.is_fullscreen()

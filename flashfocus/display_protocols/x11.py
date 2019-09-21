@@ -143,9 +143,11 @@ class Window:
     @ignore_window_error
     def is_fullscreen(self) -> bool:
         wm_states = get_wm_state(self.id).reply()
-        for wm_state in wm_states:
-            if get_atom_name(wm_state) == "_NET_WM_STATE_FULLSCREEN":
-                return True
+        # wm_states might be null in some WMs - #29
+        if wm_states:
+            for wm_state in wm_states:
+                if get_atom_name(wm_state) == "_NET_WM_STATE_FULLSCREEN":
+                    return True
         return False
 
 
@@ -244,8 +246,9 @@ class DisplayHandler(Thread):
         atom_name = get_atom_name(event.atom)
         if atom_name == "_NET_ACTIVE_WINDOW":
             focused_window = get_focused_window()
-            logging.info(f"Focus shifted to {focused_window.id}")
-            self.queue_window(focused_window, WMEventType.FOCUS_SHIFT)
+            if focused_window is not None:
+                logging.info(f"Focus shifted to {focused_window.id}")
+                self.queue_window(focused_window, WMEventType.FOCUS_SHIFT)
         elif atom_name == "WM_NAME" and event.window == self.message_window.id:
             # Received kill signal from server -> terminate the thread
             self.keep_going = False
