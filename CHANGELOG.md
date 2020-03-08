@@ -1,4 +1,7 @@
 # Changelog
+## [2.1.2] - March 8th, 2020
+- (Hopefully) fixed: #43 - Error when setting rules in config
+- Add support for Click 7.0
 
 ## [2.1.1] - September 20th, 2019
 - Fixed: #39 Crashes when switching tags on dwm
