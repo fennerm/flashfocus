@@ -20,7 +20,7 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         "xcffib>=0.6.0,<1.0",
-        "click>=6.7,<7.0",
+        "click>=6.7,<8.0",
         "cffi>=1.11,<2.0",
         "xpybutil>=0.0.6,<1.0",
         "marshmallow>=2.15,<4.0",
