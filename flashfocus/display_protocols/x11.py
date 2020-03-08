@@ -110,7 +110,14 @@ class Window:
         if not criteria.get("window_id") and not criteria.get("window_class"):
             return True
         for prop in ["window_id", "window_class"]:
-            if criteria.get(prop) and not match_regex(criteria[prop], self.properties[prop]):
+            # https://github.com/fennerm/flashfocus/issues/43
+            # I'm not 100 % sure but this issue seems to indicate that in some WMs a window might
+            # have an ID but not a class.
+            if (
+                criteria.get(prop)
+                and self.properties.get(prop)
+                and not match_regex(criteria[prop], self.properties[prop])
+            ):
                 return False
         return True
 
