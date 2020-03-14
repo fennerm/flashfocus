@@ -32,7 +32,7 @@ flash-fullscreen: true
 #      Never flash lone windows
 #   'on_open_close':
 #      Lone windows will be flashed only if a) if they were just opened and b)
-#      if another window was just closed. 
+#      if another window was just closed.
 #   'on_switch':
 #      Lone windows will be flashed only upon switching desktops.
 flash-lone-windows: 'always'
@@ -78,7 +78,7 @@ flash-lone-windows: 'always'
 # can be found using `swaymsg -t get_tree`. XWayland apps are matched with
 # using WM_CLASS as above (this can also be found with `swaymsg`)
 #
-# Given that termite is wayland native and firefox is not, the rules above 
+# Given that termite is wayland native and firefox is not, the rules above
 # could instead be written:
 #
 # rules:
