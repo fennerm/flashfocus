@@ -1,4 +1,8 @@
 # Changelog
+## [2.1.3] - March 14th, 2020
+- Catch yaml ParserError correctly if config file is invalid
+- Removed trailing spaces from conf file (@dakyskye)
+
 ## [2.1.2] - March 8th, 2020
 - (Hopefully) fixed: #43 - Error when setting rules in config
 - Add support for Click 7.0
