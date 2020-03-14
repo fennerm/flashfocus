@@ -6,7 +6,7 @@ import fastentrypoints  # noqa: F401
 
 setup(
     name="flashfocus",
-    version="2.1.1",
+    version="2.1.2",
     author="Fenner Macrae",
     author_email="fmacrae.dev@gmail.com",
     description=("Simple focus animations for tiling window managers"),
@@ -25,7 +25,7 @@ setup(
         "xpybutil>=0.0.6,<1.0",
         "marshmallow>=2.15,<4.0",
         "pyyaml>=5.1,<6.0",
-        "i3ipc>=2.1.1,<3.0",
+        "i3ipc>=2.1.2,<3.0",
     ],
     packages=find_packages(exclude=["*test*"]),
     keywords="xorg flash focus i3 bspwm awesomewm herbsluftwm",
