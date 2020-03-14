@@ -14,8 +14,8 @@ import shutil
 from typing import Any, Dict, List, Optional, Pattern, Union
 
 from marshmallow import fields, post_load, Schema, validates_schema, ValidationError
-from parser import ParserError
 import yaml
+from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 
 from flashfocus.compat import DisplayProtocol, get_display_protocol
@@ -148,7 +148,9 @@ def load_config(config_file: Path) -> Dict:
         raise ConfigLoadError(f"Config file does not exist: {config_file}")
     except (ScannerError, ParserError) as e:
         logging.error(str(e))
-        raise ConfigLoadError("Error encountered in config file")
+        raise ConfigLoadError(
+            "Error encountered in config file. Check that your config file is formatted correctly."
+        )
     else:
         dehyphen(config)
     return config
