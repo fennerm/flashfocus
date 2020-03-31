@@ -6,7 +6,7 @@ import fastentrypoints  # noqa: F401
 
 setup(
     name="flashfocus",
-    version="2.1.2",
+    version="2.1.3",
     author="Fenner Macrae",
     author_email="fmacrae.dev@gmail.com",
     description=("Simple focus animations for tiling window managers"),
