@@ -17,7 +17,7 @@ requests are always welcome :)
 
 For X based window managers, an active window compositor is required for the effects of flashfocus
 to be noticeable. If you don't have one setup already, I recommend
-[compton](https://github.com/chjj/compton).
+[picom](https://github.com/yshui/picom).
 
 ### Arch
 
