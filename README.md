@@ -34,7 +34,7 @@ pip install flashfocus
 
 ```
 dnf install libffi-devel python-devel python-cffi
-sudo pip install flashfocus
+pip install flashfocus
 ```
 
 ### openSUSE
