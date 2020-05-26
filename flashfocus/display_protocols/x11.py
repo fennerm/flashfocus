@@ -254,7 +254,7 @@ class DisplayHandler(Thread):
         if atom_name == "_NET_ACTIVE_WINDOW":
             focused_window = get_focused_window()
             if focused_window is not None:
-                logging.info(f"Focus shifted to {focused_window.id}")
+                logging.debug(f"Focus shifted to {focused_window.id}")
                 self.queue_window(focused_window, WMEventType.FOCUS_SHIFT)
         elif atom_name == "WM_NAME" and event.window == self.message_window.id:
             # Received kill signal from server -> terminate the thread

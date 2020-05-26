@@ -82,6 +82,16 @@ from flashfocus.server import FlashServer
         "One of [never, always, on_open_close, on_switch]."
     ),
 )
+@click.option(
+    "--verbose",
+    "-v",
+    required=False,
+    is_flag=True,
+    default=None,
+    help=(
+        "Enable verbose logging."
+    ),
+)
 def cli(*args, **kwargs) -> None:
     """Simple focus animations for tiling window managers."""
     init_server(kwargs)
@@ -89,6 +99,10 @@ def cli(*args, **kwargs) -> None:
 
 def init_server(cli_options: Dict) -> None:
     """Initialize the flashfocus server with given command line options."""
+    if cli_options.pop("verbose") is True:
+        log = logging.getLogger()
+        log.setLevel(logging.DEBUG)
+
     ensure_single_instance()
     config_file_path = cli_options.pop("config")
     if config_file_path is None:
