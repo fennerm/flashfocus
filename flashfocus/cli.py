@@ -7,10 +7,23 @@ from typing import Dict
 
 import click
 
-from flashfocus.errors import ConfigInitError, ConfigLoadError
+from flashfocus.errors import ConfigInitError, ConfigLoadError, UnsupportedWM
 from flashfocus.config import init_user_configfile, load_merged_config
+from flashfocus.logging import setup_logging
 from flashfocus.pid import ensure_single_instance
 from flashfocus.server import FlashServer
+
+
+# Basic logging init - we'll change the log level later
+logging.basicConfig(level="WARNING", format="%(levelname)s: %(message)s")
+
+
+def check_for_supported_wm():
+    try:
+        import flashfocus.compat  # noqa F401
+    except UnsupportedWM as error:
+        logging.error(str(error))
+        sys.exit("Unrecoverable error, exiting...")
 
 
 @click.command()
@@ -70,17 +83,23 @@ from flashfocus.server import FlashServer
     required=False,
     is_flag=True,
     default=None,
-    help=("If True, fullscreen windows are flashed (default: True)."),
+    help="If True, fullscreen windows are flashed (default: True).",
 )
 @click.option(
     "--flash-lone-windows",
     "-l",
     required=False,
     default=None,
-    help=(
-        "Should windows be flashed when they are the only one on the desktop?. "
-        "One of [never, always, on_open_close, on_switch]."
-    ),
+    type=click.Choice(["never", "always", "on_open_close", "on_switch"]),
+    help="Flash windows when they are the only one on the desktop?"
+)
+@click.option(
+    "--loglevel",
+    "-l",
+    required=False,
+    default="INFO",
+    type=click.Choice(["INFO", "WARNING", "DEBUG", "ERROR"]),
+    help="Set the logging verbosity."
 )
 def cli(*args, **kwargs) -> None:
     """Simple focus animations for tiling window managers."""
@@ -89,7 +108,11 @@ def cli(*args, **kwargs) -> None:
 
 def init_server(cli_options: Dict) -> None:
     """Initialize the flashfocus server with given command line options."""
+    loglevel = cli_options.pop("loglevel")
+    setup_logging(loglevel)
+    check_for_supported_wm()
     ensure_single_instance()
+
     config_file_path = cli_options.pop("config")
     if config_file_path is None:
         try:

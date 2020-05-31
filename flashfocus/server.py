@@ -76,7 +76,7 @@ class FlashServer:
         for window in list_mapped_windows():
             window.set_opacity(1)
         if disconnect_from_wm:
-            logging.info("Disconnecting from X session...")
+            logging.info("Disconnecting from display server...")
             disconnect_display_conn()
 
     def _flash_queued_window(self) -> None:

@@ -67,7 +67,7 @@ class Flasher:
         self.progress: Dict[int, int] = dict()
 
     def flash(self, window: Window) -> None:
-        logging.info(f"Flashing window {window.id}")
+        logging.debug(f"Flashing window {window.id}")
         if self.default_opacity == self.flash_opacity:
             return
 
@@ -119,6 +119,6 @@ class Flasher:
             sleep(self.timechunk)
             self.progress[window.id] += 1
 
-        logging.info(f"Resetting window {window.id} opacity to default")
+        logging.debug(f"Resetting window {window.id} opacity to default")
         window.set_opacity(self.default_opacity)
         del self.progress[window.id]
