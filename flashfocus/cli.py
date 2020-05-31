@@ -91,7 +91,7 @@ def check_for_supported_wm():
     required=False,
     default=None,
     type=click.Choice(["never", "always", "on_open_close", "on_switch"]),
-    help="Should windows be flashed when they are the only one on the desktop?."
+    help="Flash windows when they are the only one on the desktop?"
 )
 @click.option(
     "--loglevel",
