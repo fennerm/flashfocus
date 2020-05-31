@@ -11,9 +11,9 @@ from flashfocus.sockets import init_client_socket, init_server_socket
 
 def client_request_flash() -> None:
     """Request that the server flashes the current window."""
-    logging.info("Connecting to the flashfocus daemon...")
+    logging.debug("Connecting to the flashfocus daemon...")
     sock = init_client_socket()
-    logging.info("Connection established, sending flash request...")
+    logging.debug("Connection established, sending flash request...")
     # Just send a single byte to the server. Contents are unimportant.
     sock.sendall(bytearray("1", encoding="UTF-8"))
 
@@ -36,12 +36,12 @@ class ClientMonitor(Thread):
                 self.sock.recv(1)
             except socket.timeout:
                 continue
-            logging.info("Received a flash request from client...")
+            logging.debug("Received a flash request from client...")
             focused = get_focused_window()
             if focused is not None:
                 self.queue_window(focused, WMEventType.CLIENT_REQUEST)
             else:
-                logging.warning("Focused window is undefined, ignoring request...")
+                logging.debug("Focused window is undefined, ignoring request...")
 
     def queue_window(self, window: Window, event_type: WMEventType):
         """Add a window to the queue."""
@@ -50,5 +50,5 @@ class ClientMonitor(Thread):
     def stop(self) -> None:
         self.keep_going = False
         self.join()
-        logging.info("Disconnecting socket...")
+        logging.debug("Disconnecting socket...")
         self.sock.close()

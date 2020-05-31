@@ -118,7 +118,7 @@ class DisplayHandler(Thread):
 
     def _handle_new_mapped_window(self, _: i3ipc.Connection, event: i3ipc.Event) -> None:
         if _is_mapped_window(event.container):
-            logging.info("Window %s mapped...", event.container.id)
+            logging.debug("Window %s mapped...", event.container.id)
             self.queue_window(Window(event.container), WMEventType.NEW_WINDOW)
 
 

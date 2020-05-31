@@ -127,7 +127,7 @@ class FlashRouter:
             else:
                 flasher.set_default_opacity(window)
         else:
-            logging.info(f"Window {window.id} was just flashed, ignoring...")
+            logging.debug(f"Window {window.id} was just flashed, ignoring...")
 
     def _route_client_request(self, window: Window) -> None:
         """Handle a manual flash request from the user."""
@@ -139,7 +139,7 @@ class FlashRouter:
         for i, (rule, flasher) in enumerate(zip(self.rules, self.flashers)):
             if window.match(rule):
                 if i < len(self.rules) - 1:
-                    logging.info(f"Window {window.id} matches criteria of rule {i}")
+                    logging.debug(f"Window {window.id} matches criteria of rule {i}")
                 return rule, flasher
         return rule, flasher
 
@@ -156,7 +156,7 @@ class FlashRouter:
             self.current_workspace = get_focused_workspace()
 
         if not rule.get("flash_on_focus"):
-            logging.info(f"flash_on_focus is False for window {window.id}, ignoring...")
+            logging.debug(f"flash_on_focus is False for window {window.id}, ignoring...")
             return False
 
         if rule.get("flash_lone_windows") != "always":
@@ -172,12 +172,12 @@ class FlashRouter:
                         and rule.get("flash_lone_windows") == "on_switch"
                     )
                 ):
-                    logging.info("Current workspace has <2 windows, ignoring...")
+                    logging.debug("Current workspace has <2 windows, ignoring...")
                     return False
 
         if rule.get("flash_fullscreen") is not True:
             if window.is_fullscreen():
-                logging.info("Window is fullscreen, ignoring...")
+                logging.debug("Window is fullscreen, ignoring...")
                 return False
 
         return True

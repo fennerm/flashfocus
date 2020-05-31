@@ -237,7 +237,7 @@ class DisplayHandler(Thread):
         self.queue.put(WMEvent(window=window, event_type=event_type))
 
     def _handle_new_mapped_window(self, event: Event) -> None:
-        logging.info(f"Window {event.window} mapped...")
+        logging.debug(f"Window {event.window} mapped...")
         if event.window is not None:
             window = Window(event.window)
             # Check that window is visible so that we don't accidentally set
@@ -246,7 +246,7 @@ class DisplayHandler(Thread):
             if window in list_mapped_windows():
                 self.queue_window(window, WMEventType.NEW_WINDOW)
             else:
-                logging.info(f"Window {window.id} is not visible, ignoring...")
+                logging.debug(f"Window {window.id} is not visible, ignoring...")
 
     def _handle_property_change(self, event: Event) -> None:
         """Handle a property change on a watched window."""
