@@ -112,8 +112,8 @@ class RulesSchema(BaseSchema):
         """Check that rule contains at least one method for matching a window."""
         if not any([prop in data for prop in WINDOW_MATCH_PROPERTIES]):
             raise ValidationError(
-                f"No criteria for matching rule to window. Must set one of "
-                "({', '.join(WINDOW_MATCH_NAMES)})"
+                "No criteria for matching rule to window. Must set one of "
+                f"({', '.join(WINDOW_MATCH_NAMES)})"
             )
 
 
