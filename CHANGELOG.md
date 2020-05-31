@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.2.0 - May 31st, 2020
+- Added: --loglevel CLI option
+- Fixed: Removed --opacity documentation in help
+
 ## [2.1.3] - March 30th, 2020
 - Fixed: #46 Accidental bump of required version of i3ipc
 
