@@ -66,9 +66,6 @@ def check_for_supported_wm():
     "(default: 10)",
 )
 @click.option(
-    "--opacity", required=False, type=float, help="DEPRECATED: use --flash-opacity/-o instead"
-)
-@click.option(
     "--flash-on-focus/--no-flash-on-focus",
     required=False,
     is_flag=True,
