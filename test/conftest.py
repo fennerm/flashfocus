@@ -188,11 +188,13 @@ def valid_config_types():
 
 @fixture
 def blank_cli_options():
-    return {
-        key: None
-        for key, val in default_flash_param().items()
-        if val["location"] == "any" or val["location"] == "cli"
-    }
+    cli_options = dict()
+    for key, val in default_flash_param().items():
+        if val["location"] == "any":
+            cli_options[key] = None
+        elif val["location"] == "cli":
+            cli_options[key] = val["default"]
+    return cli_options
 
 
 @fixture

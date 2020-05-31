@@ -39,6 +39,7 @@ X11_MATCH_PROPERTIES = {"window_class", "window_id"}
 WAYLAND_MATCH_PROPERTIES = {"window_name", "app_id"}
 WINDOW_MATCH_PROPERTIES = X11_MATCH_PROPERTIES | WAYLAND_MATCH_PROPERTIES
 WINDOW_MATCH_NAMES = {x.replace("_", "-") for x in WINDOW_MATCH_PROPERTIES}
+CLI_ONLY_OPTS = ["config", "loglevel"]
 
 
 def validate_positive_number(data: Number) -> None:
@@ -314,6 +315,8 @@ def get_default_config_file() -> Path:
 
 def merge_config_sources(user_config: Dict, default_config: Dict, cli_options: Dict) -> Dict:
     """Merge the user, default configs and CLI options into a single dict."""
+    for opt in CLI_ONLY_OPTS:
+        del cli_options[opt]
     config = hierarchical_merge([default_config, user_config, cli_options])
     validated_config = validate_config(config)
     return validated_config

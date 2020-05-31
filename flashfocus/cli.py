@@ -105,12 +105,11 @@ def cli(*args, **kwargs) -> None:
 
 def init_server(cli_options: Dict) -> None:
     """Initialize the flashfocus server with given command line options."""
-    loglevel = cli_options.pop("loglevel")
-    setup_logging(loglevel)
+    setup_logging(cli_options["loglevel"])
     check_for_supported_wm()
     ensure_single_instance()
 
-    config_file_path = cli_options.pop("config")
+    config_file_path = cli_options["config"]
     if config_file_path is None:
         try:
             config_file_path = init_user_configfile()

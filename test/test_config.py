@@ -1,4 +1,6 @@
 """Testsuite for flashfocus.config."""
+from copy import deepcopy
+
 from pytest import fixture, mark, raises
 from pytest_lazyfixture import lazy_fixture
 
@@ -13,6 +15,8 @@ from flashfocus.config import (
     validate_config,
 )
 from flashfocus.errors import ConfigLoadError
+
+# WOW these tests are flakey and overengineered :(
 
 
 @fixture
@@ -58,13 +62,14 @@ def test_invalid_param(option, values, input_type, blank_cli_options, default_co
         return
     for value in values:
         # Need to refresh these variables as they might be altered during merge
-        defaults = default_config
-        blanks = blank_cli_options
-        config = {option: value}
+        defaults = deepcopy(default_config)
+        blanks = deepcopy(blank_cli_options)
         with raises(ConfigLoadError):
             if input_type == "cli":
-                merge_config_sources(cli_options=config, user_config=None, default_config=defaults)
+                blanks[option] = value
+                merge_config_sources(cli_options=blanks, user_config=None, default_config=defaults)
             else:
+                config = {option: value}
                 merge_config_sources(
                     cli_options=blanks, user_config=config, default_config=defaults
                 )
@@ -99,17 +104,18 @@ def test_valid_param(
     option, values, input_type, blank_cli_options, default_config, valid_config_types
 ):
     for value in values:
-        config = {option: value}
+        blanks = deepcopy(blank_cli_options)
         if input_type == "cli":
+            blanks[option] = value
             validated_config = merge_config_sources(
-                cli_options=config, user_config=None, default_config=default_config
+                cli_options=blanks, user_config=None, default_config=default_config
             )
         else:
+            config = {option: value}
             validated_config = merge_config_sources(
-                cli_options=blank_cli_options, user_config=config, default_config=default_config
+                cli_options=blanks, user_config=config, default_config=default_config
             )
         check_validated_config(validated_config, valid_config_types)
-        assert len(validated_config) == len(blank_cli_options)
 
 
 @mark.parametrize(
@@ -134,7 +140,7 @@ def test_valid_param(
 )
 def test_rules_validation(rules, blank_cli_options, default_config, valid_config_types):
     rules_dict = {"rules": rules}
-    validated_config = merge_config_sources(blank_cli_options, default_config, rules_dict)
+    validated_config = merge_config_sources(default_config, rules_dict, blank_cli_options)
     for rule in validated_config["rules"]:
         check_validated_config(rule, valid_config_types)
 
@@ -178,12 +184,16 @@ def test_hierarchical_merge_returns_a_new_dict():
 
 def test_rule_defaults_inherited_from_global_param(default_config, blank_cli_options):
     user_config = {"rules": [{"window_class": "foo"}]}
-    validated = merge_config_sources(blank_cli_options, default_config, user_config)
+    validated = merge_config_sources(
+        default_config=default_config, user_config=user_config, cli_options=blank_cli_options
+    )
     assert validated["rules"][0]["flash_opacity"] == default_config["flash_opacity"]
 
 
 def test_rules_added_to_config_dict_if_not_present_in_config(default_config, blank_cli_options):
-    validated = merge_config_sources(blank_cli_options, default_config, default_config)
+    validated = merge_config_sources(
+        default_config=default_config, user_config=default_config, cli_options=blank_cli_options
+    )
     assert "rules" in validated
 
 
