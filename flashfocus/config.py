@@ -56,8 +56,8 @@ def validate_decimal(data: Number) -> None:
 def validate_flash_lone_windows(data: str) -> None:
     if data not in FLASH_LONE_WINDOWS_OPTS:
         raise ValidationError(
-            f"Invalid 'flash-lone-windows' value, expected one of "
-            "{', '.join(FLASH_LONE_WINDOWS_OPTS)}",
+            "Invalid 'flash-lone-windows' value, expected one of "
+            f"{', '.join(FLASH_LONE_WINDOWS_OPTS)}",
             data,
         )
 
