@@ -49,9 +49,9 @@ zypper in flashfocus
 
 ## Quickstart
 
-#### Compton setup
+#### Picom setup
 
-The following must be present in your compton config file:
+The following must be present in your picom config file:
 
 ```
 detect-client-opacity = true;
