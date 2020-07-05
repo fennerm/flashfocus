@@ -42,7 +42,7 @@ def quick_conf() -> Dict:
 def default_flash_param() -> Dict:
     return {
         "config": {"default": None, "type": [str], "location": "cli"},
-        "loglevel": {"default": "INFO", "type": str, "location": "cli"},
+        "verbosity": {"default": "INFO", "type": str, "location": "cli"},
         "default_opacity": {"default": 1, "type": [float], "location": "any"},
         "flash_opacity": {"default": 0.8, "type": [float], "location": "any"},
         "time": {"default": 100, "type": [float], "location": "any"},

@@ -39,7 +39,7 @@ X11_MATCH_PROPERTIES = {"window_class", "window_id"}
 WAYLAND_MATCH_PROPERTIES = {"window_name", "app_id"}
 WINDOW_MATCH_PROPERTIES = X11_MATCH_PROPERTIES | WAYLAND_MATCH_PROPERTIES
 WINDOW_MATCH_NAMES = {x.replace("_", "-") for x in WINDOW_MATCH_PROPERTIES}
-CLI_ONLY_OPTS = ["config", "loglevel"]
+CLI_ONLY_OPTS = ["config", "verbosity"]
 
 
 def validate_positive_number(data: Number) -> None:

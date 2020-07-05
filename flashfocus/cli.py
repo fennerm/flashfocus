@@ -91,8 +91,8 @@ def check_for_supported_wm():
     help="Flash windows when they are the only one on the desktop?"
 )
 @click.option(
-    "--loglevel",
-    "-l",
+    "--verbosity",
+    "-v",
     required=False,
     default="INFO",
     type=click.Choice(["INFO", "WARNING", "DEBUG", "ERROR"]),
@@ -105,7 +105,7 @@ def cli(*args, **kwargs) -> None:
 
 def init_server(cli_options: Dict) -> None:
     """Initialize the flashfocus server with given command line options."""
-    setup_logging(cli_options["loglevel"])
+    setup_logging(cli_options["verbosity"])
     check_for_supported_wm()
     ensure_single_instance()
 
