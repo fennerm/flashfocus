@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.2.1 - July 5th, 2020]
+- Fixed: Renamed (--loglevel/-l) param to (--verbosity/-v) due to conflict with
+  --flash-lone-windows
+
 ## [2.2.0 - May 31st, 2020
 - Added: --loglevel CLI option
 - Fixed: Removed --opacity documentation in help
