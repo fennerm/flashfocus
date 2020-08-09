@@ -194,8 +194,7 @@ def construct_config_error_msg(errors: Dict[str, Any]) -> str:
     return error_msg
 
 
-def unset_sway_specific_options(config: Dict) -> None:
-    """Clear sway-specific options from the config file."""
+def unset_invalid_x11_options(config: Dict) -> None:
     if config["rules"] is not None:
         rules = list()
         for rule in config["rules"]:
@@ -210,8 +209,7 @@ def unset_sway_specific_options(config: Dict) -> None:
         config["rules"] = rules
 
 
-def unset_x11_specific_options(config: Dict) -> None:
-    """Clear X11-specific options from the config file."""
+def unset_invalid_sway_options(config: Dict) -> None:
     if config["flash_fullscreen"] is True:
         logging.warning(
             "Fullscreen windows cannot be flashed in sway. Setting flash-fullscreen=false. "
@@ -224,9 +222,9 @@ def unset_invalid_options_for_wm(config: Dict) -> None:
     """Clear any config options which don't work with the user's WM."""
     display_protocol = get_display_protocol()
     if display_protocol == DisplayProtocol.X11:
-        unset_x11_specific_options(config)
+        unset_invalid_x11_options(config)
     elif display_protocol == DisplayProtocol.SWAY:
-        unset_sway_specific_options(config)
+        unset_invalid_sway_options(config)
 
 
 def validate_config(config: Dict) -> Dict:
