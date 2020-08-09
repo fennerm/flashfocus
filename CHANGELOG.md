@@ -1,5 +1,8 @@
 # Changelog
 
+## [2.2.2 - August 9th, 2020]
+- Added: #55 Emit warning when flash-fullscreen: true in sway.
+
 ## [2.2.1 - July 5th, 2020]
 - Fixed: Renamed (--loglevel/-l) param to (--verbosity/-v) due to conflict with
   --flash-lone-windows
