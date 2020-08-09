@@ -194,8 +194,8 @@ def construct_config_error_msg(errors: Dict[str, Any]) -> str:
     return error_msg
 
 
-def unset_x11_specific_options(config: Dict) -> None:
-    """Clear X11-specific options from the config file."""
+def unset_sway_specific_options(config: Dict) -> None:
+    """Clear sway-specific options from the config file."""
     if config["rules"] is not None:
         rules = list()
         for rule in config["rules"]:
@@ -210,11 +210,11 @@ def unset_x11_specific_options(config: Dict) -> None:
         config["rules"] = rules
 
 
-def unset_sway_specific_options(config: Dict) -> None:
+def unset_x11_specific_options(config: Dict) -> None:
     """Clear X11-specific options from the config file."""
     if config["flash_fullscreen"] is True:
         logging.warning(
-            "Fullscreen windows cannot be flashed in sway. Setting flash-fullscreen=false."
+            "Fullscreen windows cannot be flashed in sway. Setting flash-fullscreen=false. "
             "https://github.com/fennerm/flashfocus/issues/55"
         )
         config["flash_fullscreen"] = False
