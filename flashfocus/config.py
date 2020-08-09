@@ -214,7 +214,7 @@ def unset_sway_specific_options(config: Dict) -> None:
     """Clear X11-specific options from the config file."""
     if config["flash_fullscreen"] is True:
         logging.warning(
-            "[flash-fullscreen: true] doesn't work in sway, ignoring it. "
+            "Fullscreen windows cannot be flashed in sway. Setting flash-fullscreen=false."
             "https://github.com/fennerm/flashfocus/issues/55"
         )
         config["flash_fullscreen"] = False
