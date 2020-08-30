@@ -47,6 +47,22 @@ zypper ref
 zypper in flashfocus
 ```
 
+### Nix / NixOS
+
+Declaratively in `/etc/nixos/configuration.nix`
+
+```
+environment.systemPackages = with pkgs; [
+  flashfocus
+];
+```
+
+Ad hoc
+
+```
+nix-env -iA nixpkgs.flashfocus
+```
+
 ## Quickstart
 
 #### Picom setup
