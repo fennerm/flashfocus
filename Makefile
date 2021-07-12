@@ -1,4 +1,4 @@
-SHELL=/bin/bash
+SHELL=/usr/bin/env bash
 
 TEST_PORT="8083:8083"
 

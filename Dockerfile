@@ -33,7 +33,7 @@ RUN pip install --user -r requirements.txt
 
 COPY --chown=user . /home/user/flashfocus
 WORKDIR /home/user/flashfocus
-RUN pip3 install --no-deps -e . --user .
+RUN pip3 install --no-deps --user -e .
 
 CMD supervisord </dev/null &>/dev/null \
     & sleep 1; \
