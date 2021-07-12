@@ -1,5 +1,8 @@
 # Changelog
 
+## [2.2.3 - August 9th, 2020]
+- Bump click dependency to v9
+
 ## [2.2.2 - August 9th, 2020]
 - Added: #55 Emit warning when flash-fullscreen: true in sway.
 
