@@ -1,6 +1,9 @@
 # Changelog
 
-## [2.2.3 - August 9th, 2020]
+## [2.2.4 - July 30th, 2021]
+- Fixed: Remove pytest from setup.py requirements.
+
+## [2.2.3 - July 12th, 2021]
 - Bump click dependency to v9
 
 ## [2.2.2 - August 9th, 2020]
