@@ -15,8 +15,6 @@ setup(
     license="MIT",
     url="https://www.github.com/fennerm/flashfocus",
     py_modules=["flashfocus"],
-    setup_requires=["pytest-runner"],
-    tests_require=["pytest"],
     python_requires=">=3.6",
     install_requires=[
         "xcffib>=0.6.0,<1.0",

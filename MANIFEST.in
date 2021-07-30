@@ -1,2 +1,3 @@
 include flashfocus/default_config.yml
+include fastentrypoints.py
 include README.md
