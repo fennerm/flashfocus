@@ -13,6 +13,11 @@ from flashfocus.logging import setup_logging
 from flashfocus.pid import ensure_single_instance
 from flashfocus.server import FlashServer
 
+try:
+    import setproctitle
+    setproctitle.setproctitle("flashfocus")
+except:
+    pass
 
 # Basic logging init - we'll change the log level later
 logging.basicConfig(level="WARNING", format="%(levelname)s: %(message)s")
