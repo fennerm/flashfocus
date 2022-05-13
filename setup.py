@@ -22,7 +22,7 @@ setup(
         "cffi>=1.11,<2.0",
         "xpybutil>=0.0.6,<1.0",
         "marshmallow>=2.15,<4.0",
-        "pyyaml>=5.1,<6.0",
+        "pyyaml>=5.1",
         "i3ipc>=2.1.1,<3.0",
     ],
     packages=find_packages(exclude=["*test*"]),
