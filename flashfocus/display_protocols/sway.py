@@ -15,7 +15,6 @@ from flashfocus.display import WMEvent, WMEventType
 from flashfocus.errors import WMError
 from flashfocus.util import match_regex
 
-
 # This connection is shared by all classes/functions in the module. It is not thread-safe to
 # maintain multiple connections to sway through the same socket.
 SWAY = i3ipc.Connection()

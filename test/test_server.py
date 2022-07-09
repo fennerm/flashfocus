@@ -2,16 +2,17 @@
 
 Most of the functionality in flashfocus.router is also tested here.
 """
-from unittest.mock import call, MagicMock
+from test.compat import change_focus, set_fullscreen, switch_workspace
+from test.helpers import (WindowSession, new_watched_window, server_running,
+                          watching_windows)
 from time import sleep
+from unittest.mock import MagicMock, call
 
 from pytest import approx, mark
 
 from flashfocus.client import client_request_flash
 from flashfocus.compat import Window
 from flashfocus.display import WMEvent, WMEventType
-from test.compat import change_focus, set_fullscreen, switch_workspace
-from test.helpers import new_watched_window, server_running, watching_windows, WindowSession
 
 
 @mark.parametrize(

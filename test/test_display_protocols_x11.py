@@ -1,14 +1,15 @@
 """Testing X11-specific details which don't apply to the sway implementation."""
 from collections import namedtuple
+from test.helpers import producer_running, queue_to_list
 from unittest.mock import MagicMock
 
 import pytest
 from pytest import mark
 from xcffib.xproto import CreateNotifyEvent
 
-from flashfocus.compat import DisplayProtocol, get_display_protocol, list_mapped_windows, Window
+from flashfocus.compat import (DisplayProtocol, Window, get_display_protocol,
+                               list_mapped_windows)
 from flashfocus.display import WMEvent, WMEventType
-from test.helpers import producer_running, queue_to_list
 
 Event = namedtuple("Event", "window,atom")
 

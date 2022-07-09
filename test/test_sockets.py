@@ -1,8 +1,10 @@
 """Test suite for the flashfocus.sockets module."""
 import os
+
 from pytest import raises
 
-from flashfocus.sockets import get_socket_address, init_client_socket, init_server_socket
+from flashfocus.sockets import (get_socket_address, init_client_socket,
+                                init_server_socket)
 
 
 def test_init_client_socket(client_socket):

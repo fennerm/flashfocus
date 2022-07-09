@@ -1,11 +1,12 @@
 """Testsuite for flashfocus.xutil."""
+from test.compat import change_focus, set_fullscreen, unset_fullscreen
+from test.helpers import producer_running, queue_to_list
+
 from pytest import approx, mark, raises
 
 from flashfocus.compat import Window
 from flashfocus.display import WMEvent, WMEventType
 from flashfocus.errors import WMError
-from test.compat import change_focus, set_fullscreen, unset_fullscreen
-from test.helpers import producer_running, queue_to_list
 
 
 def test_window_raises_wm_error_if_window_is_none():

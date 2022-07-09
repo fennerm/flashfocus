@@ -1,4 +1,5 @@
 """Test suite for flashfocus.flasher."""
+from test.helpers import change_focus, new_watched_window, watching_windows
 from time import sleep
 from unittest.mock import MagicMock
 
@@ -6,7 +7,6 @@ from pytest import approx, mark
 
 from flashfocus.compat import Window
 from flashfocus.flasher import Flasher
-from test.helpers import change_focus, new_watched_window, watching_windows
 
 
 def test_flash(flasher, window):

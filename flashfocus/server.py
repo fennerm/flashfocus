@@ -3,15 +3,15 @@ from __future__ import division
 
 import logging
 from queue import Empty, Queue
-from signal import default_int_handler, SIGINT, signal
+from signal import SIGINT, default_int_handler, signal
 from typing import Dict
 
 from flashfocus.client import ClientMonitor
-from flashfocus.compat import disconnect_display_conn, DisplayHandler, list_mapped_windows
+from flashfocus.compat import (DisplayHandler, disconnect_display_conn,
+                               list_mapped_windows)
 from flashfocus.display import WMEvent, WMEventType
 from flashfocus.errors import UnexpectedMessageType, WMError
 from flashfocus.router import FlashRouter
-
 
 # Ensure that SIGINTs are handled correctly
 signal(SIGINT, default_int_handler)

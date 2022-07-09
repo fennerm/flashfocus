@@ -1,10 +1,10 @@
 """Communicating with the flashfocus server via unix socket."""
-from queue import Queue
 import logging
 import socket
+from queue import Queue
 from threading import Thread
 
-from flashfocus.compat import get_focused_window, Window
+from flashfocus.compat import Window, get_focused_window
 from flashfocus.display import WMEvent, WMEventType
 from flashfocus.sockets import init_client_socket, init_server_socket
 

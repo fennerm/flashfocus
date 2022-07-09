@@ -9,9 +9,10 @@ passes the request on to the Flasher whose criteria match the window.
 import logging
 from typing import Dict, List, Tuple
 
-from flashfocus.compat import get_focused_workspace, list_mapped_windows, Window
-from flashfocus.errors import UnexpectedMessageType
+from flashfocus.compat import (Window, get_focused_workspace,
+                               list_mapped_windows)
 from flashfocus.display import WMEvent, WMEventType
+from flashfocus.errors import UnexpectedMessageType
 from flashfocus.flasher import Flasher
 
 

@@ -1,7 +1,7 @@
 """Compatibility module for abstracting across display protocols."""
-from enum import auto, Enum
 import logging
 import os
+from enum import Enum, auto
 
 from flashfocus.errors import UnsupportedWM
 from flashfocus.util import find_process
@@ -27,24 +27,30 @@ _display_protocol = get_display_protocol()
 
 if _display_protocol is DisplayProtocol.SWAY:
     logging.info("Detected display protocol: wayland - sway")
-    from flashfocus.display_protocols.sway import (
-        disconnect_display_conn as disconnect_display_conn,
-        DisplayHandler as DisplayHandler,
-        get_focused_workspace as get_focused_workspace,
-        get_focused_window as get_focused_window,
-        list_mapped_windows as list_mapped_windows,
-        Window as Window,
-    )
+    from flashfocus.display_protocols.sway import \
+        DisplayHandler as DisplayHandler
+    from flashfocus.display_protocols.sway import Window as Window
+    from flashfocus.display_protocols.sway import \
+        disconnect_display_conn as disconnect_display_conn
+    from flashfocus.display_protocols.sway import \
+        get_focused_window as get_focused_window
+    from flashfocus.display_protocols.sway import \
+        get_focused_workspace as get_focused_workspace
+    from flashfocus.display_protocols.sway import \
+        list_mapped_windows as list_mapped_windows
 elif _display_protocol is DisplayProtocol.WAYLAND:
     logging.info("Detected display protocol: wayland - other")
     raise UnsupportedWM("This window manager is not supported yet.")
 else:
     logging.info("Detected display protocol: X11")
-    from flashfocus.display_protocols.x11 import (  # noqa: F401
-        disconnect_display_conn as disconnect_display_conn,
-        DisplayHandler as DisplayHandler,
-        get_focused_workspace as get_focused_workspace,
-        get_focused_window as get_focused_window,
-        list_mapped_windows as list_mapped_windows,
-        Window as Window,
-    )
+    from flashfocus.display_protocols.x11 import \
+        DisplayHandler as DisplayHandler
+    from flashfocus.display_protocols.x11 import Window as Window
+    from flashfocus.display_protocols.x11 import \
+        disconnect_display_conn as disconnect_display_conn  # noqa: F401
+    from flashfocus.display_protocols.x11 import \
+        get_focused_window as get_focused_window
+    from flashfocus.display_protocols.x11 import \
+        get_focused_workspace as get_focused_workspace
+    from flashfocus.display_protocols.x11 import \
+        list_mapped_windows as list_mapped_windows

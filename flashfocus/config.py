@@ -8,13 +8,14 @@ seem overly complex (and perhaps it is!) but it was motivated by a couple of con
 """
 import logging
 import os
-from pathlib import Path
 import re
 import shutil
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Pattern, Union
 
-from marshmallow import fields, post_load, Schema, validates_schema, ValidationError
 import yaml
+from marshmallow import (Schema, ValidationError, fields, post_load,
+                         validates_schema)
 from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 
