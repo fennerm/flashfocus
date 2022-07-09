@@ -1,5 +1,8 @@
 # Changelog
 
+## [2.2.5 - July 9th, 2022]
+- Fixed: Relax PyYaml dependency (@Artturin)
+
 ## [2.2.4 - July 30th, 2021]
 - Fixed: Remove pytest from setup.py requirements (as it is not really required).
 
