@@ -92,7 +92,7 @@ class DisplayHandler(Thread):
         # This is set to True when initialization of the thread is complete and its ready to begin
         # the event loop
         self.ready = False
-        super(DisplayHandler, self).__init__()
+        super().__init__()
         self.queue = queue
 
     def run(self) -> None:

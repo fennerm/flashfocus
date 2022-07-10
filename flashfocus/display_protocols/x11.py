@@ -186,7 +186,7 @@ class DisplayHandler(Thread):
         # the event loop
         self.ready = False
 
-        super(DisplayHandler, self).__init__()
+        super().__init__()
 
         # Queue of messages to be handled by the flash server
         self.queue: Queue = queue

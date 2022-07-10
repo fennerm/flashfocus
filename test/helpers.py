@@ -85,7 +85,7 @@ class WindowWatcher(Thread):
     """Watch a window for changes in opacity."""
 
     def __init__(self, window: Window):
-        super(WindowWatcher, self).__init__()
+        super().__init__()
         self.window: Window = window
         self.opacity_events: List[float] = [window.opacity]
         self.keep_going: bool = True
