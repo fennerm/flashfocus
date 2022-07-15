@@ -68,7 +68,7 @@ class Window:
         if window_id is None:
             raise WMError("Undefined window")
         self.id = window_id
-        self._properties: Dict = dict()
+        self._properties: Dict = {}
 
     def __eq__(self, other) -> bool:
         if type(self) != type(other):

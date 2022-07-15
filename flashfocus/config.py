@@ -276,7 +276,7 @@ def hierarchical_merge(dicts: List[Dict]) -> Dict:
         will contain the value from dicts[1].
 
     """
-    outdict = dict()
+    outdict = {}
     for dct in dicts:
         try:
             for key, value in dct.items():
