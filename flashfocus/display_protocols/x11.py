@@ -281,7 +281,7 @@ def _try_unwrap(cookie: PropertyCookieSingle) -> Optional[Any]:
 def list_mapped_windows(workspace: Optional[int] = None) -> List[Window]:
     mapped_window_ids = get_client_list().reply()
     if mapped_window_ids is None:
-        mapped_window_ids = list()
+        mapped_window_ids = []
 
     mapped_windows = [Window(wid) for wid in mapped_window_ids if wid is not None]
     if workspace is not None:

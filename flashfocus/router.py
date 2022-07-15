@@ -54,10 +54,10 @@ class FlashRouter:
 
     def __init__(self, config: Dict):
         if config.get("rules") is None:
-            self.rules: List[Dict] = list()
+            self.rules: List[Dict] = []
         else:
             self.rules = config["rules"]
-        self.flashers: List[Flasher] = list()
+        self.flashers: List[Flasher] = []
         # We only need to track the user's workspace if the user config requires it
         self.track_workspaces = config["flash_lone_windows"] != "always"
         for rule_config in self.rules:

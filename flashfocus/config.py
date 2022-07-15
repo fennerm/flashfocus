@@ -196,7 +196,7 @@ def construct_config_error_msg(errors: Dict[str, Any]) -> str:
 
 def unset_invalid_x11_options(config: Dict) -> None:
     if config["rules"] is not None:
-        rules = list()
+        rules = []
         for rule in config["rules"]:
             if not WAYLAND_MATCH_PROPERTIES & rule.keys():
                 rules.append(rule)
@@ -306,7 +306,7 @@ def init_user_configfile() -> Path:
 def build_config_search_path() -> List[Path]:
     """Return a list of user config locations in order of search priority."""
     xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
-    search_path = list()
+    search_path = []
     if xdg_config_home is not None:
         search_path.append(Path(xdg_config_home) / "flashfocus" / "flashfocus.yml")
 
