@@ -4,10 +4,16 @@ from copy import deepcopy
 from pytest import fixture, mark, raises
 from pytest_lazyfixture import lazy_fixture
 
-from flashfocus.config import (construct_config_error_msg, dehyphen,
-                               get_default_config_file, hierarchical_merge,
-                               load_config, load_merged_config,
-                               merge_config_sources, validate_config)
+from flashfocus.config import (
+    construct_config_error_msg,
+    dehyphen,
+    get_default_config_file,
+    hierarchical_merge,
+    load_config,
+    load_merged_config,
+    merge_config_sources,
+    validate_config,
+)
 from flashfocus.errors import ConfigLoadError
 
 # WOW these tests are flakey and overengineered :(

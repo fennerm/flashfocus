@@ -1,7 +1,13 @@
 """Unit test fixtures."""
 from queue import Queue
-from test.helpers import (StubServer, WindowSession, default_flash_param,
-                          fill_in_rule, quick_conf, rekey)
+from test.helpers import (
+    StubServer,
+    WindowSession,
+    default_flash_param,
+    fill_in_rule,
+    quick_conf,
+    rekey,
+)
 
 from factory import Factory
 from pytest import fixture

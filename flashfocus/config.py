@@ -14,8 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Pattern, Union
 
 import yaml
-from marshmallow import (Schema, ValidationError, fields, post_load,
-                         validates_schema)
+from marshmallow import Schema, ValidationError, fields, post_load, validates_schema
 from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 

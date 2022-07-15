@@ -28,18 +28,24 @@ _display_protocol = get_display_protocol()
 # pylint: disable=unused-import
 if _display_protocol is DisplayProtocol.SWAY:
     logging.info("Detected display protocol: wayland - sway")
-    from flashfocus.display_protocols.sway import (DisplayHandler, Window,
-                                                   disconnect_display_conn,
-                                                   get_focused_window,
-                                                   get_focused_workspace,
-                                                   list_mapped_windows)
+    from flashfocus.display_protocols.sway import (  # noqa: F401
+        DisplayHandler,
+        Window,
+        disconnect_display_conn,
+        get_focused_window,
+        get_focused_workspace,
+        list_mapped_windows,
+    )
 elif _display_protocol is DisplayProtocol.WAYLAND:
     logging.info("Detected display protocol: wayland - other")
     raise UnsupportedWM("This window manager is not supported yet.")
 else:
     logging.info("Detected display protocol: X11")
-    from flashfocus.display_protocols.x11 import (DisplayHandler, Window,
-                                                  disconnect_display_conn,
-                                                  get_focused_window,
-                                                  get_focused_workspace,
-                                                  list_mapped_windows)
+    from flashfocus.display_protocols.x11 import (  # noqa: F401
+        DisplayHandler,
+        Window,
+        disconnect_display_conn,
+        get_focused_window,
+        get_focused_workspace,
+        list_mapped_windows,
+    )

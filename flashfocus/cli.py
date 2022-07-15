@@ -87,7 +87,7 @@ def check_for_supported_wm():
     required=False,
     default=None,
     type=click.Choice(["never", "always", "on_open_close", "on_switch"]),
-    help="Flash windows when they are the only one on the desktop?"
+    help="Flash windows when they are the only one on the desktop?",
 )
 @click.option(
     "--verbosity",
@@ -95,7 +95,7 @@ def check_for_supported_wm():
     required=False,
     default="INFO",
     type=click.Choice(["INFO", "WARNING", "DEBUG", "ERROR"]),
-    help="Set the logging verbosity."
+    help="Set the logging verbosity.",
 )
 def cli(*args, **kwargs) -> None:
     """Simple focus animations for tiling window managers."""

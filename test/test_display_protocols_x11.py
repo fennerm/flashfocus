@@ -7,8 +7,7 @@ import pytest
 from pytest import mark
 from xcffib.xproto import CreateNotifyEvent
 
-from flashfocus.compat import (DisplayProtocol, Window, get_display_protocol,
-                               list_mapped_windows)
+from flashfocus.compat import DisplayProtocol, Window, get_display_protocol, list_mapped_windows
 from flashfocus.display import WMEvent, WMEventType
 
 Event = namedtuple("Event", "window,atom")

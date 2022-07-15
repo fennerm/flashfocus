@@ -12,15 +12,25 @@ from threading import Thread
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import xpybutil.window
-from xcffib.xproto import (CW, CreateNotifyEvent, EventMask,
-                           PropertyNotifyEvent, WindowClass, WindowError)
+from xcffib.xproto import (
+    CW,
+    CreateNotifyEvent,
+    EventMask,
+    PropertyNotifyEvent,
+    WindowClass,
+    WindowError,
+)
 from xpybutil import conn, root
-from xpybutil.ewmh import (get_active_window, get_client_list,
-                           get_current_desktop, get_wm_desktop, get_wm_state,
-                           get_wm_window_opacity,
-                           set_wm_window_opacity_checked)
-from xpybutil.icccm import (get_wm_class, set_wm_class_checked,
-                            set_wm_name_checked)
+from xpybutil.ewmh import (
+    get_active_window,
+    get_client_list,
+    get_current_desktop,
+    get_wm_desktop,
+    get_wm_state,
+    get_wm_window_opacity,
+    set_wm_window_opacity_checked,
+)
+from xpybutil.icccm import get_wm_class, set_wm_class_checked, set_wm_name_checked
 from xpybutil.util import PropertyCookieSingle, get_atom_name
 
 from flashfocus.display import WMEvent, WMEventType
