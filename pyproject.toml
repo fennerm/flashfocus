@@ -13,6 +13,12 @@ disable = [
     "logging-fstring-interpolation" # readability > a couple of nanoseconds
 ]
 
+[tool.pylint.basic]
+# Allow shorter and longer variable names than the default.
+argument-rgx = "[a-z_][a-z0-9_]*$"
+attr-rgx = "[a-z_][a-z0-9_]*$"
+variable-rgx = "[a-z_][a-z0-9_]*$"
+
 [tool.isort]
 profile = "black"
 
