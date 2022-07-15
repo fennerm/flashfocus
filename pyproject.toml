@@ -1,0 +1,28 @@
+[tool.black]
+line-length = 100
+
+[tool.pylint.FORMAT]
+output-format = "colorized"
+max-line-length = 100
+
+[tool.pylint."messages control"]
+disable = [
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "logging-fstring-interpolation" # readability > a couple of nanoseconds
+]
+
+[tool.isort]
+profile = "black"
+
+[[tool.mypy.overrides]]
+module = [
+    "i3ipc",
+    "xpybutil",
+    "xpybutil.window",
+    "xpybutil.ewmh",
+    "xpybutil.icccm",
+    "xpybutil.util",
+]
+ignore_missing_imports = true
