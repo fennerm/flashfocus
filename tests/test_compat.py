@@ -1,6 +1,6 @@
 """Testsuite for flashfocus.xutil."""
-from test.compat import change_focus, set_fullscreen, unset_fullscreen
-from test.helpers import producer_running, queue_to_list
+from tests.compat import change_focus, set_fullscreen, unset_fullscreen
+from tests.helpers import producer_running, queue_to_list
 
 from pytest import approx, mark, raises
 

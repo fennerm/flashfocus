@@ -39,6 +39,6 @@ CMD supervisord </dev/null &>/dev/null \
     & sleep 1; \
     flake8 --exclude "./build,./.eggs"; \
     mypy --ignore-missing-imports .; \
-    vulture flashfocus test; \
+    vulture flashfocus tests; \
     pytest --failed-first --verbose --cov-report term-missing \
         --cov="$PWD" --color yes --showlocals --durations 10 --pdb

@@ -5,7 +5,7 @@ import copy
 import socket
 from contextlib import contextmanager
 from queue import Queue
-from test.compat import change_focus, clear_event_queue, create_blank_window, switch_workspace
+from tests.compat import change_focus, clear_event_queue, create_blank_window, switch_workspace
 from threading import Thread
 from time import sleep
 from typing import Dict, Generator, List, Pattern, Union

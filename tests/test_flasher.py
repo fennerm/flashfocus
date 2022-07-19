@@ -1,5 +1,5 @@
 """Test suite for flashfocus.flasher."""
-from test.helpers import change_focus, new_watched_window, watching_windows
+from tests.helpers import change_focus, new_watched_window, watching_windows
 from time import sleep
 from unittest.mock import MagicMock
 

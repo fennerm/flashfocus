@@ -1,6 +1,6 @@
 """Unit test fixtures."""
 from queue import Queue
-from test.helpers import (
+from tests.helpers import (
     StubServer,
     WindowSession,
     default_flash_param,

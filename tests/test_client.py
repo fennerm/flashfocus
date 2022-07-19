@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 import socket
-from test.helpers import producer_running, queue_to_list
+from tests.helpers import producer_running, queue_to_list
 from threading import Thread
 from time import sleep
 
