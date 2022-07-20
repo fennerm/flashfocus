@@ -1,13 +1,5 @@
 """Unit test fixtures."""
 from queue import Queue
-from tests.helpers import (
-    StubServer,
-    WindowSession,
-    default_flash_param,
-    fill_in_rule,
-    quick_conf,
-    rekey,
-)
 
 from factory import Factory
 from pytest import fixture
@@ -18,6 +10,14 @@ from flashfocus.compat import DisplayHandler
 from flashfocus.flasher import Flasher
 from flashfocus.server import FlashServer
 from flashfocus.sockets import init_client_socket, init_server_socket
+from tests.helpers import (
+    StubServer,
+    WindowSession,
+    default_flash_param,
+    fill_in_rule,
+    quick_conf,
+    rekey,
+)
 
 
 @fixture

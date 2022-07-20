@@ -5,7 +5,6 @@ import copy
 import socket
 from contextlib import contextmanager
 from queue import Queue
-from tests.compat import change_focus, clear_event_queue, create_blank_window, switch_workspace
 from threading import Thread
 from time import sleep
 from typing import Dict, Generator, List, Pattern, Union
@@ -20,6 +19,12 @@ from flashfocus.compat import (
 )
 from flashfocus.errors import WMError
 from flashfocus.server import FlashServer
+from tests.compat import (
+    change_focus,
+    clear_event_queue,
+    create_blank_window,
+    switch_workspace,
+)
 
 Producer = Union[ClientMonitor, DisplayHandler]
 
