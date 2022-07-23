@@ -15,5 +15,5 @@ jobs:
       - name: Build docker image
         run: docker build -t flashfocus .
       - name: Run tests in docker
-        run: docker run --publish "8083:8083" --name flashfocus --env DISPLAY=":0" flashfocus
+        run: docker run --publish "8083:8083" --name flashfocus flashfocus
 

@@ -9,7 +9,8 @@ RUN pacman -S --noconfirm \
         glib2 \
         gtk3 \
         python-pip \
-        libxcb
+        libxcb \
+        xorg-server-xvfb
 
 USER user
 ENV PATH="/home/user/.local/bin:${PATH}"
@@ -40,5 +41,5 @@ CMD supervisord </dev/null &>/dev/null \
     flake8 --exclude "./build,./.eggs"; \
     mypy --ignore-missing-imports .; \
     vulture flashfocus test; \
-    pytest --failed-first --verbose --cov-report term-missing \
+    xvfb-run pytest --failed-first --verbose --cov-report term-missing \
         --cov="$PWD" --color yes --showlocals --durations 10 --pdb

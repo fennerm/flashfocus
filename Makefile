@@ -42,7 +42,7 @@ run_tests:
 
 run_tests_noninteractive:
 	docker build -t flashfocus .
-	docker run --rm -p $(TEST_PORT) --name flashfocus -e DISPLAY=${DISPLAY} flashfocus
+	docker run --rm -p $(TEST_PORT) --name flashfocus flashfocus
 	docker rm --force flashfocus || true
 
 patch_release:
