@@ -18,5 +18,3 @@ jobs:
       - name: Run tests in docker
         run: docker run -p "8083:8083" --name flashfocus -e DISPLAY=${DISPLAY} flashfocus
 
-
-
