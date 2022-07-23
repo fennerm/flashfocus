@@ -1,0 +1,18 @@
+name: Run tests
+on:
+  pull_request:
+
+jobs:
+  test:
+    name: Run pytest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+      - name: Build docker image
+        run: docker build -t flashfocus .
+      - name: Run tests in docker
+        run: docker run -p "8083:8083" -it --name flashfocus -e DISPLAY=${DISPLAY} flashfocus
+
+
+
