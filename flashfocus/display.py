@@ -1,6 +1,6 @@
 """Utility code related to window management but not tied to a specific display protocol."""
 from collections import namedtuple
-from enum import auto, Enum
+from enum import Enum, auto
 
 
 class WMEventType(Enum):

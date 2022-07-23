@@ -64,7 +64,7 @@ class Flasher:
             self.ntimepoints = ntimepoints
             self.timechunk = self.time / self.ntimepoints
             self.flash_series = self._compute_flash_series()
-        self.progress: Dict[int, int] = dict()
+        self.progress: Dict[int, int] = {}
 
     def flash(self, window: Window) -> None:
         logging.debug(f"Flashing window {window.id}")

@@ -6,14 +6,15 @@ functions/classes for abstracting across various display protocols. See list in 
 """
 import functools
 import logging
-from queue import Queue
 import struct
+from queue import Queue
 from threading import Thread
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import xpybutil.window
 from xcffib.xproto import (
-    CreateNotifyEvent,
     CW,
+    CreateNotifyEvent,
     EventMask,
     PropertyNotifyEvent,
     WindowClass,
@@ -30,13 +31,11 @@ from xpybutil.ewmh import (
     set_wm_window_opacity_checked,
 )
 from xpybutil.icccm import get_wm_class, set_wm_class_checked, set_wm_name_checked
-import xpybutil.window
-from xpybutil.util import get_atom_name, PropertyCookieSingle
+from xpybutil.util import PropertyCookieSingle, get_atom_name
 
 from flashfocus.display import WMEvent, WMEventType
 from flashfocus.errors import WMError
 from flashfocus.util import match_regex
-
 
 Event = Union[CreateNotifyEvent, PropertyNotifyEvent]
 
@@ -69,7 +68,7 @@ class Window:
         if window_id is None:
             raise WMError("Undefined window")
         self.id = window_id
-        self._properties: Dict = dict()
+        self._properties: Dict = {}
 
     def __eq__(self, other) -> bool:
         if type(self) != type(other):
@@ -197,7 +196,7 @@ class DisplayHandler(Thread):
         # the event loop
         self.ready = False
 
-        super(DisplayHandler, self).__init__()
+        super().__init__()
 
         # Queue of messages to be handled by the flash server
         self.queue: Queue = queue
@@ -282,7 +281,7 @@ def _try_unwrap(cookie: PropertyCookieSingle) -> Optional[Any]:
 def list_mapped_windows(workspace: Optional[int] = None) -> List[Window]:
     mapped_window_ids = get_client_list().reply()
     if mapped_window_ids is None:
-        mapped_window_ids = list()
+        mapped_window_ids = []
 
     mapped_windows = [Window(wid) for wid in mapped_window_ids if wid is not None]
     if workspace is not None:

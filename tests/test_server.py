@@ -2,16 +2,21 @@
 
 Most of the functionality in flashfocus.router is also tested here.
 """
-from unittest.mock import call, MagicMock
 from time import sleep
+from unittest.mock import MagicMock, call
 
 from pytest import approx, mark
 
 from flashfocus.client import client_request_flash
 from flashfocus.compat import Window
 from flashfocus.display import WMEvent, WMEventType
-from test.compat import change_focus, set_fullscreen, switch_workspace
-from test.helpers import new_watched_window, server_running, watching_windows, WindowSession
+from tests.compat import change_focus, set_fullscreen, switch_workspace
+from tests.helpers import (
+    WindowSession,
+    new_watched_window,
+    server_running,
+    watching_windows,
+)
 
 
 @mark.parametrize(
@@ -139,7 +144,7 @@ def test_lone_windows_flash_on_switch_if_flash_lone_windows_is_on_switch(lone_on
 
 
 def test_lone_windows_dont_flash_on_switch_if_flash_lone_windows_is_on_open_close(
-    lone_on_open_close_server
+    lone_on_open_close_server,
 ):
     with new_watched_window() as (window, watcher):
         with server_running(lone_on_open_close_server):
@@ -160,7 +165,7 @@ def test_flash_fullscreen_server_flashes_fullscreen_windows(flash_server):
 
 
 def test_no_flash_fullscreen_false_server_doesnt_flash_fullscreen_windows(
-    no_flash_fullscreen_server
+    no_flash_fullscreen_server,
 ):
     with new_watched_window() as (window, watcher):
         set_fullscreen(window)

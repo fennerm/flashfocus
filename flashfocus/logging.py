@@ -2,7 +2,6 @@
 import logging
 import sys
 
-
 ANSI = {"green": "\033[92m", "red": "\033[91m", "end": "\033[0m"}
 
 

@@ -1,9 +1,9 @@
 """A pid file is used to ensure only one flashfocus instance is running."""
 
 import fcntl
-from pathlib import Path
 import os
 import sys
+from pathlib import Path
 
 
 def determine_runtime_dir() -> Path:

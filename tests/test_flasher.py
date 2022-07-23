@@ -6,7 +6,7 @@ from pytest import approx, mark
 
 from flashfocus.compat import Window
 from flashfocus.flasher import Flasher
-from test.helpers import change_focus, new_watched_window, watching_windows
+from tests.helpers import change_focus, new_watched_window, watching_windows
 
 
 def test_flash(flasher, window):

@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.2.5 - July 9th, 2022]
+- Fixed: Relax PyYaml dependency (@Artturin)
+
+## [2.2.4 - July 30th, 2021]
+- Fixed: Remove pytest from setup.py requirements (as it is not really required).
+
+## [2.2.3 - July 12th, 2021]
+- Bump click dependency to v9
+
 ## [2.2.2 - August 9th, 2020]
 - Added: #55 Emit warning when flash-fullscreen: true in sway.
 

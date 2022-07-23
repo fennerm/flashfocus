@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 """Command line interface."""
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Dict
 
 import click
 
-from flashfocus.errors import ConfigInitError, ConfigLoadError, UnsupportedWM
 from flashfocus.config import init_user_configfile, load_merged_config
+from flashfocus.errors import ConfigInitError, ConfigLoadError, UnsupportedWM
 from flashfocus.logging import setup_logging
 from flashfocus.pid import ensure_single_instance
 from flashfocus.server import FlashServer
-
 
 # Basic logging init - we'll change the log level later
 logging.basicConfig(level="WARNING", format="%(levelname)s: %(message)s")
@@ -88,7 +87,7 @@ def check_for_supported_wm():
     required=False,
     default=None,
     type=click.Choice(["never", "always", "on_open_close", "on_switch"]),
-    help="Flash windows when they are the only one on the desktop?"
+    help="Flash windows when they are the only one on the desktop?",
 )
 @click.option(
     "--verbosity",
@@ -96,7 +95,7 @@ def check_for_supported_wm():
     required=False,
     default="INFO",
     type=click.Choice(["INFO", "WARNING", "DEBUG", "ERROR"]),
-    help="Set the logging verbosity."
+    help="Set the logging verbosity.",
 )
 def cli(*args, **kwargs) -> None:
     """Simple focus animations for tiling window managers."""
