@@ -3,6 +3,8 @@ FROM fennerm/arch-i3-novnc
 LABEL maintainer="fmacrae.dev@gmail.com"
 
 RUN pacman -Sy --noconfirm archlinux-keyring
+RUN yes | pacman-key --init
+RUN yes | pacman-key --populate archlinux
 RUN pacman -Syyu --noconfirm
 RUN pacman -S --noconfirm \
         gcc \
