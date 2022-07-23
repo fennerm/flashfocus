@@ -15,7 +15,6 @@ from flashfocus.display import WMEvent, WMEventType
 from flashfocus.errors import WMError
 from flashfocus.util import match_regex
 
-
 # This connection is shared by all classes/functions in the module. It is not thread-safe to
 # maintain multiple connections to sway through the same socket.
 SWAY = i3ipc.Connection()
@@ -93,7 +92,7 @@ class DisplayHandler(Thread):
         # This is set to True when initialization of the thread is complete and its ready to begin
         # the event loop
         self.ready = False
-        super(DisplayHandler, self).__init__()
+        super().__init__()
         self.queue = queue
 
     def run(self) -> None:

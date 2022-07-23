@@ -9,9 +9,9 @@ passes the request on to the Flasher whose criteria match the window.
 import logging
 from typing import Dict, List, Tuple
 
-from flashfocus.compat import get_focused_workspace, list_mapped_windows, Window
-from flashfocus.errors import UnexpectedMessageType
+from flashfocus.compat import Window, get_focused_workspace, list_mapped_windows
 from flashfocus.display import WMEvent, WMEventType
+from flashfocus.errors import UnexpectedMessageType
 from flashfocus.flasher import Flasher
 
 
@@ -54,10 +54,10 @@ class FlashRouter:
 
     def __init__(self, config: Dict):
         if config.get("rules") is None:
-            self.rules: List[Dict] = list()
+            self.rules: List[Dict] = []
         else:
             self.rules = config["rules"]
-        self.flashers: List[Flasher] = list()
+        self.flashers: List[Flasher] = []
         # We only need to track the user's workspace if the user config requires it
         self.track_workspaces = config["flash_lone_windows"] != "always"
         for rule_config in self.rules:

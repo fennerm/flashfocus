@@ -1,7 +1,7 @@
 """Compatibility module for abstracting across display protocols."""
-from enum import auto, Enum
 import logging
 import os
+from enum import Enum, auto
 
 from flashfocus.errors import UnsupportedWM
 from flashfocus.util import find_process
@@ -25,15 +25,16 @@ def get_display_protocol() -> DisplayProtocol:
 
 _display_protocol = get_display_protocol()
 
+# pylint: disable=unused-import
 if _display_protocol is DisplayProtocol.SWAY:
     logging.info("Detected display protocol: wayland - sway")
-    from flashfocus.display_protocols.sway import (
-        disconnect_display_conn as disconnect_display_conn,
-        DisplayHandler as DisplayHandler,
-        get_focused_workspace as get_focused_workspace,
-        get_focused_window as get_focused_window,
-        list_mapped_windows as list_mapped_windows,
-        Window as Window,
+    from flashfocus.display_protocols.sway import (  # noqa: F401
+        DisplayHandler,
+        Window,
+        disconnect_display_conn,
+        get_focused_window,
+        get_focused_workspace,
+        list_mapped_windows,
     )
 elif _display_protocol is DisplayProtocol.WAYLAND:
     logging.info("Detected display protocol: wayland - other")
@@ -41,10 +42,10 @@ elif _display_protocol is DisplayProtocol.WAYLAND:
 else:
     logging.info("Detected display protocol: X11")
     from flashfocus.display_protocols.x11 import (  # noqa: F401
-        disconnect_display_conn as disconnect_display_conn,
-        DisplayHandler as DisplayHandler,
-        get_focused_workspace as get_focused_workspace,
-        get_focused_window as get_focused_window,
-        list_mapped_windows as list_mapped_windows,
-        Window as Window,
+        DisplayHandler,
+        Window,
+        disconnect_display_conn,
+        get_focused_window,
+        get_focused_workspace,
+        list_mapped_windows,
     )

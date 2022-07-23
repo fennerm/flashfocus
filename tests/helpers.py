@@ -2,9 +2,9 @@
 from __future__ import division
 
 import copy
+import socket
 from contextlib import contextmanager
 from queue import Queue
-import socket
 from threading import Thread
 from time import sleep
 from typing import Dict, Generator, List, Pattern, Union
@@ -12,15 +12,19 @@ from typing import Dict, Generator, List, Pattern, Union
 from flashfocus.client import ClientMonitor
 from flashfocus.compat import (
     DisplayHandler,
+    Window,
     get_focused_window,
     get_focused_workspace,
     list_mapped_windows,
-    Window,
 )
 from flashfocus.errors import WMError
 from flashfocus.server import FlashServer
-from test.compat import change_focus, clear_event_queue, create_blank_window, switch_workspace
-
+from tests.compat import (
+    change_focus,
+    clear_event_queue,
+    create_blank_window,
+    switch_workspace,
+)
 
 Producer = Union[ClientMonitor, DisplayHandler]
 
@@ -90,7 +94,7 @@ class WindowWatcher(Thread):
     """Watch a window for changes in opacity."""
 
     def __init__(self, window: Window):
-        super(WindowWatcher, self).__init__()
+        super().__init__()
         self.window: Window = window
         self.opacity_events: List[float] = [window.opacity]
         self.keep_going: bool = True

@@ -8,7 +8,6 @@ import xpybutil.ewmh
 from xpybutil.ewmh import request_wm_state_checked, set_active_window_checked
 from xpybutil.util import get_atom
 
-
 from flashfocus.compat import Window
 
 

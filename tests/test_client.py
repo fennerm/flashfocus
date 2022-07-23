@@ -9,7 +9,7 @@ from pytest import raises
 
 from flashfocus.client import client_request_flash
 from flashfocus.display import WMEvent, WMEventType
-from test.helpers import producer_running, queue_to_list
+from tests.helpers import producer_running, queue_to_list
 
 
 def test_client_request_flash(stub_server):

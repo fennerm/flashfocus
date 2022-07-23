@@ -1,4 +1,5 @@
 from io import open
+
 from setuptools import find_packages, setup
 
 # This speeds up the flash_window script
@@ -25,7 +26,7 @@ setup(
         "pyyaml>=5.1",
         "i3ipc>=2.1.1,<3.0",
     ],
-    packages=find_packages(exclude=["*test*"]),
+    packages=find_packages(exclude=["*tests*"]),
     keywords="xorg flash focus i3 bspwm awesomewm herbsluftwm",
     scripts=["bin/nc_flash_window"],
     include_package_data=True,

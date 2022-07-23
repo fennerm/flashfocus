@@ -1,6 +1,6 @@
 """Testsuite for the flashfocus CLI."""
-from flashfocus.server import FlashServer
 from flashfocus.cli import init_server
+from flashfocus.server import FlashServer
 
 
 def return_opacity(self, *args, **kwargs):
