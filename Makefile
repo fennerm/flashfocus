@@ -1,7 +1,5 @@
 SHELL=/usr/bin/env bash
 
-TEST_PORT="8083:8083"
-
 define deploy_to_pypi
 	set -euo pipefail
 	IFS=$$'\n\t'
@@ -22,15 +20,9 @@ define update_changelog
 	git commit -m "Updated changelog"
 endef
 
-define run_tests
-	docker build -t flashfocus .
-	docker run --rm -p $(TEST_PORT) -it --name flashfocus -e DISPLAY=${DISPLAY} flashfocus
-	docker rm --force flashfocus || true
-endef
-
 define deploy
 	set -euo pipefail
-	$(call run_tests)
+	scripts/test
 	$(call update_changelog)
 	bumpversion ${1}
 	$(call deploy_to_pypi)
@@ -38,12 +30,10 @@ define deploy
 endef
 
 run_tests:
-	$(call run_tests)
+	scripts/test
 
-run_tests_noninteractive:
-	docker build -t flashfocus .
-	docker run --rm -p $(TEST_PORT) --name flashfocus flashfocus
-	docker rm --force flashfocus || true
+run_tests_pdb:
+	scripts/test --pdb
 
 patch_release:
 	$(call deploy,"patch")

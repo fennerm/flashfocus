@@ -11,25 +11,18 @@ RUN pacman -S --noconfirm \
         glib2 \
         gtk3 \
         python-pip \
-        libxcb \
-        xorg-server-xvfb
+        libxcb
 
 USER user
 ENV PATH="/home/user/.local/bin:${PATH}"
 
 RUN pip install --user \
-    flake8 \
-    flake8-bugbear \
-    flake8-blind-except \
-    flake8-builtins \
-    mypy \
     pdbpp \
     pytest \
     pytest-cov \
     pytest-factoryboy \
     pytest-runner \
-    pytest-lazy-fixture \
-    vulture
+    pytest-lazy-fixture
 
 COPY --chown=user requirements.txt requirements.txt
 RUN pip install --user -r requirements.txt
@@ -38,10 +31,8 @@ COPY --chown=user . /home/user/flashfocus
 WORKDIR /home/user/flashfocus
 RUN pip3 install --no-deps --user -e .
 
+ENV DISPLAY=":0"
 CMD supervisord </dev/null &>/dev/null \
-    & sleep 1; \
-    flake8 --exclude "./build,./.eggs"; \
-    mypy --ignore-missing-imports .; \
-    vulture flashfocus tests; \
-    xvfb-run pytest --failed-first --verbose --cov-report term-missing \
-        --cov="$PWD" --color yes --showlocals --durations 10 --pdb
+    & sleep 2; \
+    pytest --failed-first --verbose --cov-report term-missing \
+        --cov="$PWD" --color yes --showlocals --durations 10 ${PYTEST_ARGS}

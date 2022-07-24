@@ -13,7 +13,6 @@ jobs:
         uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
       - name: Build docker image
-        run: docker build -t flashfocus .
+        run: scripts/docker_build
       - name: Run tests in docker
-        run: docker run --publish "8083:8083" --name flashfocus flashfocus
-
+        run: scripts/test
