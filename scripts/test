@@ -4,6 +4,8 @@
 set -euo pipefail
 
 pdb=false
+script_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+port=8083
 
 while [[ "${#}" != 0 ]]; do
     case "${1:-}" in
@@ -18,8 +20,6 @@ while [[ "${#}" != 0 ]]; do
   esac
 done
 
-port=8083
-
 if [[ "$pdb" == "true" ]]; then
     docker_args="-it"
     pytest_args="--pdb"
@@ -28,7 +28,7 @@ else
     docker_args=
 fi
 
-scripts/docker_build
+$script_dir/docker_build
 docker run \
     --rm \
     --publish "$port:$port" \
