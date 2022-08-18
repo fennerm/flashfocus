@@ -6,6 +6,7 @@ jobs:
   test:
     name: Run pytest
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Check out repo
         uses: actions/checkout@v3
