@@ -22,13 +22,15 @@ done
 
 if [[ "$pdb" == "true" ]]; then
     docker_args="-it"
-    pytest_args="--pdb -vvv"
+    pytest_args="--pdb"
 else
-    pytest_args="-vvv"
+    pytest_args=
     docker_args=
 fi
 
-$script_dir/docker_build
+"$script_dir/docker_build"
+
+# shellcheck disable=SC2086
 docker run \
     --rm \
     --publish "$port:$port" \

@@ -34,5 +34,5 @@ RUN pip3 install --no-deps --user -e .
 ENV DISPLAY=":0"
 CMD supervisord </dev/null &>/dev/null \
     & sleep 2; \
-    pytest --failed-first --verbose --cov-report term-missing \
+    pytest --failed-first --verbosity=3 --cov-report term-missing --log-level=DEBUG \
         --cov="$PWD" --color yes --showlocals --durations 10 ${PYTEST_ARGS}
