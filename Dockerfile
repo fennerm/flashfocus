@@ -37,5 +37,5 @@ WORKDIR /home/user/flashfocus
 RUN pip3 install --no-deps --user -e .
 
 ENV DISPLAY=":0"
-CMD xvfb-run -a pytest --failed-first --verbosity=3 --cov-report term-missing --log-level=DEBUG --capture=no \
+CMD Xvfb :0 & pytest --failed-first --verbosity=3 --cov-report term-missing --log-level=DEBUG --capture=no \
         --cov="flashfocus" --color yes --showlocals --durations 10 ${PYTEST_ARGS}
