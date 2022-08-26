@@ -15,12 +15,12 @@ USER user
 ENV PATH="/home/user/.local/bin:${PATH}"
 
 RUN pip install --user \
-    pdbpp \
-    pytest \
-    pytest-cov \
-    pytest-factoryboy \
-    pytest-runner \
-    pytest-lazy-fixture
+        pdbpp \
+        pytest \
+        pytest-cov \
+        pytest-factoryboy \
+        pytest-lazy-fixture \
+        pytest-runner
 
 COPY --chown=user requirements.txt requirements.txt
 RUN pip install --user -r requirements.txt
