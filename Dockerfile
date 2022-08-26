@@ -32,5 +32,5 @@ RUN pip3 install --no-deps --user -e .
 ENV DISPLAY=":0"
 CMD supervisord </dev/null &>/dev/null \
     & sleep 10; \
-    pytest --failed-first --verbosity=3 --cov-report term-missing --log-level=DEBUG --capture=no \
+    python -m trace -cmC . pytest --failed-first --verbosity=3 --cov-report term-missing --log-level=DEBUG --capture=no \
         --cov="flashfocus" --color yes --showlocals --durations 10 ${PYTEST_ARGS}
