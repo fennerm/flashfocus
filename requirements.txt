@@ -5,9 +5,3 @@ xpybutil>=0.0.6,<1.0.0
 pyyaml>=5.1
 marshmallow >=2.15.0,<4.0.0
 i3ipc>=2.1.1,<3.0.0
-pdbpp
-pytest
-pytest-cov
-pytest-factoryboy
-pytest-runner
-pytest-lazy-fixture
