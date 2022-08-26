@@ -22,9 +22,9 @@ done
 
 if [[ "$pdb" == "true" ]]; then
     docker_args="-it"
-    pytest_args="--pdb"
+    pytest_args="--pdb -vvv"
 else
-    pytest_args=
+    pytest_args="-vvv"
     docker_args=
 fi
 
