@@ -15,7 +15,10 @@ RUN pacman -S --noconfirm \
         xorg-server-xvfb \
         xorg-xinit
 
+RUN useradd -m user
+WORKDIR /home/user
 USER user
+
 ENV PATH="/home/user/.local/bin:${PATH}"
 
 RUN pip install --user \
