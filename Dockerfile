@@ -1,7 +1,5 @@
 FROM fennerm/arch-i3-novnc
 
-LABEL maintainer="fmacrae.dev@gmail.com"
-
 RUN pacman -Sy --noconfirm archlinux-keyring
 RUN yes | pacman-key --init
 RUN yes | pacman-key --populate archlinux
@@ -35,4 +33,4 @@ ENV DISPLAY=":0"
 CMD supervisord </dev/null &>/dev/null \
     & sleep 2; \
     pytest --failed-first --verbosity=3 --cov-report term-missing --log-level=DEBUG --capture=no \
-        --cov="$PWD" --color yes --showlocals --durations 10 ${PYTEST_ARGS}
+        --cov="flashfocus" --color yes --showlocals --durations 10 ${PYTEST_ARGS}
