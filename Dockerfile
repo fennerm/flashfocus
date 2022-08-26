@@ -8,12 +8,19 @@ RUN pacman -S --noconfirm \
         gcc \
         glib2 \
         gtk3 \
+        i3status \
+        i3-wm \
         python-pip \
         libxcb \
+        ttf-dejavu \
         xorg-apps \
         xorg-server \
         xorg-server-xvfb \
         xorg-xinit
+
+# Setup locale (required for i3)
+RUN sed -i '/en_US.UTF-8/s/^#//g' /etc/locale.gen
+RUN locale-gen
 
 RUN useradd -m user
 WORKDIR /home/user
@@ -37,5 +44,5 @@ WORKDIR /home/user/flashfocus
 RUN pip3 install --no-deps --user -e .
 
 ENV DISPLAY=":0"
-CMD Xvfb :0 & pytest --failed-first --verbosity=3 --cov-report term-missing --log-level=DEBUG --capture=no \
+CMD Xvfb :0 & i3 & pytest --failed-first --verbosity=3 --cov-report term-missing --log-level=DEBUG --capture=no \
         --cov="flashfocus" --color yes --showlocals --durations 10 ${PYTEST_ARGS}
