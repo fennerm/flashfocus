@@ -1,4 +1,4 @@
-FROM fennerm/arch-i3-novnc
+FROM archlinux:base
 
 RUN pacman -Sy --noconfirm archlinux-keyring
 RUN yes | pacman-key --init
@@ -9,7 +9,11 @@ RUN pacman -S --noconfirm \
         glib2 \
         gtk3 \
         python-pip \
-        libxcb
+        libxcb \
+        xorg-apps \
+        xorg-server \
+        xorg-server-xvfb \
+        xorg-xinit
 
 USER user
 ENV PATH="/home/user/.local/bin:${PATH}"
@@ -20,7 +24,8 @@ RUN pip install --user \
         pytest-cov \
         pytest-factoryboy \
         pytest-lazy-fixture \
-        pytest-runner
+        pytest-runner \
+        pytest-xvfb
 
 COPY --chown=user requirements.txt requirements.txt
 RUN pip install --user -r requirements.txt
@@ -30,7 +35,5 @@ WORKDIR /home/user/flashfocus
 RUN pip3 install --no-deps --user -e .
 
 ENV DISPLAY=":0"
-CMD supervisord </dev/null &>/dev/null \
-    & sleep 10; \
-    pytest --failed-first --verbosity=3 --cov-report term-missing --log-level=DEBUG --capture=no \
+CMD pytest --failed-first --verbosity=3 --cov-report term-missing --log-level=DEBUG --capture=no \
         --cov="flashfocus" --color yes --showlocals --durations 10 ${PYTEST_ARGS}
