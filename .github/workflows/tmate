@@ -1,0 +1,13 @@
+name: Tmate
+on:
+  pull_request:
+
+jobs:
+  test:
+    name: Run Tmate
+    runs-on: ubuntu-latest
+    - uses: actions/checkout@v2
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      with:
+        sudo: false
