@@ -86,9 +86,10 @@ class FlashRouter:
         )
         self.flashers.append(default_flasher)
         self.prev_focus = None
+        self.prev_workspace = None
+        self.current_workspace = None
         if self.track_workspaces:
-            self.current_workspace = get_focused_workspace()
-            self.prev_workspace = self.current_workspace
+            self._update_workspace_history()
 
     def route_request(self, message: WMEvent) -> None:
         """Match a window against rule criteria and handle the request according to it's type."""
@@ -103,6 +104,12 @@ class FlashRouter:
         else:
             raise UnexpectedMessageType()
 
+    def _update_workspace_history(self):
+        focused_workspace = get_focused_workspace()
+        if focused_workspace is not None:
+            self.prev_workspace = self.current_workspace
+            self.current_workspace = focused_workspace
+
     def _route_new_window(self, window: Window) -> None:
         """Handle a new window being mapped."""
         rule, flasher = self._match(window)
@@ -114,7 +121,7 @@ class FlashRouter:
 
     def _route_window_init(self, window: Window) -> None:
         """Handle a window initialization event (this happens at startup)."""
-        rule, flasher = self._match(window)
+        _, flasher = self._match(window)
         flasher.set_default_opacity(window)
 
     def _route_focus_shift(self, window: Window) -> None:
@@ -131,7 +138,7 @@ class FlashRouter:
 
     def _route_client_request(self, window: Window) -> None:
         """Handle a manual flash request from the user."""
-        rule, flasher = self._match(window)
+        _, flasher = self._match(window)
         flasher.flash(window)
 
     def _match(self, window: Window) -> Tuple[Dict, Flasher]:
@@ -152,8 +159,7 @@ class FlashRouter:
 
         """
         if self.track_workspaces:
-            self.prev_workspace = self.current_workspace
-            self.current_workspace = get_focused_workspace()
+            self._update_workspace_history()
 
         if not rule.get("flash_on_focus"):
             logging.debug(f"flash_on_focus is False for window {window.id}, ignoring...")
