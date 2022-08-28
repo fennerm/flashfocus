@@ -126,7 +126,7 @@ def _is_mapped_window(container: i3ipc.Con) -> bool:
     return container and container.id and container.window_rect.width != 0  # type: ignore
 
 
-def get_focused_window() -> Window:
+def get_focused_window() -> Optional[Window]:
     return Window(SWAY.get_tree().find_focused())
 
 
@@ -148,6 +148,12 @@ def disconnect_display_conn() -> None:
     SWAY.main_quit()
 
 
-def get_focused_workspace() -> int:
-    workspace: int = SWAY.get_tree().find_focused().workspace().num
-    return workspace
+def get_focused_workspace() -> Optional[int]:
+    focused_container = SWAY.get_tree().find_focused()
+    if focused_container is None:
+        return None
+    workspace = focused_container.workspace()
+    if workspace is None:
+        return None
+    workspace_number = workspace.num
+    return workspace_number

@@ -41,9 +41,9 @@ class FlashRouter:
     rules
         List of rules each corresponding to a set of criteria for matching against windows. The last
         rule in the list is the default rule which matches any window.
-    current_workspace: int
+    current_workspace: int | None
         The id of the current focused workspace
-    prev_workspace: int
+    prev_workspace: int | None
         The id of the previously focused workspace
     prev_focus: int
         The id of the previously focused window. We keep track of this so that
