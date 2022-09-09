@@ -45,7 +45,7 @@ RUN pip3 install --no-deps --user -e .
 
 
 ENV DISPLAY=":0"
-RUN Xvfb :0 -screen 0 1280x1024x24 & sleep 2; i3 & sleep 2
+RUN Xvfb :0 -screen 0 1280x1024x24 & sleep 2; i3 & sleep 10
 CMD i3-msg workspace 2
 
 
