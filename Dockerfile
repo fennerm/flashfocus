@@ -44,7 +44,15 @@ WORKDIR /home/user/flashfocus
 RUN pip3 install --no-deps --user -e .
 
 ENV DISPLAY=":0"
+
+# For some reason Xvfb tries to create this dir but fails because its not running as root.
 RUN mkdir /tmp/.x11-unix
+
+# We see a few errors on startup which are safe to ignore:
+# _XSERVTransmkdir: ERROR: euid != 0,directory /tmp/.X11-unix will not be created.
+# /bin/sh: line 1: dex: command not found
+# /bin/sh: line 1: xss-lock: command not found
+# /bin/sh: line 1: nm-applet: command not found
 CMD Xvfb :0 -screen 0 1280x1024x24 & \
         sleep 2; \
         i3 & \
