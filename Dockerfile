@@ -23,6 +23,8 @@ RUN sed -i '/en_US.UTF-8/s/^#//g' /etc/locale.gen
 RUN locale-gen
 
 RUN useradd -m user
+RUN mkdir /tmp
+RUN chmod 777 /tmp
 WORKDIR /home/user
 USER user
 
@@ -42,6 +44,7 @@ RUN pip install --user -r requirements.txt
 COPY --chown=user . /home/user/flashfocus
 WORKDIR /home/user/flashfocus
 RUN pip3 install --no-deps --user -e .
+
 
 ENV DISPLAY=":0"
 RUN Xvfb :0 -screen 0 1280x1024x24 & sleep 2; i3 &
