@@ -1,4 +1,6 @@
-name: Tmate
+name: Debug Runner
+on:
+  workflow_dispatch:
 
 jobs:
   test:
