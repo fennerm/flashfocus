@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: fennerm/flashfocus/.github/workflows/docker_build.yml
+      - name: Build docker image
+        uses: fennerm/flashfocus/.github/workflows/docker_build.yml
       - name: Run tests in docker
         run: scripts/test
