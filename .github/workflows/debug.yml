@@ -5,7 +5,7 @@ on:
 jobs:
   docker-build:
     name: Build docker image
-    uses: fennerm/flashfocus/.github/workflows/docker_build.yml
+    uses: ./.github/workflows/docker_build.yml
   test:
     name: Run Tmate
     runs-on: ubuntu-latest
