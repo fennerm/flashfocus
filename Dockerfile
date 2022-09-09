@@ -44,7 +44,9 @@ WORKDIR /home/user/flashfocus
 RUN pip3 install --no-deps --user -e .
 
 ENV DISPLAY=":0"
-CMD Xvfb :0 -screen 0 1280x1024x24 -nolisten tcp -nolisten unix & sleep 2; i3 
+RUN Xvfb :0 -screen 0 1280x1024x24 -nolisten tcp -nolisten unix & sleep 2; i3 &
+CMD i3-msg workspace 2
+
 
 
 # & pytest --failed-first --verbosity=3 --cov-report term-missing --log-level=DEBUG --capture=no \
