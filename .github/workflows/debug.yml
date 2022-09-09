@@ -1,7 +1,6 @@
 name: Debug Runner
 on:
   workflow_dispatch:
-  pull_request:
 
 jobs:
   test:
