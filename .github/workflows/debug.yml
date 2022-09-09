@@ -8,12 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-    - uses: actions/checkout@v2
-    - name: Cache docker layers
-      uses: satackey/action-docker-layer-caching@v0.0.11
-      continue-on-error: true
-    - name: Build docker image
-      run: scripts/docker_build
+    - uses: fennerm/flashfocus/.github/workflows/docker_build.yml
     # SSH into tmate session and run `docker run --rm -it flashfocus bash` to debug inside container
     - name: Setup tmate session
       uses: mxschmitt/action-tmate@v3
