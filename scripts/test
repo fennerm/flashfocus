@@ -5,7 +5,6 @@ set -euo pipefail
 
 pdb=false
 script_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
-port=8083
 
 while [[ "${#}" != 0 ]]; do
     case "${1:-}" in
@@ -33,7 +32,6 @@ fi
 # shellcheck disable=SC2086
 docker run \
     --rm \
-    --publish "$port:$port" \
     $docker_args \
     --name flashfocus \
     --env PYTEST_ARGS="$pytest_args" \
