@@ -76,10 +76,9 @@ class WindowSession:
         for window in self.windows:
             while window not in list_mapped_windows():
                 pass
-        change_focus(self.windows[0])
         # Wait for the focus to actually change
         while get_focused_window() != self.windows[0]:
-            pass
+            change_focus(self.windows[0])
 
     def destroy(self) -> None:
         """Tear down the window session."""
