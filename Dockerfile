@@ -47,9 +47,18 @@ RUN pip3 install --no-deps --user -e .
 ENV DISPLAY=":0"
 # -nolisten unix is necessary or we hit errors:
 # _XSERVTransmkdir: ERROR: euid != 0,directory /tmp/.X11-unix will not be created.
-CMD Xvfb :0 -nolisten unix -screen 0 1280x1024x24 & sleep 2; i3 & sleep 10; i3-msg workspace 2
-
-
-
-# & pytest --failed-first --verbosity=3 --cov-report term-missing --log-level=DEBUG --capture=no \
-#         --cov="flashfocus" --color yes --showlocals --durations 10 ${PYTEST_ARGS}
+CMD Xvfb :0 -nolisten unix -screen 0 1280x1024x24 & \
+        sleep 2; \
+        i3 & \
+        sleep 10; \
+        pytest \
+            --failed-first \
+            --verbosity=3 \
+            --cov-report=term-missing \
+            --log-level=DEBUG \
+            --capture=no \
+            --cov="flashfocus" \
+            --color=yes \
+            --showlocals \
+            --durations 10 \
+            ${PYTEST_ARGS}
