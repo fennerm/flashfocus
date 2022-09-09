@@ -43,7 +43,6 @@ COPY --chown=user . /home/user/flashfocus
 WORKDIR /home/user/flashfocus
 RUN pip3 install --no-deps --user -e .
 
-
 ENV DISPLAY=":0"
 # -nolisten unix is necessary or we hit errors:
 # _XSERVTransmkdir: ERROR: euid != 0,directory /tmp/.X11-unix will not be created.
