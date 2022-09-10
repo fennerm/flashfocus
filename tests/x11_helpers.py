@@ -14,7 +14,7 @@ from flashfocus.compat import Window
 def change_focus(window):
     """Change the active window."""
     set_active_window_checked(window.id).check()
-    sleep(0.2)
+    sleep(0.01)
 
 
 def clear_event_queue() -> None:
@@ -56,7 +56,6 @@ def switch_workspace(workspace: int) -> None:
     # unfortunately need to use i3 specific command here because i3 blocks
     # external desktop switch requests
     subprocess.check_output(["i3-msg", "workspace", str(workspace)])
-    sleep(0.2)
 
 
 def set_fullscreen(window: Window) -> None:
