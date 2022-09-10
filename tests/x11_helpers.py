@@ -56,6 +56,7 @@ def switch_workspace(workspace: int) -> None:
     # unfortunately need to use i3 specific command here because i3 blocks
     # external desktop switch requests
     subprocess.check_output(["i3-msg", "workspace", str(workspace)])
+    sleep(0.2)
 
 
 def set_fullscreen(window: Window) -> None:
