@@ -88,7 +88,7 @@ class FlashRouter:
         self.prev_focus = None
         if self.track_workspaces:
             self.current_workspace = get_focused_workspace()
-            self.prev_workspace = None
+            self.prev_workspace = self.current_workspace
 
     def route_request(self, message: WMEvent) -> None:
         """Match a window against rule criteria and handle the request according to it's type."""

@@ -117,54 +117,60 @@ def test_flash_lone_windows_set_to_never_with_existing_window(no_lone_server, wi
 
 
 def test_flash_lone_windows_set_to_never_for_new_window(no_lone_server):
-    switch_workspace(1)
     with server_running(no_lone_server):
         with new_watched_window() as (window, watcher):
-            switch_workspace(0)
             change_focus(window)
 
     # The report might contain None or 0.2 depending on whether server or watcher initialized first
     assert watcher.count_flashes() == 0
 
 
+@mark.skip(
+    "Test doesn't work because switching workspace is only tracked if there is a window on that "
+    "workspace"
+)
 def test_flash_lone_windows_set_to_never_with_desktop_switching(no_lone_server):
-    switch_workspace(1)
     with server_running(no_lone_server):
         with new_watched_window() as (window, watcher):
-            switch_workspace(0)
+            switch_workspace(1)
             change_focus(window)
 
     assert watcher.count_flashes() == 0
 
 
+@mark.skip(
+    "Test doesn't work because switching workspace is only tracked if there is a window on that "
+    "workspace"
+)
 def test_lone_windows_flash_on_switch_if_flash_lone_windows_is_on_switch(lone_on_switch_server):
-    switch_workspace(1)
     with new_watched_window() as (window, watcher):
         with server_running(lone_on_switch_server):
-            switch_workspace(0)
+            switch_workspace(1)
             change_focus(window)
 
     assert watcher.count_flashes() == 1
 
 
+@mark.skip(
+    "Test doesn't work because switching workspace is only tracked if there is a window on that "
+    "workspace"
+)
 def test_lone_windows_dont_flash_on_switch_if_flash_lone_windows_is_on_open_close(
     lone_on_open_close_server,
 ):
-    switch_workspace(1)
     with new_watched_window() as (window, watcher):
         with server_running(lone_on_open_close_server):
-            switch_workspace(0)
+            switch_workspace(1)
             change_focus(window)
 
     assert watcher.count_flashes() == 0
 
 
 def test_flash_fullscreen_server_flashes_fullscreen_windows(flash_server):
-    switch_workspace(1)
     with new_watched_window() as (window, watcher):
         set_fullscreen(window)
         with server_running(flash_server):
-            switch_workspace(0)
+            switch_workspace(1)
             change_focus(window)
 
     assert watcher.count_flashes() == 1
@@ -173,11 +179,10 @@ def test_flash_fullscreen_server_flashes_fullscreen_windows(flash_server):
 def test_no_flash_fullscreen_false_server_doesnt_flash_fullscreen_windows(
     no_flash_fullscreen_server,
 ):
-    switch_workspace(1)
     with new_watched_window() as (window, watcher):
         set_fullscreen(window)
         with server_running(no_flash_fullscreen_server):
-            switch_workspace(0)
+            switch_workspace(1)
             change_focus(window)
 
     assert watcher.count_flashes() == 0
