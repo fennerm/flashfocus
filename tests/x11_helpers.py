@@ -14,7 +14,7 @@ from flashfocus.compat import Window
 def change_focus(window):
     """Change the active window."""
     set_active_window_checked(window.id).check()
-    sleep(0.01)
+    sleep(0.2)
 
 
 def clear_event_queue() -> None:
