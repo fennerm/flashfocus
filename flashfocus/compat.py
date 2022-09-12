@@ -34,6 +34,7 @@ if _display_protocol is DisplayProtocol.SWAY:
         disconnect_display_conn,
         get_focused_window,
         get_focused_workspace,
+        get_workspace,
         list_mapped_windows,
     )
 elif _display_protocol is DisplayProtocol.WAYLAND:
@@ -47,5 +48,6 @@ else:
         disconnect_display_conn,
         get_focused_window,
         get_focused_workspace,
+        get_workspace,
         list_mapped_windows,
     )

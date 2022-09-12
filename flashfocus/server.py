@@ -41,6 +41,10 @@ class FlashServer:
     flash_requests: Queue
         Queue of flash jobs for the server to work through. Each item of the
         queue is a tuple of (window id, request type).
+    ready: bool
+        True if all server threads are fully initialized and ready to process events
+    processing_event: bool
+        True if the server is currently processing an event.
 
     """
 
@@ -51,6 +55,7 @@ class FlashServer:
         self.producers = [ClientMonitor(self.events), DisplayHandler(self.events)]
         self.keep_going = True
         self.ready = False
+        self.processing_event = False
 
     def event_loop(self) -> None:
         """Wait for changes in focus or client requests and queues flashes."""
@@ -86,6 +91,7 @@ class FlashServer:
         """Pop a window from the flash_requests queue and initiate flash."""
         try:
             message = self.events.get(timeout=1)
+            self.processing_event = True
         except Empty:
             return None
 
@@ -96,6 +102,8 @@ class FlashServer:
             self.shutdown()
         except WMError:
             pass
+        finally:
+            self.processing_event = False
 
     def _kill_producers(self) -> None:
         logging.info("Terminating threads...")
@@ -104,5 +112,5 @@ class FlashServer:
 
     def _set_all_window_opacity_to_default(self) -> None:
         logging.info("Setting all windows to their default opacity...")
-        for window in list_mapped_windows():
+        for window in sorted(list_mapped_windows(), key=lambda window: window.id):
             self.router.route_request(WMEvent(window=window, event_type=WMEventType.WINDOW_INIT))

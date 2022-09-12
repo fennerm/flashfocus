@@ -13,7 +13,6 @@ from flashfocus.client import ClientMonitor
 from flashfocus.compat import (
     DisplayHandler,
     Window,
-    get_focused_window,
     get_focused_workspace,
     list_mapped_windows,
 )
@@ -64,21 +63,26 @@ def default_flash_param() -> Dict:
 class WindowSession:
     """A session of blank windows for testing."""
 
-    def __init__(self, num_windows: int = 2) -> None:
-        wm_names = ["window" + str(i) for i in range(1, num_windows + 1)]
-        wm_classes = zip(wm_names, [name.capitalize() for name in wm_names])
+    def __init__(self, num_windows_by_workspace: Dict[int, int] | None = None) -> None:
+        """
+        Parameters
+        ----------
+        num_windows_by_workspace
+            A dict mapping workspace number to the number of windows which should be created on the 
+            workspace
+        
+        """
+        self.windows: Dict[int, Window] = {}
+        self.num_windows_by_workspace = (
+            num_windows_by_workspace if num_windows_by_workspace is not None else {0: 2}
+        )
+
+    def setup(self) -> None:
+        """Create the window session."""
         clear_desktops()
-        self.windows = [
-            create_blank_window(wm_name, wm_class)
-            for wm_name, wm_class in zip(wm_names, wm_classes)
-        ]
-        # Wait for all of the windows to be mapped
-        for window in self.windows:
-            while window not in list_mapped_windows():
-                pass
-        # Wait for the focus to actually change
-        while get_focused_window() != self.windows[0]:
-            change_focus(self.windows[0])
+        if self.num_windows_by_workspace:
+            self._create_windows()
+            self._set_initial_focused_window()
 
     def destroy(self) -> None:
         """Tear down the window session."""
@@ -87,6 +91,29 @@ class WindowSession:
                 window.destroy()
             except Exception:
                 pass
+            
+    def get_first_window(self) -> Window:
+        """Get the first window from the first workspace."""
+        for workspace in sorted(self.windows.keys()):
+            if len(self.windows[workspace]) > 0:
+                return self.windows[workspace][0]
+        
+    def _create_windows(self) -> None:
+        for workspace, num_windows in self.num_windows_by_workspace.items():
+            wm_names = [f"window_{workspace}_{number}" for number in range(1, num_windows + 1)]
+            wm_classes = zip(wm_names, [name.capitalize() for name in wm_names])
+            switch_workspace(workspace)
+            self.windows[workspace] = [
+                create_blank_window(wm_name, wm_class)
+                for wm_name, wm_class in zip(wm_names, wm_classes)
+            ]
+            
+    def _set_initial_focused_window(self) -> None:
+        for workspace in sorted(self.windows.keys()):
+            if len(self.windows[workspace]) > 0:
+                break
+        switch_workspace(workspace)
+        change_focus(self.windows[workspace][0])
 
 
 class WindowWatcher(Thread):
@@ -155,7 +182,9 @@ def server_running(server: FlashServer) -> Generator:
     while not server.ready:
         pass
     yield
-    while not server.events.empty():
+    # Give the display handler thread a little time to register any recent events
+    sleep(0.2)
+    while not server.events.empty() or server.processing_event:
         pass
     server.shutdown(disconnect_from_wm=False)
 
@@ -181,12 +210,22 @@ def clear_desktops():
 @contextmanager
 def new_watched_window() -> Generator:
     """Open a new window and watch it."""
-    window_session = WindowSession(1)
-    watcher = WindowWatcher(window_session.windows[0])
+    window_session = WindowSession({0: 1})
+    window_session.setup()
+    watcher = WindowWatcher(window_session.get_first_window())
     watcher.start()
     sleep(0.1)
-    yield window_session.windows[0], watcher
+    yield window_session.get_first_window(), watcher
     watcher.stop()
+    window_session.destroy()
+    
+
+@contextmanager
+def new_window_session(num_windows_by_workspace: Dict[int, int]) -> Generator:
+    """Context manager for creating a session of windows across multiple workspaces."""
+    window_session = WindowSession(num_windows_by_workspace)
+    window_session.setup()
+    yield window_session
     window_session.destroy()
 
 

@@ -9,7 +9,7 @@ passes the request on to the Flasher whose criteria match the window.
 import logging
 from typing import Dict, List, Tuple
 
-from flashfocus.compat import Window, get_focused_workspace, list_mapped_windows
+from flashfocus.compat import Window, get_focused_workspace, get_workspace, list_mapped_windows
 from flashfocus.display import WMEvent, WMEventType
 from flashfocus.errors import UnexpectedMessageType
 from flashfocus.flasher import Flasher
@@ -153,7 +153,7 @@ class FlashRouter:
         """
         if self.track_workspaces:
             self.prev_workspace = self.current_workspace
-            self.current_workspace = get_focused_workspace()
+            self.current_workspace = get_workspace(window)
 
         if not rule.get("flash_on_focus"):
             logging.debug(f"flash_on_focus is False for window {window.id}, ignoring...")

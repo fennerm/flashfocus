@@ -53,12 +53,15 @@ class Window:
     def __eq__(self, other: object) -> bool:
         if type(self) != type(other):
             raise TypeError("Arguments must be of the same type")
-        return self._container.id == other._container.id
+        return self.id == other.id
 
     def __ne__(self, other: object) -> bool:
         if type(self) != type(other):
             raise TypeError("Arguments must be of the same type")
         return self.id != other.id
+
+    def __repr__(self) -> str:
+        return f"Window(id={self.id})"
 
     def match(self, criteria: Dict) -> bool:
         """Determine whether the window matches a set of criteria.
@@ -151,3 +154,10 @@ def disconnect_display_conn() -> None:
 def get_focused_workspace() -> int:
     workspace: int = SWAY.get_tree().find_focused().workspace().num
     return workspace
+
+
+def get_workspace(window: Window) -> int | None:
+    """Get the workspace that the window is mapped to."""
+    workspace = SWAY.get_tree().find_by_id(window.id).workspace().num
+    return workspace
+    
