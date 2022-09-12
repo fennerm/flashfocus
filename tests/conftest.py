@@ -23,16 +23,18 @@ from tests.helpers import (
 @fixture
 def windows():
     """Display session with multiple open windows."""
-    window_session = WindowSession(3)
-    yield window_session.windows
+    window_session = WindowSession({0: 3})
+    window_session.setup()
+    yield window_session.windows[0]
     window_session.destroy()
 
 
 @fixture
 def window():
     """Single blank window."""
-    window_session = WindowSession(1)
-    yield window_session.windows[0]
+    window_session = WindowSession({0: 1})
+    window_session.setup()
+    yield window_session.windows[0][0]
     window_session.destroy()
 
 
@@ -65,7 +67,7 @@ register(
             "rules": [
                 fill_in_rule(
                     {
-                        "window_class": "Window1",
+                        "window_class": "Window_0_1",
                         "default_opacity": 0.2,
                         "flash_lone_windows": "never",
                     }
@@ -102,8 +104,8 @@ register(
             "rules": [
                 fill_in_rule(rule)
                 for rule in [
-                    {"window_class": "Window1", "default_opacity": 0.2},
-                    {"window_id": "window2", "default_opacity": 0.5},
+                    {"window_class": "Window_0_1", "default_opacity": 0.2},
+                    {"window_id": "window_0_2", "default_opacity": 0.5},
                 ]
             ]
         },
@@ -119,8 +121,8 @@ register(
             "rules": [
                 fill_in_rule(rule)
                 for rule in [
-                    {"window_class": "Window1", "flash_opacity": 0.2},
-                    {"window_id": "window2", "flash_opacity": 0.5},
+                    {"window_class": "Window_0_1", "flash_opacity": 0.2},
+                    {"window_id": "window_0_2", "flash_opacity": 0.5},
                 ]
             ]
         },

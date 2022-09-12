@@ -55,21 +55,21 @@ def test_that_nonvisible_windows_are_not_queued_by_display_handler(
     "rule,should_match",
     [
         # Id matches exactly, no class
-        ({"window_id": r"window1"}, True),
+        ({"window_id": r"window_0_1"}, True),
         # Id regex matches, no class
         ({"window_id": r"^win.*$"}, True),
         # Class matches exactly, no id
-        ({"window_class": r"Window1"}, True),
+        ({"window_class": r"Window_0_1"}, True),
         # Class regex matches, no id
         ({"window_class": r"^Win.*$"}, True),
         # Both id and class exactly match
-        ({"window_id": r"window1", "window_class": r"Window1"}, True),
+        ({"window_id": r"window_0_1", "window_class": r"Window_0_1"}, True),
         # Class matches but id doesn't
-        ({"window_id": r"window2", "window_class": r"Window1"}, False),
+        ({"window_id": r"window_0_2", "window_class": r"Window_0_1"}, False),
         # Id matches but class doesn't
-        ({"window_id": r"window1", "window_class": r"Window2"}, False),
+        ({"window_id": r"window_0_1", "window_class": r"Window_0_2"}, False),
         # Neither match
-        ({"window_id": r"window2", "window_class": r"Window2"}, False),
+        ({"window_id": r"window_0_2", "window_class": r"Window_0_2"}, False),
         # Neither defines (always matches)
         (dict(), True),
     ],
@@ -79,7 +79,7 @@ def test_rule_matching(window, rule, should_match):
 
 
 def test_properties(window):
-    assert window.properties == {"window_id": "window1", "window_class": "Window1"}
+    assert window.properties == {"window_id": "window_0_1", "window_class": "Window_0_1"}
 
 
 def test_list_mapped_windows(windows):

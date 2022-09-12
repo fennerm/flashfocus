@@ -6,14 +6,15 @@ from time import sleep
 from unittest.mock import MagicMock, call
 
 from pytest import approx, mark
+from pytest_lazyfixture import lazy_fixture
 
 from flashfocus.client import client_request_flash
 from flashfocus.compat import Window
 from flashfocus.display import WMEvent, WMEventType
 from tests.compat import change_focus, set_fullscreen, switch_workspace
 from tests.helpers import (
-    WindowSession,
     new_watched_window,
+    new_window_session,
     server_running,
     watching_windows,
 )
@@ -28,6 +29,7 @@ from tests.helpers import (
 )
 def test_event_loop(flash_server, windows, focus_indices, flash_indices, monkeypatch):
     focus_shifts = [windows[i] for i in focus_indices]
+    windows = sorted(windows, key=lambda window: window.id)
     expected_calls = (
         [call(WMEvent(window=window, event_type=WMEventType.WINDOW_INIT)) for window in windows]
         + [
@@ -41,7 +43,9 @@ def test_event_loop(flash_server, windows, focus_indices, flash_indices, monkeyp
         for window in focus_shifts:
             change_focus(window)
         client_request_flash()
-    assert flash_server.router.route_request.call_args_list == expected_calls
+        sleep(0.2)
+    actual_calls = flash_server.router.route_request.call_args_list
+    assert actual_calls == expected_calls
 
 
 def test_second_consecutive_focus_requests_ignored(flash_server, windows):
@@ -51,8 +55,10 @@ def test_second_consecutive_focus_requests_ignored(flash_server, windows):
         with server_running(flash_server):
             change_focus(windows[1])
             change_focus(windows[1])
+    
+    actual_calls = flash_server.router.route_request.call_args_list
     # The first three route_request calls will be window_inits
-    assert flash_server.router.route_request.call_args_list[3:] == expected_calls
+    assert actual_calls[3:] == expected_calls
 
     # Window will only be flashed once though
     watchers[0].count_flashes() == 1
@@ -75,10 +81,9 @@ def test_window_opacity_unset_on_shutdown(mult_opacity_server, list_only_test_wi
 
 def test_new_window_opacity_set_to_default(transparent_flash_server, list_only_test_windows):
     with server_running(transparent_flash_server):
-        window_session = WindowSession()
-        sleep(0.2)
-        assert window_session.windows[0].opacity == approx(0.4)
-    window_session.destroy()
+        with new_watched_window() as (window, _):
+            sleep(0.2)
+            assert window.opacity == approx(0.4)
 
 
 def test_server_handles_nonexistant_window(flash_server):
@@ -96,7 +101,6 @@ def test_per_window_opacity_settings_handled_correctly_by_server(
             assert windows[1].opacity == approx(1)
             change_focus(windows[1])
             change_focus(windows[0])
-            sleep(0.2)
 
     # expected: [None, 1.0, 0.2, ...]
     assert watchers[0].opacity_events[2] == approx(0.2)
@@ -125,33 +129,25 @@ def test_flash_lone_windows_set_to_never_for_new_window(no_lone_server):
     assert watcher.count_flashes() == 0
 
 
-def test_flash_lone_windows_set_to_never_with_desktop_switching(no_lone_server):
-    with server_running(no_lone_server):
-        with new_watched_window() as (window, watcher):
-            switch_workspace(1)
-            change_focus(window)
-
-    assert watcher.count_flashes() == 0
-
-
-def test_lone_windows_flash_on_switch_if_flash_lone_windows_is_on_switch(lone_on_switch_server):
-    with new_watched_window() as (window, watcher):
-        with server_running(lone_on_switch_server):
-            switch_workspace(1)
-            change_focus(window)
-
-    assert watcher.count_flashes() == 1
-
-
-def test_lone_windows_dont_flash_on_switch_if_flash_lone_windows_is_on_open_close(
-    lone_on_open_close_server,
-):
-    with new_watched_window() as (window, watcher):
-        with server_running(lone_on_open_close_server):
-            switch_workspace(1)
-            change_focus(window)
-
-    assert watcher.count_flashes() == 0
+@mark.parametrize(
+    "server,expected_num_flashes",
+    [
+        (lazy_fixture("no_lone_server"), 0),
+        (lazy_fixture("lone_on_switch_server"), 1),
+        (lazy_fixture("lone_on_open_close_server"), 0)
+    ]
+)
+def test_workspace_switching_behavior(server, expected_num_flashes):
+    """Test behavior of switching to a workspace with a single mapped window."""
+    with new_window_session({0:1, 1:1}) as window_session:
+        with server_running(server):
+            change_focus(window_session.windows[1][0])
+            with watching_windows([window_session.get_first_window()]) as watchers:
+                change_focus(window_session.get_first_window())
+                while not server.events.empty() or server.processing_event:
+                    sleep(0.01)
+    
+    assert watchers[0].count_flashes() == expected_num_flashes
 
 
 def test_flash_fullscreen_server_flashes_fullscreen_windows(flash_server):

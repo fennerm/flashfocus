@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Build the docker image for running tests
+
+set -euo pipefail
+
+docker build -t flashfocus .
