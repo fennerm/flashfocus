@@ -9,7 +9,7 @@ passes the request on to the Flasher whose criteria match the window.
 import logging
 from typing import Dict, List, Tuple
 
-from flashfocus.compat import Window, get_focused_workspace, list_mapped_windows
+from flashfocus.compat import Window, get_focused_workspace, get_workspace, list_mapped_windows
 from flashfocus.display import WMEvent, WMEventType
 from flashfocus.errors import UnexpectedMessageType
 from flashfocus.flasher import Flasher
@@ -89,7 +89,8 @@ class FlashRouter:
         self.prev_workspace = None
         self.current_workspace = None
         if self.track_workspaces:
-            self._update_workspace_history()
+            self.prev_workspace = self.current_workspace
+            self.current_workspace = get_focused_workspace()
 
     def route_request(self, message: WMEvent) -> None:
         """Match a window against rule criteria and handle the request according to it's type."""
@@ -103,12 +104,6 @@ class FlashRouter:
             self._route_window_init(message.window)
         else:
             raise UnexpectedMessageType()
-
-    def _update_workspace_history(self):
-        focused_workspace = get_focused_workspace()
-        if focused_workspace is not None:
-            self.prev_workspace = self.current_workspace
-            self.current_workspace = focused_workspace
 
     def _route_new_window(self, window: Window) -> None:
         """Handle a new window being mapped."""
@@ -159,7 +154,8 @@ class FlashRouter:
 
         """
         if self.track_workspaces:
-            self._update_workspace_history()
+            self.prev_workspace = self.current_workspace
+            self.current_workspace = get_workspace(window)
 
         if not rule.get("flash_on_focus"):
             logging.debug(f"flash_on_focus is False for window {window.id}, ignoring...")
