@@ -133,13 +133,13 @@ def get_focused_window() -> Optional[Window]:
     return Window(SWAY.get_tree().find_focused())
 
 
-def get_workspace(workspace: int) -> i3ipc.Con:
+def _get_workspace_object(workspace: int) -> i3ipc.Con:
     return next(filter(lambda ws: ws.num == workspace, SWAY.get_tree().workspaces()), None)
 
 
 def list_mapped_windows(workspace: Optional[int] = None) -> List[Window]:
     if workspace is not None:
-        containers = get_workspace(workspace)
+        containers = _get_workspace_object(workspace)
     else:
         containers = SWAY.get_tree().leaves()
 
