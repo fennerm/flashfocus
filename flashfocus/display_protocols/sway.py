@@ -156,8 +156,7 @@ def get_focused_workspace() -> int:
     return workspace
 
 
-def get_workspace(window: Window) -> int | None:
+def get_workspace(window: Window) -> Optional[int]:
     """Get the workspace that the window is mapped to."""
     workspace = SWAY.get_tree().find_by_id(window.id).workspace().num
     return workspace
-    

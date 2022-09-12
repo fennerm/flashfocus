@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from queue import Queue
 from threading import Thread
 from time import sleep
-from typing import Dict, Generator, List, Pattern, Union
+from typing import Dict, Generator, List, Optional, Pattern, Union
 
 from flashfocus.client import ClientMonitor
 from flashfocus.compat import (
@@ -63,7 +63,7 @@ def default_flash_param() -> Dict:
 class WindowSession:
     """A session of blank windows for testing."""
 
-    def __init__(self, num_windows_by_workspace: Dict[int, int] | None = None) -> None:
+    def __init__(self, num_windows_by_workspace: Optional[Dict[int, int]] = None) -> None:
         """
         Parameters
         ----------

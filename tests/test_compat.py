@@ -25,8 +25,6 @@ def test_display_handler_handles_focus_shifts(display_handler, windows):
     with producer_running(display_handler):
         change_focus(windows[1])
         change_focus(windows[0])
-        # Wait for the display handler to register the focus change
-        sleep(0.5)
     queued = queue_to_list(display_handler.queue)
     assert queued == [
         WMEvent(window=windows[1], event_type=WMEventType.FOCUS_SHIFT),

@@ -79,7 +79,7 @@ class Window:
         if type(self) != type(other):
             raise TypeError("Arguments must be of the same type")
         return self.id != other.id
-    
+
     def __repr__(self) -> str:
         return f"Window(id={self.id})"
 
@@ -301,7 +301,7 @@ def get_focused_workspace() -> int:
     return get_current_desktop().reply()
 
 
-def get_workspace(window: Window) -> int | None:
+def get_workspace(window: Window) -> Optional[int]:
     """Get the workspace that the window is mapped to."""
     return _try_unwrap(get_wm_desktop(window.id))
 
