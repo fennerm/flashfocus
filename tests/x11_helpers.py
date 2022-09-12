@@ -19,8 +19,10 @@ def change_focus(window):
     while get_focused_window() != window:
         logging.debug(f"Waiting for focus to shift to {window.id}")
         sleep(0.1)
+    # Make sure that display handler thread has time to register the focus change. This is necessary
+    # because the thread calls get_focused_window to determine the relevant window. This can return
+    # an incorrect value if multiple focus shifts happen in quick succession
     sleep(0.1)
-    # Make sure that producer threads have time to register the focus change
 
 
 def clear_event_queue() -> None:
