@@ -1,11 +1,13 @@
 """Testsuite for flashfocus.xutil."""
+from time import sleep
+
 from pytest import approx, mark, raises
 
-from flashfocus.compat import Window
+from flashfocus.compat import Window, get_workspace
 from flashfocus.display import WMEvent, WMEventType
 from flashfocus.errors import WMError
 from tests.compat import change_focus, set_fullscreen, unset_fullscreen
-from tests.helpers import producer_running, queue_to_list
+from tests.helpers import new_window_session, producer_running, queue_to_list
 
 
 def test_window_raises_wm_error_if_window_is_none():
@@ -58,3 +60,8 @@ def test_is_fullscreen(window):
     set_fullscreen(window)
     assert window.is_fullscreen()
     unset_fullscreen(window)
+
+
+def test_get_workspace():
+    with new_window_session({0: 1, 1: 1}) as window_session:
+        assert get_workspace(window_session.windows[1][0]) == 1

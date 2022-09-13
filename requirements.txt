@@ -12,8 +12,8 @@ pdbpp
 pytest
 pytest-cov
 pytest-factoryboy
-pytest-runner
 pytest-lazy-fixture
+pytest-runner
 types-factory-boy
 types-pytest-lazy-fixture
 types-pyyaml

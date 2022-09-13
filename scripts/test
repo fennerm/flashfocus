@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Run pytest in docker container
+
+set -euo pipefail
+
+pdb=false
+script_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+
+while [[ "${#}" != 0 ]]; do
+    case "${1:-}" in
+        --pdb )
+            pdb=true
+            shift 1
+            ;;
+        *)
+            echo "Unexpected option: $1"
+            exit 1
+            ;;
+  esac
+done
+
+if [[ "$pdb" == "true" ]]; then
+    docker_args="-it"
+    pytest_args="--pdb"
+else
+    pytest_args=
+    docker_args=
+fi
+
+"$script_dir/docker_build"
+
+# shellcheck disable=SC2086
+docker run \
+    --rm \
+    $docker_args \
+    --name flashfocus \
+    --env PYTEST_ARGS="$pytest_args" \
+    flashfocus

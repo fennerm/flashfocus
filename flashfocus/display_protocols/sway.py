@@ -54,12 +54,15 @@ class Window:
     def __eq__(self, other: object) -> bool:
         if type(self) != type(other):
             raise TypeError("Arguments must be of the same type")
-        return self._container.id == other._container.id
+        return self.id == other.id
 
     def __ne__(self, other: object) -> bool:
         if type(self) != type(other):
             raise TypeError("Arguments must be of the same type")
         return self.id != other.id
+
+    def __repr__(self) -> str:
+        return f"Window(id={self.id})"
 
     def match(self, criteria: dict) -> bool:
         """Determine whether the window matches a set of criteria.
@@ -127,17 +130,17 @@ def _is_mapped_window(container: i3ipc.Con) -> bool:
     return container and container.id and container.window_rect.width != 0  # type: ignore
 
 
-def get_focused_window() -> Window:
+def get_focused_window() -> Optional[Window]:
     return Window(SWAY.get_tree().find_focused())
 
 
-def get_workspace(workspace: int) -> i3ipc.Con:
+def _get_workspace_object(workspace: int) -> i3ipc.Con:
     return next(filter(lambda ws: ws.num == workspace, SWAY.get_tree().workspaces()), None)
 
 
 def list_mapped_windows(workspace: int | None = None) -> list[Window]:
     if workspace is not None:
-        containers = get_workspace(workspace)
+        containers = _get_workspace_object(workspace)
     else:
         containers = SWAY.get_tree().leaves()
 
@@ -149,6 +152,18 @@ def disconnect_display_conn() -> None:
     SWAY.main_quit()
 
 
-def get_focused_workspace() -> int:
-    workspace: int = SWAY.get_tree().find_focused().workspace().num
+def get_focused_workspace() -> Optional[int]:
+    focused_container = SWAY.get_tree().find_focused()
+    if focused_container is None:
+        return None
+    workspace = focused_container.workspace()
+    if workspace is None:
+        return None
+    workspace_number = workspace.num
+    return workspace_number
+
+
+def get_workspace(window: Window) -> Optional[int]:
+    """Get the workspace that the window is mapped to."""
+    workspace = SWAY.get_tree().find_by_id(window.id).workspace().num
     return workspace

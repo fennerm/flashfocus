@@ -83,6 +83,9 @@ class Window:
             raise TypeError("Arguments must be of the same type")
         return self.id != other.id
 
+    def __repr__(self) -> str:
+        return f"Window(id={self.id})"
+
     @property
     def properties(self) -> dict:
         """Get a dictionary with the window class and instance."""
@@ -254,6 +257,8 @@ class DisplayHandler(Thread):
         """Handle a property change on a watched window."""
         atom_name = get_atom_name(event.atom)
         if atom_name == "_NET_ACTIVE_WINDOW":
+            # We are deliberately not using the `event.window` property here since that property
+            # sometimes contains incorrect ids. Possibly its returning the id from a parent window
             focused_window = get_focused_window()
             if focused_window is not None:
                 logging.debug(f"Focus shifted to {focused_window.id}")
@@ -297,6 +302,11 @@ def list_mapped_windows(workspace: int | None = None) -> list[Window]:
 @ignore_window_error
 def get_focused_workspace() -> int:
     return get_current_desktop().reply()
+
+
+def get_workspace(window: Window) -> Optional[int]:
+    """Get the workspace that the window is mapped to."""
+    return _try_unwrap(get_wm_desktop(window.id))
 
 
 @ignore_window_error
