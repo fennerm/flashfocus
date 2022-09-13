@@ -218,15 +218,15 @@ def display_handler() -> DisplayHandler:
 
 
 @pytest.fixture
-def configfile(tmpdir):
-    breakpoint()
+def configfile(tmpdir):  # type: ignore
+    # tmpdir is a py._path.local.LocalPath object
     tmp = tmpdir.join("conf.yml")
     tmp.write("default-opacity: 1\nflash-opacity: 0.5")
     return tmp
 
 
 @pytest.fixture
-def configfile_with_02_flash_opacity(tmpdir):
+def configfile_with_02_flash_opacity(tmpdir):  # type: ignore
     tmp = tmpdir.join("conf.yml")
     tmp.write("default-opacity: 1\nflash-opacity: 0.2")
     return tmp

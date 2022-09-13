@@ -13,6 +13,7 @@ pytest
 pytest-cov
 pytest-factoryboy
 pytest-lazy-fixture
+pytest-mock
 pytest-runner
 types-factory-boy
 types-pytest-lazy-fixture

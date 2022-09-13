@@ -21,7 +21,9 @@ def test_client_request_flash(stub_server: StubServer) -> None:
     assert stub_server.data == [b"1"]
 
 
-def test_client_monitor_handles_client_requests(client_monitor: ClientMonitor, windows: WindowSession) -> None:
+def test_client_monitor_handles_client_requests(
+    client_monitor: ClientMonitor, windows: WindowSession
+) -> None:
     with producer_running(client_monitor):
         client_request_flash()
         client_request_flash()

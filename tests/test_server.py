@@ -55,7 +55,7 @@ def test_second_consecutive_focus_requests_ignored(flash_server, windows):
         with server_running(flash_server):
             change_focus(windows[1])
             change_focus(windows[1])
-    
+
     actual_calls = flash_server.router.route_request.call_args_list
     # The first three route_request calls will be window_inits
     assert actual_calls[3:] == expected_calls
@@ -134,19 +134,19 @@ def test_flash_lone_windows_set_to_never_for_new_window(no_lone_server):
     [
         (lazy_fixture("no_lone_server"), 0),
         (lazy_fixture("lone_on_switch_server"), 1),
-        (lazy_fixture("lone_on_open_close_server"), 0)
-    ]
+        (lazy_fixture("lone_on_open_close_server"), 0),
+    ],
 )
 def test_workspace_switching_behavior(server, expected_num_flashes):
     """Test behavior of switching to a workspace with a single mapped window."""
-    with new_window_session({0:1, 1:1}) as window_session:
+    with new_window_session({0: 1, 1: 1}) as window_session:
         with server_running(server):
             change_focus(window_session.windows[1][0])
             with watching_windows([window_session.get_first_window()]) as watchers:
                 change_focus(window_session.get_first_window())
                 while not server.events.empty() or server.processing_event:
                     sleep(0.01)
-    
+
     assert watchers[0].count_flashes() == expected_num_flashes
 
 

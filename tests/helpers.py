@@ -70,9 +70,9 @@ class WindowSession:
         Parameters
         ----------
         num_windows_by_workspace
-            A dict mapping workspace number to the number of windows which should be created on the 
+            A dict mapping workspace number to the number of windows which should be created on the
             workspace
-        
+
         """
         self.windows: dict[int, Window] = {}
         self.num_windows_by_workspace = (
@@ -93,13 +93,13 @@ class WindowSession:
                 window.destroy()
             except Exception:
                 pass
-            
+
     def get_first_window(self) -> Window:
         """Get the first window from the first workspace."""
         for workspace in sorted(self.windows.keys()):
             if len(self.windows[workspace]) > 0:
                 return self.windows[workspace][0]
-        
+
     def _create_windows(self) -> None:
         for workspace, num_windows in self.num_windows_by_workspace.items():
             wm_names = [f"window_{workspace}_{number}" for number in range(1, num_windows + 1)]
@@ -109,7 +109,7 @@ class WindowSession:
                 create_blank_window(wm_name, wm_class)
                 for wm_name, wm_class in zip(wm_names, wm_classes)
             ]
-            
+
     def _set_initial_focused_window(self) -> None:
         for workspace in sorted(self.windows.keys()):
             if len(self.windows[workspace]) > 0:
@@ -220,7 +220,7 @@ def new_watched_window() -> Generator:
     yield window_session.get_first_window(), watcher
     watcher.stop()
     window_session.destroy()
-    
+
 
 @contextmanager
 def new_window_session(num_windows_by_workspace: dict[int, int]) -> Generator:
