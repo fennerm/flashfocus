@@ -1,10 +1,9 @@
 """Flash windows on focus."""
-from __future__ import division
+from __future__ import annotations, division
 
 import logging
 from queue import Empty, Queue
 from signal import SIGINT, default_int_handler, signal
-from typing import Dict
 
 from flashfocus.client import ClientMonitor
 from flashfocus.compat import (
@@ -36,7 +35,7 @@ class FlashServer:
     keep_going: bool
         Setting this to False terminates the event loop (but does not initiate
         cleanup).
-    producers: List[Thread]
+    producers: tuple[ClientMonitor, DisplayHandler]
         List of threads which produce work for the server.
     flash_requests: Queue
         Queue of flash jobs for the server to work through. Each item of the
@@ -44,11 +43,11 @@ class FlashServer:
 
     """
 
-    def __init__(self, config: Dict) -> None:
+    def __init__(self, config: dict) -> None:
         self.config = config
         self.router = FlashRouter(config)
         self.events: Queue = Queue()
-        self.producers = [ClientMonitor(self.events), DisplayHandler(self.events)]
+        self.producers = (ClientMonitor(self.events), DisplayHandler(self.events))
         self.keep_going = True
         self.ready = False
 
