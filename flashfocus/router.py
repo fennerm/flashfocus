@@ -6,8 +6,9 @@ created for each rule. Each time a request comes in the router iterates through 
 passes the request on to the Flasher whose criteria match the window.
 
 """
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Tuple
 
 from flashfocus.compat import Window, get_focused_workspace, list_mapped_windows
 from flashfocus.display import WMEvent, WMEventType
@@ -24,10 +25,10 @@ class FlashRouter:
 
     Parameters
     ----------
-    defaults: Dict[str, Any]
+    defaults: dict[str, Any]
         Set of default parameters. Must include all `Flasher` parameters and
         `flash_on_focus` and `flash_lone_windows` settings.
-    config_rules: Dict[str, Any]
+    config_rules: dict[str, Any]
         Set of rule parameters from user config. Must include all `Flasher`
         parameters, `flash_on_focus` setting and `window_id` and/or
         `window_class`.
@@ -52,12 +53,12 @@ class FlashRouter:
 
     """
 
-    def __init__(self, config: Dict):
+    def __init__(self, config: dict) -> None:
         if config.get("rules") is None:
-            self.rules: List[Dict] = []
+            self.rules: list[dict] = []
         else:
             self.rules = config["rules"]
-        self.flashers: List[Flasher] = []
+        self.flashers: list[Flasher] = []
         # We only need to track the user's workspace if the user config requires it
         self.track_workspaces = config["flash_lone_windows"] != "always"
         for rule_config in self.rules:
@@ -134,7 +135,7 @@ class FlashRouter:
         rule, flasher = self._match(window)
         flasher.flash(window)
 
-    def _match(self, window: Window) -> Tuple[Dict, Flasher]:
+    def _match(self, window: Window) -> tuple[dict, Flasher]:
         """Find a flash rule which matches window."""
         for i, (rule, flasher) in enumerate(zip(self.rules, self.flashers)):
             if window.match(rule):
@@ -143,7 +144,7 @@ class FlashRouter:
                 return rule, flasher
         return rule, flasher
 
-    def _config_allows_flash(self, window: Window, rule: Dict) -> bool:
+    def _config_allows_flash(self, window: Window, rule: dict) -> bool:
         """Check whether a config parameter disallows a window from flashing.
 
         Returns

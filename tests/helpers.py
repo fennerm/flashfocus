@@ -1,13 +1,15 @@
 """Helper functions/classes for unit tests."""
-from __future__ import division
+from __future__ import annotations, division
 
 import copy
+import re
 import socket
+from collections.abc import Generator
 from contextlib import contextmanager
 from queue import Queue
 from threading import Thread
 from time import sleep
-from typing import Dict, Generator, List, Pattern, Union
+from typing import Union
 
 from flashfocus.client import ClientMonitor
 from flashfocus.compat import (
@@ -29,7 +31,7 @@ from tests.compat import (
 Producer = Union[ClientMonitor, DisplayHandler]
 
 
-def quick_conf() -> Dict:
+def quick_conf() -> dict:
     return dict(
         default_opacity=1,
         flash_opacity=0.8,
@@ -43,10 +45,10 @@ def quick_conf() -> Dict:
     )
 
 
-def default_flash_param() -> Dict:
+def default_flash_param() -> dict:
     return {
         "config": {"default": None, "type": [str], "location": "cli"},
-        "verbosity": {"default": "INFO", "type": str, "location": "cli"},
+        "verbosity": {"default": "INFO", "type": [str], "location": "cli"},
         "default_opacity": {"default": 1, "type": [float], "location": "any"},
         "flash_opacity": {"default": 0.8, "type": [float], "location": "any"},
         "time": {"default": 100, "type": [float], "location": "any"},
@@ -56,8 +58,8 @@ def default_flash_param() -> Dict:
         "flash_lone_windows": {"default": "always", "type": [str], "location": "any"},
         "flash_fullscreen": {"default": True, "type": [bool], "location": "any"},
         "rules": {"default": None, "type": [list, type(None)], "location": "config_file"},
-        "window_id": {"default": "window1", "type": [Pattern], "location": "rule"},
-        "window_class": {"default": "Window1", "type": [Pattern], "location": "rule"},
+        "window_id": {"default": "window1", "type": [re.Pattern], "location": "rule"},
+        "window_class": {"default": "Window1", "type": [re.Pattern], "location": "rule"},
     }
 
 
@@ -96,7 +98,7 @@ class WindowWatcher(Thread):
     def __init__(self, window: Window):
         super().__init__()
         self.window: Window = window
-        self.opacity_events: List[float] = [window.opacity]
+        self.opacity_events: list[float] = [window.opacity]
         self.keep_going: bool = True
         self.done: bool = False
 
@@ -133,14 +135,14 @@ class StubServer:
 
     def __init__(self, socket: socket.socket):
         self.socket = socket
-        self.data: List[bytes] = []
+        self.data: list[bytes] = []
 
     def await_data(self):
         """Wait for a single piece of data from a client and store it."""
         self.data.append(self.socket.recv(1))
 
 
-def queue_to_list(queue: Queue) -> List:
+def queue_to_list(queue: Queue) -> list:
     """Convert a Queue to a list."""
     result = []
     while queue.qsize() != 0:
@@ -162,7 +164,7 @@ def server_running(server: FlashServer) -> Generator:
 
 
 @contextmanager
-def watching_windows(windows: List[Window]) -> Generator:
+def watching_windows(windows: list[Window]) -> Generator:
     watchers = [WindowWatcher(window) for window in windows]
     for watcher in watchers:
         watcher.start()
@@ -201,7 +203,7 @@ def producer_running(producer: Producer) -> Generator:
     producer.stop()
 
 
-def fill_in_rule(partial_rule: Dict) -> Dict:
+def fill_in_rule(partial_rule: dict) -> dict:
     """Fill in default param for a rule given a partial rule definition."""
     default_rules = {
         key: val["default"]
@@ -214,7 +216,7 @@ def fill_in_rule(partial_rule: Dict) -> Dict:
     return partial_rule
 
 
-def rekey(dic: Dict, new_vals: Dict) -> Dict:
+def rekey(dic: dict, new_vals: dict) -> dict:
     dic_copy = copy.deepcopy(dic)
     for key, val in new_vals.items():
         dic_copy[key] = val

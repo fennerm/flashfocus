@@ -6,12 +6,13 @@ seem overly complex (and perhaps it is!) but it was motivated by a couple of con
    addition to some unique options. This is complicated to parse without a schema.
 2. I want to make sure that the user gets helpful feedback when their config file is invalid.
 """
+from __future__ import annotations
+
 import logging
 import os
 import re
 import shutil
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Pattern, Union
 
 import yaml
 from marshmallow import Schema, ValidationError, fields, post_load, validates_schema
@@ -35,8 +36,13 @@ BASE_PROPERTIES = [
 ]
 
 FLASH_LONE_WINDOWS_OPTS = ["never", "on_open_close", "on_switch", "always"]
+
+# Window properties which can be used for flash rule matching in X11-based window managers
 X11_MATCH_PROPERTIES = {"window_class", "window_id"}
+
+# Window properties which can be used for flash rule matching in wayland window managers
 WAYLAND_MATCH_PROPERTIES = {"window_name", "app_id"}
+
 WINDOW_MATCH_PROPERTIES = X11_MATCH_PROPERTIES | WAYLAND_MATCH_PROPERTIES
 WINDOW_MATCH_NAMES = {x.replace("_", "-") for x in WINDOW_MATCH_PROPERTIES}
 CLI_ONLY_OPTS = ["config", "verbosity"]
@@ -66,7 +72,7 @@ def validate_flash_lone_windows(data: str) -> None:
 class Regex(fields.Field):
     """Schema field for validating a regex."""
 
-    def _deserialize(self, value: str, attr: str, obj: Dict, **kwargs) -> Pattern[str]:
+    def _deserialize(self, value: str, attr: str, obj: dict, **kwargs) -> re.Pattern[str]:
         try:
             return re.compile(value)
         except Exception:
@@ -90,7 +96,7 @@ class BaseSchema(Schema):
     flash_fullscreen: fields.Boolean = fields.Boolean()
 
     @validates_schema(pass_original=True)
-    def check_unknown_fields(self, data: Dict, original_data: Dict, **kwargs) -> None:
+    def check_unknown_fields(self, data: dict, original_data: dict, **kwargs) -> None:
         """Check that unknown options were not passed by the user."""
         try:
             unknown = set(original_data) - set(self.fields)
@@ -109,7 +115,7 @@ class RulesSchema(BaseSchema):
     window_name = Regex()
 
     @validates_schema()
-    def check_for_matching_criteria(self, data: Dict, **kwargs) -> None:
+    def check_for_matching_criteria(self, data: dict, **kwargs) -> None:
         """Check that rule contains at least one method for matching a window."""
         if not any([prop in data for prop in WINDOW_MATCH_PROPERTIES]):
             raise ValidationError(
@@ -128,7 +134,7 @@ class ConfigSchema(BaseSchema):
     rules: fields.Nested = fields.Nested(RulesSchema, many=True)
 
     @post_load()
-    def set_rule_defaults(self, config: Dict, **kwargs) -> Dict:
+    def set_rule_defaults(self, config: dict, **kwargs) -> dict:
         """Set default values for the nested `RulesSchema`."""
         if "rules" not in config:
             config["rules"] = None
@@ -140,11 +146,11 @@ class ConfigSchema(BaseSchema):
         return config
 
 
-def load_config(config_file: Path) -> Dict:
+def load_config(config_file: Path) -> dict:
     """Load the config yaml file into a dictionary."""
     try:
         with config_file.open("r") as f:
-            config: Dict = yaml.load(f, Loader=yaml.FullLoader)
+            config: dict = yaml.load(f, Loader=yaml.FullLoader)
     except FileNotFoundError:
         raise ConfigLoadError(f"Config file does not exist: {config_file}")
     except (ScannerError, ParserError) as e:
@@ -157,7 +163,7 @@ def load_config(config_file: Path) -> Dict:
     return config
 
 
-def parse_config_error(option: Union[int, str], err: Union[List, Dict], ntabs: int = 1) -> str:
+def parse_config_error(option: int | str, err: list | dict, ntabs: int = 1) -> str:
     """Parse Marshmallow schema error."""
     if isinstance(option, int):
         option = "rule " + str(option + 1)
@@ -172,7 +178,7 @@ def parse_config_error(option: Union[int, str], err: Union[List, Dict], ntabs: i
     return output
 
 
-def construct_config_error_msg(errors: Dict[str, Any]) -> str:
+def construct_config_error_msg(errors: dict) -> str:
     """Construct an error message for an invalid configuration setup.
 
     Parameters
@@ -194,7 +200,7 @@ def construct_config_error_msg(errors: Dict[str, Any]) -> str:
     return error_msg
 
 
-def unset_invalid_x11_options(config: Dict) -> None:
+def unset_invalid_x11_options(config: dict) -> None:
     if config["rules"] is not None:
         rules = []
         for rule in config["rules"]:
@@ -209,7 +215,7 @@ def unset_invalid_x11_options(config: Dict) -> None:
         config["rules"] = rules
 
 
-def unset_invalid_sway_options(config: Dict) -> None:
+def unset_invalid_sway_options(config: dict) -> None:
     if config["flash_fullscreen"] is True:
         logging.warning(
             "Fullscreen windows cannot be flashed in sway. Setting flash-fullscreen=false. "
@@ -218,7 +224,7 @@ def unset_invalid_sway_options(config: Dict) -> None:
         config["flash_fullscreen"] = False
 
 
-def unset_invalid_options_for_wm(config: Dict) -> None:
+def unset_invalid_options_for_wm(config: dict) -> None:
     """Clear any config options which don't work with the user's WM."""
     display_protocol = get_display_protocol()
     if display_protocol == DisplayProtocol.X11:
@@ -227,7 +233,7 @@ def unset_invalid_options_for_wm(config: Dict) -> None:
         unset_invalid_sway_options(config)
 
 
-def validate_config(config: Dict) -> Dict:
+def validate_config(config: dict) -> dict:
     """Validate the config file and command line parameters."""
     try:
         schema: ConfigSchema = ConfigSchema(strict=True)
@@ -236,7 +242,7 @@ def validate_config(config: Dict) -> Dict:
         schema = ConfigSchema()
 
     try:
-        loaded: Dict = schema.load(config)
+        loaded: dict = schema.load(config)
     except ValidationError as err:
         raise ConfigLoadError(construct_config_error_msg(err.messages))
 
@@ -252,7 +258,7 @@ def validate_config(config: Dict) -> Dict:
     return validated_config
 
 
-def dehyphen(config: Dict) -> None:
+def dehyphen(config: dict) -> None:
     """Replace hyphens in config dictionary with underscores."""
     # The conversion to list is necessary so that we're not modifying the keys while looping through
     # them
@@ -265,7 +271,7 @@ def dehyphen(config: Dict) -> None:
             config[new_key] = config.pop(option)
 
 
-def hierarchical_merge(dicts: List[Dict]) -> Dict:
+def hierarchical_merge(dicts: list[dict]) -> dict:
     """Merge a list of dictionaries.
 
     Parameters
@@ -303,7 +309,7 @@ def init_user_configfile() -> Path:
     return config_file_path
 
 
-def build_config_search_path() -> List[Path]:
+def build_config_search_path() -> list[Path]:
     """Return a list of user config locations in order of search priority."""
     xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
     search_path = []
@@ -317,7 +323,7 @@ def build_config_search_path() -> List[Path]:
     return search_path
 
 
-def find_config_file() -> Optional[Path]:
+def find_config_file() -> Path | None:
     """Find the flashfocus config file if it exists."""
     for location in build_config_search_path():
         if location.exists():
@@ -331,7 +337,7 @@ def get_default_config_file() -> Path:
     return Path(__file__).parent / "default_config.yml"
 
 
-def merge_config_sources(user_config: Dict, default_config: Dict, cli_options: Dict) -> Dict:
+def merge_config_sources(user_config: dict, default_config: dict, cli_options: dict) -> dict:
     """Merge the user, default configs and CLI options into a single dict."""
     for opt in CLI_ONLY_OPTS:
         del cli_options[opt]
@@ -340,7 +346,7 @@ def merge_config_sources(user_config: Dict, default_config: Dict, cli_options: D
     return validated_config
 
 
-def load_merged_config(config_file_path: Path, cli_options: Dict) -> Dict:
+def load_merged_config(config_file_path: Path, cli_options: dict) -> dict:
     """Merge the config options from the config file and the CLI into a dict."""
     default_config_path = get_default_config_file()
     default_config = load_config(default_config_path)

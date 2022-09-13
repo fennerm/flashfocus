@@ -1,12 +1,16 @@
 """Unit test fixtures."""
+from __future__ import annotations
+
+import socket
+from collections.abc import Generator
 from queue import Queue
 
+import pytest
 from factory import Factory
-from pytest import fixture
 from pytest_factoryboy import register
 
 from flashfocus.client import ClientMonitor
-from flashfocus.compat import DisplayHandler
+from flashfocus.compat import DisplayHandler, Window
 from flashfocus.flasher import Flasher
 from flashfocus.server import FlashServer
 from flashfocus.sockets import init_client_socket, init_server_socket
@@ -20,16 +24,16 @@ from tests.helpers import (
 )
 
 
-@fixture
-def windows():
+@pytest.fixture
+def windows() -> Generator[list[Window], None, None]:
     """Display session with multiple open windows."""
     window_session = WindowSession(3)
     yield window_session.windows
     window_session.destroy()
 
 
-@fixture
-def window():
+@pytest.fixture
+def window() -> Generator[Window, None, None]:
     """Single blank window."""
     window_session = WindowSession(1)
     yield window_session.windows[0]
@@ -154,39 +158,39 @@ register(FlasherFactory, "flasher")
 register(FlasherFactory, "pointless_flasher", flash_opacity=1)
 
 
-@fixture
-def server_socket():
+@pytest.fixture
+def server_socket() -> Generator[socket.socket, None, None]:
     """Server socket instance."""
     socket = init_server_socket()
     yield socket
     socket.close()
 
 
-@fixture
-def client_socket(server_socket):
+@pytest.fixture
+def client_socket(server_socket: socket.socket) -> socket.socket:
     """Client socket instance."""
     return init_client_socket()
 
 
-@fixture
-def stub_server(server_socket):
+@pytest.fixture
+def stub_server(server_socket: socket.socket) -> StubServer:
     """StubServer instance."""
     return StubServer(server_socket)
 
 
-@fixture
-def list_only_test_windows(monkeypatch, windows):
+@pytest.fixture
+def list_only_test_windows(monkeypatch: pytest.MonkeyPatch, windows: list[Window]) -> None:
     """Only list test window ids."""
     monkeypatch.setattr("flashfocus.compat.list_mapped_windows", lambda: windows)
 
 
-@fixture
-def valid_config_types():
+@pytest.fixture
+def valid_config_types() -> dict[str, list[type]]:
     return {key: val["type"] for key, val in default_flash_param().items()}
 
 
-@fixture
-def blank_cli_options():
+@pytest.fixture
+def blank_cli_options() -> dict:
     cli_options = dict()
     for key, val in default_flash_param().items():
         if val["location"] == "any":
@@ -196,29 +200,30 @@ def blank_cli_options():
     return cli_options
 
 
-@fixture
-def valid_bool():
-    return ["false", "False", "FALSE", "True", "true", "TRUE", True, False]
+@pytest.fixture
+def valid_bool() -> tuple[str, str, str, str, str, str, bool, bool]:
+    return "false", "False", "FALSE", "True", "true", "TRUE", True, False
 
 
-@fixture
-def client_monitor():
+@pytest.fixture
+def client_monitor() -> ClientMonitor:
     return ClientMonitor(Queue())
 
 
-@fixture
-def display_handler():
+@pytest.fixture
+def display_handler() -> DisplayHandler:
     return DisplayHandler(Queue())
 
 
-@fixture
+@pytest.fixture
 def configfile(tmpdir):
+    breakpoint()
     tmp = tmpdir.join("conf.yml")
     tmp.write("default-opacity: 1\nflash-opacity: 0.5")
     return tmp
 
 
-@fixture
+@pytest.fixture
 def configfile_with_02_flash_opacity(tmpdir):
     tmp = tmpdir.join("conf.yml")
     tmp.write("default-opacity: 1\nflash-opacity: 0.2")

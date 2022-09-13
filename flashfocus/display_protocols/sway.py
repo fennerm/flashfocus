@@ -4,10 +4,11 @@ All submodules in flashfocus.display_protocols are expected to contain a minimal
 functions/classes for abstracting across various display protocols. See list in flashfocus.compat
 
 """
+from __future__ import annotations
+
 import logging
 from queue import Queue
 from threading import Thread
-from typing import Dict, List, Optional
 
 import i3ipc
 
@@ -60,7 +61,7 @@ class Window:
             raise TypeError("Arguments must be of the same type")
         return self.id != other.id
 
-    def match(self, criteria: Dict) -> bool:
+    def match(self, criteria: dict) -> bool:
         """Determine whether the window matches a set of criteria.
 
         Parameters
@@ -134,7 +135,7 @@ def get_workspace(workspace: int) -> i3ipc.Con:
     return next(filter(lambda ws: ws.num == workspace, SWAY.get_tree().workspaces()), None)
 
 
-def list_mapped_windows(workspace: Optional[int] = None) -> List[Window]:
+def list_mapped_windows(workspace: int | None = None) -> list[Window]:
     if workspace is not None:
         containers = get_workspace(workspace)
     else:

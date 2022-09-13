@@ -3,7 +3,7 @@ from flashfocus.cli import init_server
 from flashfocus.server import FlashServer
 
 
-def return_opacity(self, *args, **kwargs):
+def return_opacity(self, *args, **kwargs) -> float:
     return self.router.flashers[-1].flash_opacity
 
 

@@ -5,17 +5,17 @@ import sys
 ANSI = {"green": "\033[92m", "red": "\033[91m", "end": "\033[0m"}
 
 
-def red(x):
+def red(x: str) -> str:
     """Color text red using ANSI escape sequences."""
     return ANSI["red"] + x + ANSI["end"]
 
 
-def green(x):
+def green(x: str) -> str:
     """Color text green using ANSI escape sequences."""
     return ANSI["green"] + x + ANSI["end"]
 
 
-def setup_logging(level: str):
+def setup_logging(level: str) -> None:
     logger = logging.getLogger()
     logger.setLevel(logging.getLevelName(level))
 

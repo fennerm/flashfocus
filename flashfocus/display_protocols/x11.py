@@ -4,12 +4,15 @@ All submodules in flashfocus.display_protocols are expected to contain a minimal
 functions/classes for abstracting across various display protocols. See list in flashfocus.compat
 
 """
+from __future__ import annotations
+
 import functools
 import logging
 import struct
+from collections.abc import Callable
 from queue import Queue
 from threading import Thread
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Union
 
 import xpybutil.window
 from xcffib.xproto import (
@@ -68,7 +71,7 @@ class Window:
         if window_id is None:
             raise WMError("Undefined window")
         self.id = window_id
-        self._properties: Dict = {}
+        self._properties: dict = {}
 
     def __eq__(self, other) -> bool:
         if type(self) != type(other):
@@ -81,7 +84,7 @@ class Window:
         return self.id != other.id
 
     @property
-    def properties(self) -> Dict:
+    def properties(self) -> dict:
         """Get a dictionary with the window class and instance."""
         # Properties are cached after the first call to this function and so might not necessarily
         # be correct if the properties are changed between calls. This is acceptable for our
@@ -97,7 +100,7 @@ class Window:
                 pass
         return self._properties
 
-    def match(self, criteria: Dict) -> bool:
+    def match(self, criteria: dict) -> bool:
         """Determine whether the window matches a set of criteria.
 
         Parameters
@@ -125,7 +128,7 @@ class Window:
         return get_wm_window_opacity(self.id).reply()
 
     @ignore_window_error
-    def set_opacity(self, opacity: Optional[float]) -> None:
+    def set_opacity(self, opacity: float | None) -> None:
         # If opacity is None just silently ignore the request
         if opacity is not None:
             cookie = set_wm_window_opacity_checked(self.id, opacity)
@@ -261,7 +264,7 @@ class DisplayHandler(Thread):
 
 
 @ignore_window_error
-def get_focused_window() -> Optional[Window]:
+def get_focused_window() -> Window | None:
     window_id = get_active_window().reply()
     if window_id is not None:
         return Window(window_id)
@@ -269,7 +272,7 @@ def get_focused_window() -> Optional[Window]:
         return None
 
 
-def _try_unwrap(cookie: PropertyCookieSingle) -> Optional[Any]:
+def _try_unwrap(cookie: PropertyCookieSingle) -> Any:
     """Try reading a reply from the X server, ignoring any errors encountered."""
     try:
         return cookie.reply()
@@ -278,7 +281,7 @@ def _try_unwrap(cookie: PropertyCookieSingle) -> Optional[Any]:
 
 
 @ignore_window_error
-def list_mapped_windows(workspace: Optional[int] = None) -> List[Window]:
+def list_mapped_windows(workspace: int | None = None) -> list[Window]:
     mapped_window_ids = get_client_list().reply()
     if mapped_window_ids is None:
         mapped_window_ids = []

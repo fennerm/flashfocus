@@ -37,7 +37,7 @@ def unlock_pid_file() -> None:
     fcntl.lockf(PID, fcntl.LOCK_UN)
 
 
-def ensure_single_instance():
+def ensure_single_instance() -> None:
     """Ensure that no other flashfocus instances are running."""
     try:
         lock_pid_file()

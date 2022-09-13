@@ -43,7 +43,7 @@ class ClientMonitor(Thread):
             else:
                 logging.debug("Focused window is undefined, ignoring request...")
 
-    def queue_window(self, window: Window, event_type: WMEventType):
+    def queue_window(self, window: Window, event_type: WMEventType) -> None:
         """Add a window to the queue."""
         self.queue.put(WMEvent(window=window, event_type=event_type))
 
