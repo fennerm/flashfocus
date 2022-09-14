@@ -1,12 +1,12 @@
 """Testsuite for the flashfocus CLI."""
-from __future__ import annotations
 import pytest
+from typing import Any
 
 from flashfocus.cli import init_server
 from flashfocus.server import FlashServer
 
 
-def return_opacity(self: FlashServer, *args, **kwargs) -> float:  # type: ignore[no-untyped-def]
+def return_opacity(self: FlashServer, *args: Any, **kwargs: Any) -> float:
     return self.router.flashers[-1].flash_opacity
 
 

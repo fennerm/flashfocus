@@ -1,8 +1,7 @@
-from __future__ import annotations
-
 import logging
 import subprocess
 from time import sleep
+from typing import Optional, Tuple
 
 import xcffib
 import xcffib.xproto
@@ -32,7 +31,7 @@ def clear_event_queue() -> None:
 
 
 def create_blank_window(
-    wm_name: str | None = None, wm_class: tuple[str, str] | None = None
+    wm_name: Optional[str] = None, wm_class: Optional[Tuple[str, str]] = None
 ) -> Window:
     """Create a blank Xorg window."""
     setup = xpybutil.conn.get_setup()

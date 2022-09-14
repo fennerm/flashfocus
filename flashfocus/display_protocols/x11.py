@@ -4,13 +4,11 @@ All submodules in flashfocus.display_protocols are expected to contain a minimal
 functions/classes for abstracting across various display protocols. See list in flashfocus.compat
 
 """
-from __future__ import annotations
-
 import functools
 import logging
 import struct
 from queue import Queue
-from typing import Any, Union
+from typing import Any, Dict, List, Optional, Union
 
 import xpybutil.window
 from xcffib.xproto import (
@@ -68,10 +66,10 @@ class Window(BaseWindow):
             The XORG window ID
         """
         super().__init__(window_id)
-        self._properties: dict = {}
+        self._properties: Dict = {}
 
     @property
-    def properties(self) -> dict:
+    def properties(self) -> Dict:
         """Get a dictionary with the window class and instance."""
         # Properties are cached after the first call to this function and so might not necessarily
         # be correct if the properties are changed between calls. This is acceptable for our
@@ -87,7 +85,7 @@ class Window(BaseWindow):
                 pass
         return self._properties
 
-    def match(self, criteria: dict) -> bool:
+    def match(self, criteria: Dict) -> bool:
         """Determine whether the window matches a set of criteria.
 
         Parameters
@@ -111,14 +109,14 @@ class Window(BaseWindow):
         return True
 
     @property
-    def opacity(self) -> float | None:
+    def opacity(self) -> Optional[float]:
         opacity = get_wm_window_opacity(self.id).reply()
         if opacity is None:
             return None
         return float(opacity)
 
     @ignore_window_error
-    def set_opacity(self, opacity: float | None) -> None:
+    def set_opacity(self, opacity: Optional[float]) -> None:
         # If opacity is None just silently ignore the request
         if opacity is not None:
             cookie = set_wm_window_opacity_checked(self.id, opacity)
@@ -241,7 +239,7 @@ class DisplayHandler(ProducerThread):
 
 
 @ignore_window_error
-def get_focused_window() -> Window | None:
+def get_focused_window() -> Optional[Window]:
     window_id = get_active_window().reply()
     if window_id is not None:
         return Window(window_id)
@@ -258,7 +256,7 @@ def _try_unwrap(cookie: PropertyCookieSingle) -> Any:  # type: ignore[no-any-uni
 
 
 @ignore_window_error
-def list_mapped_windows(workspace: int | None = None) -> list[Window]:
+def list_mapped_windows(workspace: Optional[int] = None) -> List[Window]:
     mapped_window_ids = get_client_list().reply()
     if mapped_window_ids is None:
         mapped_window_ids = []
@@ -272,14 +270,14 @@ def list_mapped_windows(workspace: int | None = None) -> list[Window]:
 
 
 @ignore_window_error
-def get_focused_workspace() -> int | None:
+def get_focused_workspace() -> Optional[int]:
     workspace = get_current_desktop().reply()
     if workspace is not None and not isinstance(workspace, int):
         raise RuntimeError(f"Unexpected workspace value: {workspace}")
     return workspace
 
 
-def get_workspace(window: Window) -> int | None:
+def get_workspace(window: Window) -> Optional[int]:
     """Get the workspace that the window is mapped to."""
     workspace = _try_unwrap(get_wm_desktop(window.id))
     if workspace is not None and not isinstance(workspace, int):

@@ -1,9 +1,8 @@
 """Flashing windows."""
-from __future__ import annotations
-
 import logging
 from threading import Thread
 from time import sleep
+from typing import Dict, List
 
 from flashfocus.compat import Window
 from flashfocus.types import Number
@@ -35,9 +34,9 @@ class Flasher:
 
     Attributes
     ----------
-    flash_series: list[float]
+    flash_series
         The series of opacity transitions during a flash.
-    progress: dict[int, int]
+    progress
         Keys are window ids for windows that are currently being flashed. Values
         are indices in the flash_series which define the progress in the flash
         animation.
@@ -65,7 +64,7 @@ class Flasher:
             self.ntimepoints = ntimepoints
             self.timechunk = self.time / self.ntimepoints
             self.flash_series = self._compute_flash_series()
-        self.progress: dict[int, int] = {}
+        self.progress: Dict[int, int] = {}
 
     def flash(self, window: Window) -> None:
         logging.debug(f"Flashing window {window.id}")
@@ -92,7 +91,7 @@ class Flasher:
         p.daemon = True
         p.start()
 
-    def _compute_flash_series(self) -> list[float]:
+    def _compute_flash_series(self) -> List[float]:
         """Calculate the series of opacity values for the flash animation.
 
         Given the default window opacity, and the flash opacity, this method

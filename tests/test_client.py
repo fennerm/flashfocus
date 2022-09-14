@@ -1,9 +1,8 @@
 """Test suite for flashfocus.client."""
-from __future__ import annotations, unicode_literals
-
 import socket
 from threading import Thread
 from time import sleep
+from typing import List
 
 from pytest import raises
 
@@ -23,7 +22,7 @@ def test_client_request_flash(stub_server: StubServer) -> None:
 
 
 def test_client_monitor_handles_client_requests(
-    client_monitor: ClientMonitor, windows: list[Window]
+    client_monitor: ClientMonitor, windows: List[Window]
 ) -> None:
     with producer_running(client_monitor):
         client_request_flash()

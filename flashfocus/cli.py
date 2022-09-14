@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 """Command line interface."""
-from __future__ import annotations
-
 import logging
 import sys
 from pathlib import Path
+from typing import Dict
 
 import click
 
@@ -103,7 +102,7 @@ def cli(*args, **kwargs) -> None:  # type: ignore[no-untyped-def]
     init_server(kwargs)
 
 
-def init_server(cli_options: dict) -> None:
+def init_server(cli_options: Dict) -> None:
     """Initialize the flashfocus server with given command line options."""
     setup_logging(cli_options["verbosity"])
     check_for_supported_wm()

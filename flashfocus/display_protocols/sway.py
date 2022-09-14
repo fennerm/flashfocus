@@ -4,10 +4,9 @@ All submodules in flashfocus.display_protocols are expected to contain a minimal
 functions/classes for abstracting across various display protocols. See list in flashfocus.compat
 
 """
-from __future__ import annotations
-
 import logging
 from queue import Queue
+from typing import Dict, List, Optional
 
 import i3ipc
 
@@ -49,10 +48,10 @@ class Window(BaseWindow):
         }
 
     @property
-    def properties(self) -> dict:
+    def properties(self) -> Dict:
         return self._properties
 
-    def match(self, criteria: dict) -> bool:
+    def match(self, criteria: Dict) -> bool:
         """Determine whether the window matches a set of criteria.
 
         Parameters
@@ -125,7 +124,7 @@ def _is_mapped_window(container: i3ipc.Con) -> bool:
     return container and container.id and container.window_rect.width != 0  # type: ignore
 
 
-def get_focused_window() -> Window | None:
+def get_focused_window() -> Optional[Window]:
     return Window(SWAY.get_tree().find_focused())
 
 
@@ -133,7 +132,7 @@ def _get_workspace_object(workspace: int) -> i3ipc.Con:
     return next(filter(lambda ws: ws.num == workspace, SWAY.get_tree().workspaces()), None)
 
 
-def list_mapped_windows(workspace: int | None = None) -> list[Window]:
+def list_mapped_windows(workspace: Optional[int] = None) -> List[Window]:
     if workspace is not None:
         containers = _get_workspace_object(workspace)
     else:
@@ -147,7 +146,7 @@ def disconnect_display_conn() -> None:
     SWAY.main_quit()
 
 
-def _try_get_con_workspace(container: i3ipc.Con | None) -> int | None:
+def _try_get_con_workspace(container: Optional[i3ipc.Con]) -> Optional[int]:
     """Try to get the workspace associated with an i3ipc.Con object (else return None)."""
     if container is None:
         return None
@@ -158,12 +157,12 @@ def _try_get_con_workspace(container: i3ipc.Con | None) -> int | None:
     return workspace_number
 
 
-def get_focused_workspace() -> int | None:
+def get_focused_workspace() -> Optional[int]:
     focused_container = SWAY.get_tree().find_focused()
     return _try_get_con_workspace(focused_container)
 
 
-def get_workspace(window: Window) -> int | None:
+def get_workspace(window: Window) -> Optional[int]:
     """Get the workspace that the window is mapped to."""
     i3ipc_window = SWAY.get_tree().find_by_id(window.id)
     return _try_get_con_workspace(i3ipc_window)

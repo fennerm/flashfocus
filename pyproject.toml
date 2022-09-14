@@ -23,7 +23,7 @@ variable-rgx = "[a-z_][a-z0-9_]*$"
 profile = "black"
 
 [tool.mypy]
-python_version = "3.7"
+python_version = "3.6"
 files = ["flashfocus", "tests"]
 check_untyped_defs = true
 disallow_untyped_defs = true
