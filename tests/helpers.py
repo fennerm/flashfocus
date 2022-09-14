@@ -74,7 +74,7 @@ class WindowSession:
             workspace
 
         """
-        self.windows: dict[int, Window] = {}
+        self.windows: dict[int, list[Window]] = {}
         self.num_windows_by_workspace = (
             num_windows_by_workspace if num_windows_by_workspace is not None else {0: 2}
         )
@@ -88,17 +88,19 @@ class WindowSession:
 
     def destroy(self) -> None:
         """Tear down the window session."""
-        for window in self.windows:
-            try:
-                window.destroy()
-            except Exception:
-                pass
+        for windows in self.windows.values():
+            for window in windows:
+                try:
+                    window.destroy()
+                except Exception:
+                    pass
 
     def get_first_window(self) -> Window:
         """Get the first window from the first workspace."""
         for workspace in sorted(self.windows.keys()):
             if len(self.windows[workspace]) > 0:
                 return self.windows[workspace][0]
+        raise ValueError("No windows found")
 
     def _create_windows(self) -> None:
         for workspace, num_windows in self.num_windows_by_workspace.items():
@@ -144,7 +146,7 @@ class WindowWatcher(Thread):
             pass
         self.opacity_events = [1 if event is None else event for event in self.opacity_events]
 
-    def count_flashes(self):
+    def count_flashes(self) -> int:
         num_flashes = 0
         for i, event in enumerate(self.opacity_events):
             if 0 < i < len(self.opacity_events) - 1:
@@ -163,7 +165,7 @@ class StubServer:
         self.socket = socket
         self.data: list[bytes] = []
 
-    def await_data(self):
+    def await_data(self) -> None:
         """Wait for a single piece of data from a client and store it."""
         self.data.append(self.socket.recv(1))
 
@@ -201,7 +203,7 @@ def watching_windows(windows: list[Window]) -> Generator:
         watcher.stop()
 
 
-def clear_desktops():
+def clear_desktops() -> None:
     for workspace in range(5):
         clear_workspace(workspace)
     switch_workspace(0)

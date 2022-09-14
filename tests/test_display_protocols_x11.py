@@ -36,7 +36,7 @@ def test_that_nonvisible_windows_are_not_queued_by_display_handler(
         def __init__(self) -> None:
             self.i = 0
 
-    def wait_for_event(counter={"i": 0}):  # noqa: B006
+    def wait_for_event(counter: dict = {"i": 0}) -> MagicMock:  # noqa: B006
         counter["i"] += 1
         if counter["i"] == 1:
             return visible_fake_event
@@ -93,7 +93,7 @@ def test_display_handler_handle_property_change_ignores_null_windows(
     monkeypatch.setattr("xpybutil.util.get_atom_name", lambda _: "_NET_ACTIVE_WINDOW")
     monkeypatch.setattr("flashfocus.display_protocols.x11.get_focused_window", lambda: None)
     event = Event(window=None, atom=1)
-    display_handler._handle_property_change(event)
+    display_handler._handle_property_change(event)  # type: ignore[attr-defined]
     assert display_handler.queue.empty()
 
 
@@ -101,13 +101,13 @@ def test_display_handler_handle_new_window_ignores_null_windows(
     display_handler: DisplayHandler,
 ) -> None:
     event = Event(window=None, atom=1)
-    display_handler._handle_new_mapped_window(event)
+    display_handler._handle_new_mapped_window(event)  # type: ignore[call-arg]
     assert display_handler.queue.empty()
 
 
 def test_is_fullscreen_handles_none_wm_states(monkeypatch: pytest.MonkeyPatch) -> None:
     class WMStateResponse:
-        def reply(self):
+        def reply(self) -> None:
             return None
 
     monkeypatch.setattr("xpybutil.ewmh.get_wm_state", lambda _: WMStateResponse())

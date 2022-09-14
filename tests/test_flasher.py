@@ -70,6 +70,6 @@ def test_compute_flash_series(
 def test_flash_requests_ignored_if_no_opacity_change(
     mocker: MockerFixture, pointless_flasher: Flasher, window: Window
 ) -> None:
-    pointless_flasher._flash = mocker.MagicMock()
+    pointless_flasher._flash = mocker.MagicMock()  # type: ignore
     pointless_flasher.flash(window)
-    pointless_flasher._flash.assert_not_called()
+    pointless_flasher._flash.assert_not_called()  # type: ignore

@@ -13,6 +13,7 @@ import os
 import re
 import shutil
 from pathlib import Path
+from typing import Any
 
 import yaml
 from marshmallow import Schema, ValidationError, fields, post_load, validates_schema
@@ -51,7 +52,7 @@ CLI_ONLY_OPTS = ["config", "verbosity"]
 def validate_positive_number(data: Number) -> None:
     """Check that a value is a positive number."""
     if not data > 0:
-        raise ValidationError("Not a positive number", data)
+        raise ValidationError("Not a positive number", str(data))
 
 
 def validate_decimal(data: Number) -> None:
@@ -72,7 +73,9 @@ def validate_flash_lone_windows(data: str) -> None:
 class Regex(fields.Field):
     """Schema field for validating a regex."""
 
-    def _deserialize(self, value: str, attr: str, obj: dict, **kwargs) -> re.Pattern[str]:
+    def _deserialize(
+        self, value: str, attr: str | None, data: Any, **kwargs: Any
+    ) -> re.Pattern[str]:
         try:
             return re.compile(value)
         except Exception:
@@ -96,14 +99,19 @@ class BaseSchema(Schema):
     flash_fullscreen: fields.Boolean = fields.Boolean()
 
     @validates_schema(pass_original=True)
-    def check_unknown_fields(self, data: dict, original_data: dict, **kwargs) -> None:
+    def check_unknown_fields(
+        self,
+        data: dict,
+        original_data: dict,
+        **_: Any
+    ) -> None:
         """Check that unknown options were not passed by the user."""
         try:
             unknown = set(original_data) - set(self.fields)
         except TypeError:
             unknown = set(original_data[0]) - set(self.fields)
         if unknown:
-            raise ValidationError("Unknown parameter", unknown)
+            raise ValidationError("Unknown parameter", ", ".join(unknown))
 
 
 class RulesSchema(BaseSchema):
@@ -115,7 +123,7 @@ class RulesSchema(BaseSchema):
     window_name = Regex()
 
     @validates_schema()
-    def check_for_matching_criteria(self, data: dict, **kwargs) -> None:
+    def check_for_matching_criteria(self, data: dict, **_: Any) -> None:
         """Check that rule contains at least one method for matching a window."""
         if not any([prop in data for prop in WINDOW_MATCH_PROPERTIES]):
             raise ValidationError(
@@ -134,7 +142,7 @@ class ConfigSchema(BaseSchema):
     rules: fields.Nested = fields.Nested(RulesSchema, many=True)
 
     @post_load()
-    def set_rule_defaults(self, config: dict, **kwargs) -> dict:
+    def set_rule_defaults(self, config: dict, **_: Any) -> dict:
         """Set default values for the nested `RulesSchema`."""
         if "rules" not in config:
             config["rules"] = None
@@ -202,7 +210,7 @@ def construct_config_error_msg(errors: dict) -> str:
 
 def unset_invalid_x11_options(config: dict) -> None:
     if config["rules"] is not None:
-        rules = []
+        rules: list = []
         for rule in config["rules"]:
             if not WAYLAND_MATCH_PROPERTIES & rule.keys():
                 rules.append(rule)
@@ -210,9 +218,7 @@ def unset_invalid_x11_options(config: dict) -> None:
                 logging.warning(
                     f"Detected a rule using wayland-only display properties, dropping it:\n{rule}"
                 )
-        if len(rules) == 0:
-            rules = None
-        config["rules"] = rules
+        config["rules"] = rules or None
 
 
 def unset_invalid_sway_options(config: dict) -> None:
@@ -236,7 +242,7 @@ def unset_invalid_options_for_wm(config: dict) -> None:
 def validate_config(config: dict) -> dict:
     """Validate the config file and command line parameters."""
     try:
-        schema: ConfigSchema = ConfigSchema(strict=True)
+        schema: ConfigSchema = ConfigSchema(strict=True)  # type: ignore[call-arg]
     except TypeError:
         # Strict parameter removed in the latest versions of marshmallow
         schema = ConfigSchema()
@@ -244,13 +250,21 @@ def validate_config(config: dict) -> dict:
     try:
         loaded: dict = schema.load(config)
     except ValidationError as err:
-        raise ConfigLoadError(construct_config_error_msg(err.messages))
+        if isinstance(err.messages, list):
+            # AFAICT errors should always be a dict, but marshmallow's type annotations suggest a
+            # list may be possible
+            errors = {
+                rule_number: error
+                for rule_number, error in zip(range(len(err.messages)), err.messages)
+            }
+        else:
+            errors = err.messages
+        raise ConfigLoadError(construct_config_error_msg(errors))
 
-    try:
-        # In marshmallow v2 the validated data needed to be accessed from the tuple after load
-        validated_config = loaded.data
-    except AttributeError:
-        # In marshmallow v3 the validated data is returned directly from load
+    # In marshmallow v2 the validated data needed to be accessed from the tuple after load
+    if hasattr(loaded, "data"):
+        validated_config: dict = loaded.data  # type: ignore[attr-defined]
+    else:
         validated_config = loaded
 
     unset_invalid_options_for_wm(validated_config)

@@ -43,12 +43,12 @@ def test_window_equality(window1: Window, window2: Window, should_be_equal: bool
 
 def test_window_equality_to_none_raises_error() -> None:
     with pytest.raises(TypeError):
-        Window(123) == None  # type: ignore
+        Window(123) == None  # type: ignore # noqa: E711
 
 
-def test_window_nonequality_to_none_raises_error():
+def test_window_nonequality_to_none_raises_error() -> None:
     with pytest.raises(TypeError):
-        Window(123) != None  # type: ignore
+        Window(123) != None  # type: ignore # noqa: E711
 
 
 def test_is_fullscreen(window: Window) -> None:

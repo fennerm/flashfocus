@@ -11,7 +11,7 @@ from flashfocus.sockets import (
 )
 
 
-def test_init_client_socket(client_socket) -> None:
+def test_init_client_socket(client_socket: socket.socket) -> None:
     client_socket.sendall("test".encode("UTF-8"))
 
 

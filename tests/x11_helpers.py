@@ -11,8 +11,7 @@ import xpybutil.ewmh
 from xpybutil.ewmh import request_wm_state_checked, set_active_window_checked
 from xpybutil.util import get_atom
 
-from flashfocus.compat import Window, get_focused_window, list_mapped_windows
-from flashfocus.display_protocols.sway import get_focused_workspace
+from flashfocus.compat import Window, get_focused_window, get_focused_workspace, list_mapped_windows
 
 
 def change_focus(window: Window) -> None:
@@ -32,7 +31,9 @@ def clear_event_queue() -> None:
         pass
 
 
-def create_blank_window(wm_name: str | None = None, wm_class: str | None = None) -> Window:
+def create_blank_window(
+    wm_name: str | None = None, wm_class: tuple[str, str] | None = None
+) -> Window:
     """Create a blank Xorg window."""
     setup = xpybutil.conn.get_setup()
     window = Window(xpybutil.conn.generate_id())

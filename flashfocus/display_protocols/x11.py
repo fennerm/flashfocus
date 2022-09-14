@@ -9,9 +9,7 @@ from __future__ import annotations
 import functools
 import logging
 import struct
-from collections.abc import Callable
 from queue import Queue
-from threading import Thread
 from typing import Any, Union
 
 import xpybutil.window
@@ -36,16 +34,17 @@ from xpybutil.ewmh import (
 from xpybutil.icccm import get_wm_class, set_wm_class_checked, set_wm_name_checked
 from xpybutil.util import PropertyCookieSingle, get_atom_name
 
-from flashfocus.display import WMEvent, WMEventType
+from flashfocus.display import BaseWindow, WMEventType
 from flashfocus.errors import WMError
+from flashfocus.producer import ProducerThread
 from flashfocus.util import match_regex
 
 Event = Union[CreateNotifyEvent, PropertyNotifyEvent]
 
 
-def ignore_window_error(function: Callable) -> Callable:
+def ignore_window_error(function):  # type: ignore
     @functools.wraps(function)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs):  # type: ignore
         try:
             return function(*args, **kwargs)
         except WindowError:
@@ -54,7 +53,7 @@ def ignore_window_error(function: Callable) -> Callable:
     return wrapper
 
 
-class Window:
+class Window(BaseWindow):
     def __init__(self, window_id: int) -> None:
         """Represents an Xorg window.
 
@@ -68,23 +67,15 @@ class Window:
         id
             The XORG window ID
         """
+        super().__init__()
         if window_id is None:
             raise WMError("Undefined window")
-        self.id = window_id
+        self._id: int = window_id
         self._properties: dict = {}
 
-    def __eq__(self, other) -> bool:
-        if type(self) != type(other):
-            raise TypeError("Arguments must be of the same type")
-        return self.id == other.id
-
-    def __ne__(self, other) -> bool:
-        if type(self) != type(other):
-            raise TypeError("Arguments must be of the same type")
-        return self.id != other.id
-
-    def __repr__(self) -> str:
-        return f"Window(id={self.id})"
+    @property
+    def id(self) -> int:
+        return self._id
 
     @property
     def properties(self) -> dict:
@@ -127,8 +118,11 @@ class Window:
         return True
 
     @property
-    def opacity(self) -> float:
-        return get_wm_window_opacity(self.id).reply()
+    def opacity(self) -> float | None:
+        opacity = get_wm_window_opacity(self.id).reply()
+        if opacity is None:
+            return None
+        return float(opacity)
 
     @ignore_window_error
     def set_opacity(self, opacity: float | None) -> None:
@@ -194,22 +188,11 @@ def _create_message_window() -> Window:
     return Window(window_id)
 
 
-class DisplayHandler(Thread):
+class DisplayHandler(ProducerThread):
     """Parse events from the X-server and pass them on to FlashServer"""
 
     def __init__(self, queue: Queue) -> None:
-        # This is set to True when initialization of the thread is complete and its ready to begin
-        # the event loop
-        self.ready = False
-
-        super().__init__()
-
-        # Queue of messages to be handled by the flash server
-        self.queue: Queue = queue
-
-        # This property is set by the server during shutdown and signals that the display handler
-        # should disconnect from XCB
-        self.keep_going: bool = True
+        super().__init__(queue)
 
         # In order to interrupt the event loop we need to map a special message-passing window.
         # When it comes time to exit we set the name of the window to 'KILL'. This is then
@@ -234,14 +217,10 @@ class DisplayHandler(Thread):
 
     def stop(self) -> None:
         set_wm_name_checked(self.message_window.id, "KILL").check()
-        self.keep_going = False
-        self.join()
         self.message_window.destroy()
+        super().stop()
 
-    def queue_window(self, window: Window, event_type: WMEventType) -> None:
-        self.queue.put(WMEvent(window=window, event_type=event_type))
-
-    def _handle_new_mapped_window(self, event: Event) -> None:
+    def _handle_new_mapped_window(self, event: CreateNotifyEvent) -> None:
         logging.debug(f"Window {event.window} mapped...")
         if event.window is not None:
             window = Window(event.window)
@@ -253,7 +232,7 @@ class DisplayHandler(Thread):
             else:
                 logging.debug(f"Window {window.id} is not visible, ignoring...")
 
-    def _handle_property_change(self, event: Event) -> None:
+    def _handle_property_change(self, event: PropertyNotifyEvent) -> None:
         """Handle a property change on a watched window."""
         atom_name = get_atom_name(event.atom)
         if atom_name == "_NET_ACTIVE_WINDOW":
@@ -277,7 +256,7 @@ def get_focused_window() -> Window | None:
         return None
 
 
-def _try_unwrap(cookie: PropertyCookieSingle) -> Any:
+def _try_unwrap(cookie: PropertyCookieSingle) -> Any:  # type: ignore[no-any-unimported]
     """Try reading a reply from the X server, ignoring any errors encountered."""
     try:
         return cookie.reply()
@@ -300,13 +279,19 @@ def list_mapped_windows(workspace: int | None = None) -> list[Window]:
 
 
 @ignore_window_error
-def get_focused_workspace() -> int:
-    return get_current_desktop().reply()
+def get_focused_workspace() -> int | None:
+    workspace = get_current_desktop().reply()
+    if workspace is not None and not isinstance(workspace, int):
+        raise RuntimeError(f"Unexpected workspace value: {workspace}")
+    return workspace
 
 
-def get_workspace(window: Window) -> Optional[int]:
+def get_workspace(window: Window) -> int | None:
     """Get the workspace that the window is mapped to."""
-    return _try_unwrap(get_wm_desktop(window.id))
+    workspace = _try_unwrap(get_wm_desktop(window.id))
+    if workspace is not None and not isinstance(workspace, int):
+        raise RuntimeError(f"Unexpected workspace value: {workspace}")
+    return workspace
 
 
 @ignore_window_error

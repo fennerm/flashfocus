@@ -26,7 +26,7 @@ def default_config() -> dict:
 
 
 @pytest.fixture
-def invalid_rules() -> list[list[dict]]:
+def invalid_rules() -> list:
     rules = [
         # No window_class or window_id present
         [{"flash_on_focus": True}],
@@ -70,7 +70,7 @@ def test_invalid_param(
         with pytest.raises(ConfigLoadError):
             if input_type == "cli":
                 blanks[option] = value
-                merge_config_sources(cli_options=blanks, user_config=None, default_config=defaults)
+                merge_config_sources(cli_options=blanks, user_config={}, default_config=defaults)
             else:
                 config = {option: value}
                 merge_config_sources(
@@ -116,7 +116,7 @@ def test_valid_param(
         if input_type == "cli":
             blanks[option] = value
             validated_config = merge_config_sources(
-                cli_options=blanks, user_config=None, default_config=default_config
+                cli_options=blanks, user_config={}, default_config=default_config
             )
         else:
             config = {option: value}
@@ -214,7 +214,7 @@ def test_rules_added_to_config_dict_if_not_present_in_config(
     assert "rules" in validated
 
 
-def test_load_config(configfile) -> None:
+def test_load_config(configfile) -> None:  # type: ignore[no-untyped-def]
     assert load_config(configfile) == {"default_opacity": 1, "flash_opacity": 0.5}
 
 
@@ -242,25 +242,25 @@ def test_construct_non_rules_config_error_message() -> None:
 
 
 @pytest.fixture
-def invalid_yaml(tmpdir):
+def invalid_yaml(tmpdir):  # type: ignore[no-untyped-def]
     yml = tmpdir.join("invalid.yml")
     yml.write("1 :::1: 1:")
     return yml
 
 
-def test_invalid_yaml_passed_to_load_config(invalid_yaml) -> None:
+def test_invalid_yaml_passed_to_load_config(invalid_yaml) -> None:  # type: ignore[no-untyped-def]
     with pytest.raises(ConfigLoadError):
         load_config(invalid_yaml)
 
 
-def test_load_merged_config_with_no_custom_config(
+def test_load_merged_config_with_no_custom_config(  # type: ignore[no-untyped-def]
     monkeypatch: pytest.MonkeyPatch, blank_cli_options: dict, configfile
 ) -> None:
     conf = load_merged_config(config_file_path=configfile, cli_options=blank_cli_options)
     assert conf.get("flash_opacity") == 0.5
 
 
-def test_load_merged_config_with_custom_config(
+def test_load_merged_config_with_custom_config(  # type: ignore[no-untyped-def]
     monkeypatch: pytest.MonkeyPatch, blank_cli_options: dict, configfile_with_02_flash_opacity
 ) -> None:
     conf = load_merged_config(

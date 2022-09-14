@@ -13,6 +13,7 @@ from flashfocus.compat import (
 )
 from flashfocus.display import WMEvent, WMEventType
 from flashfocus.errors import UnexpectedMessageType, WMError
+from flashfocus.producer import ProducerThread
 from flashfocus.router import FlashRouter
 
 # Ensure that SIGINTs are handled correctly
@@ -51,7 +52,10 @@ class FlashServer:
         self.config = config
         self.router = FlashRouter(config)
         self.events: Queue = Queue()
-        self.producers = (ClientMonitor(self.events), DisplayHandler(self.events))
+        self.producers: list[ProducerThread] = [
+            ClientMonitor(self.events),
+            DisplayHandler(self.events),
+        ]
         self.keep_going = True
         self.ready = False
         self.processing_event = False

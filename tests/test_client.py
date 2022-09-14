@@ -1,5 +1,5 @@
 """Test suite for flashfocus.client."""
-from __future__ import unicode_literals
+from __future__ import annotations, unicode_literals
 
 import socket
 from threading import Thread
@@ -8,8 +8,9 @@ from time import sleep
 from pytest import raises
 
 from flashfocus.client import ClientMonitor, client_request_flash
+from flashfocus.compat import Window
 from flashfocus.display import WMEvent, WMEventType
-from tests.helpers import StubServer, WindowSession, producer_running, queue_to_list
+from tests.helpers import StubServer, producer_running, queue_to_list
 
 
 def test_client_request_flash(stub_server: StubServer) -> None:
@@ -22,7 +23,7 @@ def test_client_request_flash(stub_server: StubServer) -> None:
 
 
 def test_client_monitor_handles_client_requests(
-    client_monitor: ClientMonitor, windows: WindowSession
+    client_monitor: ClientMonitor, windows: list[Window]
 ) -> None:
     with producer_running(client_monitor):
         client_request_flash()

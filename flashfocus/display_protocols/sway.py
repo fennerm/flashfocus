@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import logging
 from queue import Queue
-from threading import Thread
 
 import i3ipc
 
-from flashfocus.display import WMEvent, WMEventType
+from flashfocus.display import BaseWindow, WMEventType
 from flashfocus.errors import WMError
+from flashfocus.producer import ProducerThread
 from flashfocus.util import match_regex
 
 # This connection is shared by all classes/functions in the module. It is not thread-safe to
@@ -21,7 +21,7 @@ from flashfocus.util import match_regex
 SWAY = i3ipc.Connection()
 
 
-class Window:
+class Window(BaseWindow):
     """Represents a sway window.
 
     Parameters
@@ -40,29 +40,25 @@ class Window:
     """
 
     def __init__(self, container: i3ipc.Con) -> None:
+        super().__init__()
         self._container = container
         if self._container.id is None:
             raise WMError("Invalid window ID")
-        self.id: int = self._container.id
-        self.properties = {
+        self._id: int = self._container.id
+        self._properties = {
             "window_name": self._container.name,
             "window_class": self._container.window_class,
             "window_id": self._container.window_instance,
             "app_id": self._container.app_id,
         }
 
-    def __eq__(self, other: object) -> bool:
-        if type(self) != type(other):
-            raise TypeError("Arguments must be of the same type")
-        return self.id == other.id
+    @property
+    def id(self) -> int:
+        return self._id
 
-    def __ne__(self, other: object) -> bool:
-        if type(self) != type(other):
-            raise TypeError("Arguments must be of the same type")
-        return self.id != other.id
-
-    def __repr__(self) -> str:
-        return f"Window(id={self.id})"
+    @property
+    def properties(self) -> dict:
+        return self._properties
 
     def match(self, criteria: dict) -> bool:
         """Determine whether the window matches a set of criteria.
@@ -78,25 +74,36 @@ class Window:
                 return False
         return True
 
+    @property
+    def opacity(self) -> float:
+        raise NotImplementedError()
+
     def set_opacity(self, opacity: float) -> None:
         # If opacity is None just silently ignore the request
         self._container.command(f"opacity {opacity}")
+
+    def set_name(self, name: str) -> None:
+        raise NotImplementedError()
+
+    def set_class(self, title: str, class_: str) -> None:
+        raise NotImplementedError()
 
     def destroy(self) -> None:
         self._container.command("kill")
 
     def is_fullscreen(self) -> bool:
-        return self._container.fullscreen_mode == 1
+        fullscreen_mode: int = self._container.fullscreen_mode
+        return fullscreen_mode == 1
 
 
-class DisplayHandler(Thread):
+class DisplayHandler(ProducerThread):
     """Parse events from sway and pass them on to FlashServer"""
 
     def __init__(self, queue: Queue) -> None:
         # This is set to True when initialization of the thread is complete and its ready to begin
         # the event loop
         self.ready = False
-        super().__init__()
+        super().__init__(queue)
         self.queue = queue
 
     def run(self) -> None:
@@ -107,12 +114,8 @@ class DisplayHandler(Thread):
         SWAY.main()
 
     def stop(self) -> None:
-        self.keep_going = False
+        super().stop()
         SWAY.main_quit()
-        self.join()
-
-    def queue_window(self, window: Window, event_type: WMEventType) -> None:
-        self.queue.put(WMEvent(window=window, event_type=event_type))
 
     def _handle_focus_shift(self, _: i3ipc.Connection, event: i3ipc.Event) -> None:
         if _is_mapped_window(event.container):
@@ -130,7 +133,7 @@ def _is_mapped_window(container: i3ipc.Con) -> bool:
     return container and container.id and container.window_rect.width != 0  # type: ignore
 
 
-def get_focused_window() -> Optional[Window]:
+def get_focused_window() -> Window | None:
     return Window(SWAY.get_tree().find_focused())
 
 
@@ -152,18 +155,23 @@ def disconnect_display_conn() -> None:
     SWAY.main_quit()
 
 
-def get_focused_workspace() -> Optional[int]:
-    focused_container = SWAY.get_tree().find_focused()
-    if focused_container is None:
+def _try_get_con_workspace(container: i3ipc.Con | None) -> int | None:
+    """Try to get the workspace associated with an i3ipc.Con object (else return None)."""
+    if container is None:
         return None
-    workspace = focused_container.workspace()
+    workspace = container.workspace()
     if workspace is None:
         return None
-    workspace_number = workspace.num
+    workspace_number: int = workspace.num
     return workspace_number
 
 
-def get_workspace(window: Window) -> Optional[int]:
+def get_focused_workspace() -> int | None:
+    focused_container = SWAY.get_tree().find_focused()
+    return _try_get_con_workspace(focused_container)
+
+
+def get_workspace(window: Window) -> int | None:
     """Get the workspace that the window is mapped to."""
-    workspace = SWAY.get_tree().find_by_id(window.id).workspace().num
-    return workspace
+    i3ipc_window = SWAY.get_tree().find_by_id(window.id)
+    return _try_get_con_workspace(i3ipc_window)

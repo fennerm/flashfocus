@@ -46,7 +46,7 @@ class FlashRouter:
         The id of the current focused workspace
     prev_workspace: int | None
         The id of the previously focused workspace
-    prev_focus: int
+    prev_focus: Window | None
         The id of the previously focused window. We keep track of this so that
         the same window is never flashed consecutively. When a window is closed
         in i3, the next window is flashed 3 times without this guard
@@ -86,9 +86,9 @@ class FlashRouter:
             time=config["time"],
         )
         self.flashers.append(default_flasher)
-        self.prev_focus = None
-        self.prev_workspace = None
-        self.current_workspace = None
+        self.prev_focus: Window | None = None
+        self.prev_workspace: int | None = None
+        self.current_workspace: int | None = None
         if self.track_workspaces:
             self.prev_workspace = self.current_workspace
             self.current_workspace = get_focused_workspace()

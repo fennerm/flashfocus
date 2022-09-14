@@ -2,10 +2,10 @@
 import logging
 import socket
 from queue import Queue
-from threading import Thread
 
-from flashfocus.compat import Window, get_focused_window
-from flashfocus.display import WMEvent, WMEventType
+from flashfocus.compat import get_focused_window
+from flashfocus.display import WMEventType
+from flashfocus.producer import ProducerThread
 from flashfocus.sockets import init_client_socket, init_server_socket
 
 
@@ -18,14 +18,11 @@ def client_request_flash() -> None:
     sock.sendall(bytearray("1", encoding="UTF-8"))
 
 
-class ClientMonitor(Thread):
+class ClientMonitor(ProducerThread):
     """Queue flash requests from clients."""
 
     def __init__(self, queue: Queue) -> None:
-        self.ready = False
-        super().__init__()
-        self.queue = queue
-        self.keep_going = True
+        super().__init__(queue)
         self.sock = init_server_socket()
         self.ready = True
 
@@ -43,12 +40,7 @@ class ClientMonitor(Thread):
             else:
                 logging.debug("Focused window is undefined, ignoring request...")
 
-    def queue_window(self, window: Window, event_type: WMEventType) -> None:
-        """Add a window to the queue."""
-        self.queue.put(WMEvent(window=window, event_type=event_type))
-
     def stop(self) -> None:
-        self.keep_going = False
-        self.join()
+        super().stop()
         logging.debug("Disconnecting socket...")
         self.sock.close()

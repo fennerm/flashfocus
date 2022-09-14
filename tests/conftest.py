@@ -193,7 +193,7 @@ def valid_config_types() -> dict[str, list[type]]:
 
 @pytest.fixture
 def blank_cli_options() -> dict:
-    cli_options = dict()
+    cli_options: dict = dict()
     for key, val in default_flash_param().items():
         if val["location"] == "any":
             cli_options[key] = None
