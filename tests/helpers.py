@@ -19,6 +19,7 @@ from flashfocus.compat import (
     list_mapped_windows,
 )
 from flashfocus.errors import WMError
+from flashfocus.producer import ProducerThread
 from flashfocus.server import FlashServer
 from tests.compat import (
     change_focus,
@@ -26,8 +27,6 @@ from tests.compat import (
     create_blank_window,
     switch_workspace,
 )
-
-Producer = Union[ClientMonitor, DisplayHandler]
 
 
 def quick_conf() -> dict:
@@ -234,10 +233,10 @@ def new_window_session(num_windows_by_workspace: dict[int, int]) -> Generator:
 
 
 @contextmanager
-def producer_running(producer: Producer) -> Generator:
+def producer_running(producer: ProducerThread) -> Generator:
     producer.start()
-    # TODO - replace these sleep calls
-    sleep(0.01)
+    while not producer.ready:
+        pass
     yield
     sleep(0.01)
     producer.stop()
