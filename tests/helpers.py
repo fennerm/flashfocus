@@ -9,11 +9,8 @@ from contextlib import contextmanager
 from queue import Queue
 from threading import Thread
 from time import sleep
-from typing import Union
 
-from flashfocus.client import ClientMonitor
 from flashfocus.compat import (
-    DisplayHandler,
     Window,
     get_focused_workspace,
     list_mapped_windows,
