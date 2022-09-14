@@ -1,4 +1,6 @@
 """Testing X11-specific details which don't apply to the sway implementation."""
+from __future__ import annotations
+
 from collections import namedtuple
 from unittest.mock import MagicMock
 
