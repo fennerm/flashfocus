@@ -16,3 +16,4 @@ __LAST__
 .prospector.yaml
 .env
 .envrc
+pip-wheel-metadata
