@@ -1,5 +1,5 @@
 """Helper functions/classes for unit tests."""
-from __future__ import annotations, division
+from __future__ import annotations
 
 import copy
 import re

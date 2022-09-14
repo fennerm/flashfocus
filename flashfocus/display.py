@@ -6,6 +6,8 @@ from collections import namedtuple
 from enum import Enum, auto
 from typing import Any
 
+from flashfocus.errors import WMError
+
 
 class WMEventType(Enum):
     FOCUS_SHIFT = auto()
@@ -23,11 +25,10 @@ class BaseWindow(ABC):
     Contains any logic which isn't specifically tied to wayland/X11.
     """
 
-    @property
-    @abstractmethod
-    def id(self) -> int:
-        """The window's unique identifier."""
-        pass
+    def __init__(self, window_id: int) -> None:
+        if window_id is None:
+            raise WMError("Invalid window ID")
+        self.id = window_id
 
     @property
     @abstractmethod

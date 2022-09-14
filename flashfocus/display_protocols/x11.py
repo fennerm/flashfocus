@@ -67,15 +67,8 @@ class Window(BaseWindow):
         id
             The XORG window ID
         """
-        super().__init__()
-        if window_id is None:
-            raise WMError("Undefined window")
-        self._id: int = window_id
+        super().__init__(window_id)
         self._properties: dict = {}
-
-    @property
-    def id(self) -> int:
-        return self._id
 
     @property
     def properties(self) -> dict:

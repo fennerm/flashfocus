@@ -12,7 +12,6 @@ from queue import Queue
 import i3ipc
 
 from flashfocus.display import BaseWindow, WMEventType
-from flashfocus.errors import WMError
 from flashfocus.producer import ProducerThread
 from flashfocus.util import match_regex
 
@@ -40,21 +39,14 @@ class Window(BaseWindow):
     """
 
     def __init__(self, container: i3ipc.Con) -> None:
-        super().__init__()
         self._container = container
-        if self._container.id is None:
-            raise WMError("Invalid window ID")
-        self._id: int = self._container.id
+        super().__init__(self._container.id)
         self._properties = {
             "window_name": self._container.name,
             "window_class": self._container.window_class,
             "window_id": self._container.window_instance,
             "app_id": self._container.app_id,
         }
-
-    @property
-    def id(self) -> int:
-        return self._id
 
     @property
     def properties(self) -> dict:

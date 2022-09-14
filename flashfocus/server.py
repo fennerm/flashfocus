@@ -1,5 +1,5 @@
 """Flash windows on focus."""
-from __future__ import annotations, division
+from __future__ import annotations
 
 import logging
 from queue import Empty, Queue
@@ -30,20 +30,20 @@ class FlashServer:
 
     Attributes
     ----------
-    router: FlashRouter
+    router
         Object used to match window id's to flash parameters from the config
         file.
-    keep_going: bool
+    keep_going
         Setting this to False terminates the event loop (but does not initiate
         cleanup).
-    producers: tuple[ClientMonitor, DisplayHandler]
+    producers
         List of threads which produce work for the server.
-    flash_requests: Queue
+    flash_requests
         Queue of flash jobs for the server to work through. Each item of the
         queue is a tuple of (window id, request type).
-    ready: bool
+    ready
         True if all server threads are fully initialized and ready to process events
-    processing_event: bool
+    processing_event
         True if the server is currently processing an event.
 
     """
