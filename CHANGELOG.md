@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.3.1 - October 21st, 2022]
+- Fixed: #78 Fix error when the current workspace is null (@fennerm)
+- Not user facing: #79 Fixed a bunch of mypy warnings (@fennerm)
+
 ## [2.3.0 - September 12th, 2022]
 - Added: #74 pyproject.toml config (@Artturin)
 - Fixed: #77 Rare race condition when detecting the current workspace (@fennerm)
