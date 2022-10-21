@@ -1,12 +1,13 @@
 """Testing X11-specific details which don't apply to the sway implementation."""
 from collections import namedtuple
 from unittest.mock import MagicMock
+from typing import Dict, List
 
 import pytest
-from pytest import mark
 from xcffib.xproto import CreateNotifyEvent
 
 from flashfocus.compat import (
+    DisplayHandler,
     DisplayProtocol,
     Window,
     get_display_protocol,
@@ -22,8 +23,8 @@ if get_display_protocol() == DisplayProtocol.WAYLAND:
 
 
 def test_that_nonvisible_windows_are_not_queued_by_display_handler(
-    display_handler, monkeypatch, windows
-):
+    display_handler: DisplayHandler, monkeypatch: pytest.MonkeyPatch, windows: List[Window]
+) -> None:
     null_fake_event = MagicMock(spec=CreateNotifyEvent)
     null_fake_event.window = 0
     visible_fake_event = MagicMock(spec=CreateNotifyEvent)
@@ -33,10 +34,10 @@ def test_that_nonvisible_windows_are_not_queued_by_display_handler(
     # window
 
     class Counter:
-        def __init__(self):
+        def __init__(self) -> None:
             self.i = 0
 
-    def wait_for_event(counter={"i": 0}):  # noqa: B006
+    def wait_for_event(counter: Dict = {"i": 0}) -> MagicMock:  # noqa: B006
         counter["i"] += 1
         if counter["i"] == 1:
             return visible_fake_event
@@ -51,7 +52,7 @@ def test_that_nonvisible_windows_are_not_queued_by_display_handler(
     assert queued == [WMEvent(window=windows[0], event_type=WMEventType.NEW_WINDOW)]
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     "rule,should_match",
     [
         # Id matches exactly, no class
@@ -74,36 +75,40 @@ def test_that_nonvisible_windows_are_not_queued_by_display_handler(
         (dict(), True),
     ],
 )
-def test_rule_matching(window, rule, should_match):
+def test_rule_matching(window: Window, rule: Dict[str, str], should_match: bool) -> None:
     assert window.match(rule) == should_match
 
 
-def test_properties(window):
+def test_properties(window: Window) -> None:
     assert window.properties == {"window_id": "window_0_1", "window_class": "Window_0_1"}
 
 
-def test_list_mapped_windows(windows):
+def test_list_mapped_windows(windows: List[Window]) -> None:
     assert list_mapped_windows(0) == windows
     assert list_mapped_windows(2) == list()
 
 
-def test_display_handler_handle_property_change_ignores_null_windows(display_handler, monkeypatch):
+def test_display_handler_handle_property_change_ignores_null_windows(
+    display_handler: DisplayHandler, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr("xpybutil.util.get_atom_name", lambda _: "_NET_ACTIVE_WINDOW")
     monkeypatch.setattr("flashfocus.display_protocols.x11.get_focused_window", lambda: None)
     event = Event(window=None, atom=1)
-    display_handler._handle_property_change(event)
+    display_handler._handle_property_change(event)  # type: ignore[attr-defined]
     assert display_handler.queue.empty()
 
 
-def test_display_handler_handle_new_window_ignores_null_windows(display_handler):
+def test_display_handler_handle_new_window_ignores_null_windows(
+    display_handler: DisplayHandler,
+) -> None:
     event = Event(window=None, atom=1)
-    display_handler._handle_new_mapped_window(event)
+    display_handler._handle_new_mapped_window(event)  # type: ignore[call-arg]
     assert display_handler.queue.empty()
 
 
-def test_is_fullscreen_handles_none_wm_states(monkeypatch):
+def test_is_fullscreen_handles_none_wm_states(monkeypatch: pytest.MonkeyPatch) -> None:
     class WMStateResponse:
-        def reply(self):
+        def reply(self) -> None:
             return None
 
     monkeypatch.setattr("xpybutil.ewmh.get_wm_state", lambda _: WMStateResponse())

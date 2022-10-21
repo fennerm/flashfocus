@@ -1,18 +1,18 @@
 """Test suite for flashfocus.client."""
-from __future__ import unicode_literals
-
 import socket
 from threading import Thread
 from time import sleep
+from typing import List
 
 from pytest import raises
 
-from flashfocus.client import client_request_flash
+from flashfocus.client import ClientMonitor, client_request_flash
+from flashfocus.compat import Window
 from flashfocus.display import WMEvent, WMEventType
-from tests.helpers import producer_running, queue_to_list
+from tests.helpers import StubServer, producer_running, queue_to_list
 
 
-def test_client_request_flash(stub_server):
+def test_client_request_flash(stub_server: StubServer) -> None:
     p = Thread(target=stub_server.await_data)
     p.start()
     client_request_flash()
@@ -21,7 +21,9 @@ def test_client_request_flash(stub_server):
     assert stub_server.data == [b"1"]
 
 
-def test_client_monitor_handles_client_requests(client_monitor, windows):
+def test_client_monitor_handles_client_requests(
+    client_monitor: ClientMonitor, windows: List[Window]
+) -> None:
     with producer_running(client_monitor):
         client_request_flash()
         client_request_flash()
@@ -32,7 +34,7 @@ def test_client_monitor_handles_client_requests(client_monitor, windows):
     ]
 
 
-def test_client_monitor_stop_disconnects_socket(client_monitor):
+def test_client_monitor_stop_disconnects_socket(client_monitor: ClientMonitor) -> None:
     client_monitor.start()
     client_monitor.stop()
     with raises(socket.error):

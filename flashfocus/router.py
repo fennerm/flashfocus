@@ -7,7 +7,7 @@ passes the request on to the Flasher whose criteria match the window.
 
 """
 import logging
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from flashfocus.compat import Window, get_focused_workspace, get_workspace, list_mapped_windows
 from flashfocus.display import WMEvent, WMEventType
@@ -24,10 +24,10 @@ class FlashRouter:
 
     Parameters
     ----------
-    defaults: Dict[str, Any]
+    defaults
         Set of default parameters. Must include all `Flasher` parameters and
         `flash_on_focus` and `flash_lone_windows` settings.
-    config_rules: Dict[str, Any]
+    config_rules
         Set of rule parameters from user config. Must include all `Flasher`
         parameters, `flash_on_focus` setting and `window_id` and/or
         `window_class`.
@@ -41,18 +41,18 @@ class FlashRouter:
     rules
         List of rules each corresponding to a set of criteria for matching against windows. The last
         rule in the list is the default rule which matches any window.
-    current_workspace: int | None
+    current_workspace
         The id of the current focused workspace
-    prev_workspace: int | None
+    prev_workspace
         The id of the previously focused workspace
-    prev_focus: int
+    prev_focus
         The id of the previously focused window. We keep track of this so that
         the same window is never flashed consecutively. When a window is closed
         in i3, the next window is flashed 3 times without this guard
 
     """
 
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict) -> None:
         if config.get("rules") is None:
             self.rules: List[Dict] = []
         else:
@@ -85,9 +85,9 @@ class FlashRouter:
             time=config["time"],
         )
         self.flashers.append(default_flasher)
-        self.prev_focus = None
-        self.prev_workspace = None
-        self.current_workspace = None
+        self.prev_focus: Optional[Window] = None
+        self.prev_workspace: Optional[int] = None
+        self.current_workspace: Optional[int] = None
         if self.track_workspaces:
             self.prev_workspace = self.current_workspace
             self.current_workspace = get_focused_workspace()

@@ -17,7 +17,7 @@ from flashfocus.server import FlashServer
 logging.basicConfig(level="WARNING", format="%(levelname)s: %(message)s")
 
 
-def check_for_supported_wm():
+def check_for_supported_wm() -> None:
     try:
         import flashfocus.compat  # noqa F401
     except UnsupportedWM as error:
@@ -36,7 +36,7 @@ def check_for_supported_wm():
 )
 @click.option(
     "--default-opacity",
-    "-e",
+    "-e",  # type: ignore[no-untyped-def]
     type=float,
     required=False,
     help="Default window opacity. flashfocus will reset the window "
@@ -97,7 +97,7 @@ def check_for_supported_wm():
     type=click.Choice(["INFO", "WARNING", "DEBUG", "ERROR"]),
     help="Set the logging verbosity.",
 )
-def cli(*args, **kwargs) -> None:
+def cli(*args, **kwargs) -> None:  # type: ignore[no-untyped-def]
     """Simple focus animations for tiling window managers."""
     init_server(kwargs)
 

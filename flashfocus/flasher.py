@@ -34,9 +34,9 @@ class Flasher:
 
     Attributes
     ----------
-    flash_series: List[float]
+    flash_series
         The series of opacity transitions during a flash.
-    progress: Dict[int, int]
+    progress
         Keys are window ids for windows that are currently being flashed. Values
         are indices in the flash_series which define the progress in the flash
         animation.

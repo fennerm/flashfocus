@@ -1,6 +1,7 @@
 import logging
 import subprocess
 from time import sleep
+from typing import Optional, Tuple
 
 import xcffib
 import xcffib.xproto
@@ -9,11 +10,10 @@ import xpybutil.ewmh
 from xpybutil.ewmh import request_wm_state_checked, set_active_window_checked
 from xpybutil.util import get_atom
 
-from flashfocus.compat import Window, get_focused_window, list_mapped_windows
-from flashfocus.display_protocols.sway import get_focused_workspace
+from flashfocus.compat import Window, get_focused_window, get_focused_workspace, list_mapped_windows
 
 
-def change_focus(window):
+def change_focus(window: Window) -> None:
     """Change the active window."""
     set_active_window_checked(window.id).check()
     while get_focused_window() != window:
@@ -30,7 +30,9 @@ def clear_event_queue() -> None:
         pass
 
 
-def create_blank_window(wm_name=None, wm_class=None):
+def create_blank_window(
+    wm_name: Optional[str] = None, wm_class: Optional[Tuple[str, str]] = None
+) -> Window:
     """Create a blank Xorg window."""
     setup = xpybutil.conn.get_setup()
     window = Window(xpybutil.conn.generate_id())
@@ -70,7 +72,6 @@ def switch_workspace(workspace: int) -> None:
     while get_focused_workspace() != workspace:
         logging.debug(f"Waiting for focus to update to workspace {workspace}")
         sleep(0.1)
-        
 
 
 def set_fullscreen(window: Window) -> None:

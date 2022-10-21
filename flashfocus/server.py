@@ -1,10 +1,8 @@
 """Flash windows on focus."""
-from __future__ import division
-
 import logging
 from queue import Empty, Queue
 from signal import SIGINT, default_int_handler, signal
-from typing import Dict
+from typing import Dict, List
 
 from flashfocus.client import ClientMonitor
 from flashfocus.compat import (
@@ -14,6 +12,7 @@ from flashfocus.compat import (
 )
 from flashfocus.display import WMEvent, WMEventType
 from flashfocus.errors import UnexpectedMessageType, WMError
+from flashfocus.producer import ProducerThread
 from flashfocus.router import FlashRouter
 
 # Ensure that SIGINTs are handled correctly
@@ -30,20 +29,20 @@ class FlashServer:
 
     Attributes
     ----------
-    router: FlashRouter
+    router
         Object used to match window id's to flash parameters from the config
         file.
-    keep_going: bool
+    keep_going
         Setting this to False terminates the event loop (but does not initiate
         cleanup).
-    producers: List[Thread]
+    producers
         List of threads which produce work for the server.
-    flash_requests: Queue
+    flash_requests
         Queue of flash jobs for the server to work through. Each item of the
         queue is a tuple of (window id, request type).
-    ready: bool
+    ready
         True if all server threads are fully initialized and ready to process events
-    processing_event: bool
+    processing_event
         True if the server is currently processing an event.
 
     """
@@ -52,7 +51,10 @@ class FlashServer:
         self.config = config
         self.router = FlashRouter(config)
         self.events: Queue = Queue()
-        self.producers = [ClientMonitor(self.events), DisplayHandler(self.events)]
+        self.producers: List[ProducerThread] = [
+            ClientMonitor(self.events),
+            DisplayHandler(self.events),
+        ]
         self.keep_going = True
         self.ready = False
         self.processing_event = False

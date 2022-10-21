@@ -1,22 +1,19 @@
 """Helper functions/classes for unit tests."""
-from __future__ import division
-
 import copy
 import socket
 from contextlib import contextmanager
 from queue import Queue
 from threading import Thread
 from time import sleep
-from typing import Dict, Generator, List, Optional, Pattern, Union
+from typing import Dict, Generator, List, Optional, Pattern
 
-from flashfocus.client import ClientMonitor
 from flashfocus.compat import (
-    DisplayHandler,
     Window,
     get_focused_workspace,
     list_mapped_windows,
 )
 from flashfocus.errors import WMError
+from flashfocus.producer import ProducerThread
 from flashfocus.server import FlashServer
 from tests.compat import (
     change_focus,
@@ -24,8 +21,6 @@ from tests.compat import (
     create_blank_window,
     switch_workspace,
 )
-
-Producer = Union[ClientMonitor, DisplayHandler]
 
 
 def quick_conf() -> Dict:
@@ -45,7 +40,7 @@ def quick_conf() -> Dict:
 def default_flash_param() -> Dict:
     return {
         "config": {"default": None, "type": [str], "location": "cli"},
-        "verbosity": {"default": "INFO", "type": str, "location": "cli"},
+        "verbosity": {"default": "INFO", "type": [str], "location": "cli"},
         "default_opacity": {"default": 1, "type": [float], "location": "any"},
         "flash_opacity": {"default": 0.8, "type": [float], "location": "any"},
         "time": {"default": 100, "type": [float], "location": "any"},
@@ -68,11 +63,11 @@ class WindowSession:
         Parameters
         ----------
         num_windows_by_workspace
-            A dict mapping workspace number to the number of windows which should be created on the 
+            A dict mapping workspace number to the number of windows which should be created on the
             workspace
-        
+
         """
-        self.windows: Dict[int, Window] = {}
+        self.windows: Dict[int, List[Window]] = {}
         self.num_windows_by_workspace = (
             num_windows_by_workspace if num_windows_by_workspace is not None else {0: 2}
         )
@@ -86,18 +81,20 @@ class WindowSession:
 
     def destroy(self) -> None:
         """Tear down the window session."""
-        for window in self.windows:
-            try:
-                window.destroy()
-            except Exception:
-                pass
-            
+        for windows in self.windows.values():
+            for window in windows:
+                try:
+                    window.destroy()
+                except Exception:
+                    pass
+
     def get_first_window(self) -> Window:
         """Get the first window from the first workspace."""
         for workspace in sorted(self.windows.keys()):
             if len(self.windows[workspace]) > 0:
                 return self.windows[workspace][0]
-        
+        raise ValueError("No windows found")
+
     def _create_windows(self) -> None:
         for workspace, num_windows in self.num_windows_by_workspace.items():
             wm_names = [f"window_{workspace}_{number}" for number in range(1, num_windows + 1)]
@@ -107,7 +104,7 @@ class WindowSession:
                 create_blank_window(wm_name, wm_class)
                 for wm_name, wm_class in zip(wm_names, wm_classes)
             ]
-            
+
     def _set_initial_focused_window(self) -> None:
         for workspace in sorted(self.windows.keys()):
             if len(self.windows[workspace]) > 0:
@@ -142,7 +139,7 @@ class WindowWatcher(Thread):
             pass
         self.opacity_events = [1 if event is None else event for event in self.opacity_events]
 
-    def count_flashes(self):
+    def count_flashes(self) -> int:
         num_flashes = 0
         for i, event in enumerate(self.opacity_events):
             if 0 < i < len(self.opacity_events) - 1:
@@ -161,7 +158,7 @@ class StubServer:
         self.socket = socket
         self.data: List[bytes] = []
 
-    def await_data(self):
+    def await_data(self) -> None:
         """Wait for a single piece of data from a client and store it."""
         self.data.append(self.socket.recv(1))
 
@@ -199,7 +196,7 @@ def watching_windows(windows: List[Window]) -> Generator:
         watcher.stop()
 
 
-def clear_desktops():
+def clear_desktops() -> None:
     for workspace in range(5):
         clear_workspace(workspace)
     switch_workspace(0)
@@ -218,7 +215,7 @@ def new_watched_window() -> Generator:
     yield window_session.get_first_window(), watcher
     watcher.stop()
     window_session.destroy()
-    
+
 
 @contextmanager
 def new_window_session(num_windows_by_workspace: Dict[int, int]) -> Generator:
@@ -230,10 +227,10 @@ def new_window_session(num_windows_by_workspace: Dict[int, int]) -> Generator:
 
 
 @contextmanager
-def producer_running(producer: Producer) -> Generator:
+def producer_running(producer: ProducerThread) -> Generator:
     producer.start()
-    # TODO - replace these sleep calls
-    sleep(0.01)
+    while not producer.ready:
+        pass
     yield
     sleep(0.01)
     producer.stop()

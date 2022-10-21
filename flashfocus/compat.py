@@ -42,7 +42,7 @@ elif _display_protocol is DisplayProtocol.WAYLAND:
     raise UnsupportedWM("This window manager is not supported yet.")
 else:
     logging.info("Detected display protocol: X11")
-    from flashfocus.display_protocols.x11 import (  # noqa: F401
+    from flashfocus.display_protocols.x11 import (  # type: ignore # noqa: F401
         DisplayHandler,
         Window,
         disconnect_display_conn,

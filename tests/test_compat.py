@@ -1,27 +1,28 @@
 """Testsuite for flashfocus.xutil."""
-from time import sleep
+import pytest
+from typing import List
 
-from pytest import approx, mark, raises
-
-from flashfocus.compat import Window, get_workspace
+from flashfocus.compat import DisplayHandler, Window, get_workspace
 from flashfocus.display import WMEvent, WMEventType
 from flashfocus.errors import WMError
 from tests.compat import change_focus, set_fullscreen, unset_fullscreen
 from tests.helpers import new_window_session, producer_running, queue_to_list
 
 
-def test_window_raises_wm_error_if_window_is_none():
-    with raises(WMError):
-        Window(None)
+def test_window_raises_wm_error_if_window_is_none() -> None:
+    with pytest.raises(WMError):
+        Window(None)  # type: ignore
 
 
-@mark.parametrize("opacity", [0.5, 0, 1])
-def test_window_set_opacity(window, opacity):
+@pytest.mark.parametrize("opacity", [0.5, 0.0, 1.0])
+def test_window_set_opacity(window: Window, opacity: float) -> None:
     window.set_opacity(opacity)
-    assert window.opacity == approx(opacity)
+    assert window.opacity == pytest.approx(opacity)
 
 
-def test_display_handler_handles_focus_shifts(display_handler, windows):
+def test_display_handler_handles_focus_shifts(
+    display_handler: DisplayHandler, windows: List[Window]
+) -> None:
     with producer_running(display_handler):
         change_focus(windows[1])
         change_focus(windows[0])
@@ -32,36 +33,31 @@ def test_display_handler_handles_focus_shifts(display_handler, windows):
     ]
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     "window1,window2,should_be_equal",
     [(Window(123), Window(324), False), (Window(23), Window(23), True)],
 )
-def test_window_equality(window1, window2, should_be_equal):
+def test_window_equality(window1: Window, window2: Window, should_be_equal: bool) -> None:
     assert (window1 == window2) == should_be_equal
 
 
-def test_window_equality_to_none_raises_error():
-    with raises(TypeError):
-        Window(123) == None
+def test_window_equality_to_none_raises_error() -> None:
+    with pytest.raises(TypeError):
+        Window(123) == None  # type: ignore # noqa: E711
 
 
-def test_window_nonequality_to_none_raises_error():
-    with raises(TypeError):
-        Window(123) != None
+def test_window_nonequality_to_none_raises_error() -> None:
+    with pytest.raises(TypeError):
+        Window(123) != None  # type: ignore # noqa: E711
 
 
-def test_none_windows_raise_error():
-    with raises(WMError):
-        Window(None)
-
-
-def test_is_fullscreen(window):
+def test_is_fullscreen(window: Window) -> None:
     assert not window.is_fullscreen()
     set_fullscreen(window)
     assert window.is_fullscreen()
     unset_fullscreen(window)
 
 
-def test_get_workspace():
+def test_get_workspace() -> None:
     with new_window_session({0: 1, 1: 1}) as window_session:
         assert get_workspace(window_session.windows[1][0]) == 1
