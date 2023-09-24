@@ -6,7 +6,6 @@ RUN yes | pacman-key --populate archlinux
 RUN pacman -Sy --noconfirm archlinux-keyring
 RUN pacman -S --noconfirm \
         gcc \
-        git \
         glib2 \
         gtk3 \
         i3status \
@@ -36,7 +35,6 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 COPY --chown=user . "$APP_DIR"
 WORKDIR "$APP_DIR"
-# COPY --chown=user .git "$APP_DIR/.git"
 RUN pip3 install ".[dev]"
 RUN pip3 install --no-deps -e .
 

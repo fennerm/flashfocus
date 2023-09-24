@@ -3,6 +3,9 @@ SHELL=/usr/bin/env bash
 define deploy_to_pypi
 	set -euo pipefail
 	IFS=$$'\n\t'
+	scripts/test
+	$(call update_changelog)
+	bumpversion ${1}
 	rm -rf dist src/flashfocus.egg-info
 	python3 -m build
 	twine upload dist/*
@@ -24,6 +27,12 @@ define deploy
 	$(call deploy_to_pypi)
 	$(call deploy_to_github)
 endef
+
+run_tests:
+	scripts/test
+
+run_tests_pdb:
+	scripts/test --pdb
 
 patch_release:
 	$(call deploy,"patch")
