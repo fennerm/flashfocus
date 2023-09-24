@@ -7,7 +7,6 @@
 *.bt2
 *.cache
 *.python-version
-.bumpversion.cfg
 .mypy_cache
 .eggs
 .testmondata
