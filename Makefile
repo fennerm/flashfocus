@@ -3,9 +3,11 @@ SHELL=/usr/bin/env bash
 define deploy_to_pypi
 	set -euo pipefail
 	IFS=$$'\n\t'
-	rm -rf dist
-	python setup.py sdist
-	python setup.py bdist_wheel --universal
+	scripts/test
+	$(call update_changelog)
+	bumpversion ${1}
+	rm -rf dist src/flashfocus.egg-info
+	python3 -m build
 	twine upload dist/*
 endef
 	

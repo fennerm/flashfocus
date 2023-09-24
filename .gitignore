@@ -17,3 +17,4 @@ __LAST__
 .env
 .envrc
 pip-wheel-metadata
+.venv/
