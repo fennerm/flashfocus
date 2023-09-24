@@ -1,4 +1,10 @@
 # Changelog
+## [2.4.1 - September 24th, 2023]
+- fixed: Error when .config/flashfocus exists but no config file present
+- fixed: Multiple sigints required to terminate flashfocus on sway
+- Not user facing:
+    - Update to use ruff and pre-commit
+    - Modernize type hints
 
 ## [2.4.0 - September 24th, 2023]
 - Updated: Drop support for python 3.6 and 3.7
