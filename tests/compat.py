@@ -10,5 +10,5 @@ else:
         create_blank_window,
         set_fullscreen,
         switch_workspace,
-        unset_fullscreen
+        unset_fullscreen,
     )

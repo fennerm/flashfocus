@@ -97,12 +97,7 @@ class BaseSchema(Schema):
     flash_fullscreen: fields.Boolean = fields.Boolean()
 
     @validates_schema(pass_original=True)
-    def check_unknown_fields(
-        self,
-        data: Dict,
-        original_data: Dict,
-        **_: Any
-    ) -> None:
+    def check_unknown_fields(self, data: Dict, original_data: Dict, **_: Any) -> None:
         """Check that unknown options were not passed by the user."""
         try:
             unknown = set(original_data) - set(self.fields)
