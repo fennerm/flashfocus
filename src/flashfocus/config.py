@@ -312,7 +312,7 @@ def init_user_configfile() -> Path:
     if config_file_path is None:
         config_file_path = build_config_search_path()[0]
         try:
-            config_file_path.parent.mkdir()
+            config_file_path.parent.mkdir(exist_ok=True)
         except (AttributeError, FileNotFoundError):
             raise ConfigInitError(f"Failed to create the user config file in {config_file_path}.")
         default_config_path = get_default_config_file()
