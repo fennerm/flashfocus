@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.3.2 - September 24th, 2023]
+- Updated: Drop support for python 3.6 and 3.7
+- Updated: PEP 517 build system
+
 ## [2.3.1 - October 21st, 2022]
 - Fixed: #78 Fix error when the current workspace is null (@fennerm)
 - Not user facing: #79 Fixed a bunch of mypy warnings (@fennerm)
