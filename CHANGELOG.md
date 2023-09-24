@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.3.2 - September 24th, 2023]
+## [2.4.0 - September 24th, 2023]
 - Updated: Drop support for python 3.6 and 3.7
 - Updated: PEP 517 build system
 
