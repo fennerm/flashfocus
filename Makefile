@@ -24,6 +24,9 @@ endef
 
 define deploy
 	set -euo pipefail
+	scripts/test
+	$(call update_changelog)
+	bumpversion ${1}
 	$(call deploy_to_pypi)
 	$(call deploy_to_github)
 endef
