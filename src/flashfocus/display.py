@@ -1,8 +1,11 @@
 """Utility code related to window management but not tied to a specific display protocol."""
+
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from enum import Enum, auto
-from typing import Any, Dict
+from typing import Any
+from collections.abc import Mapping
 
 from flashfocus.errors import WMError
 
@@ -30,7 +33,7 @@ class BaseWindow(ABC):
 
     @property
     @abstractmethod
-    def properties(self) -> Dict:
+    def properties(self) -> dict:
         """A dictionary containing misc. properties of the window (e.g the name/class)."""
         pass
 
@@ -49,7 +52,7 @@ class BaseWindow(ABC):
         return f"Window(id={self.id})"
 
     @abstractmethod
-    def match(self, criteria: Dict) -> bool:
+    def match(self, criteria: Mapping) -> bool:
         """Determine whether the window matches a set of criteria.
 
         Parameters

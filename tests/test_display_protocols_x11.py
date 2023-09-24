@@ -1,7 +1,8 @@
 """Testing X11-specific details which don't apply to the sway implementation."""
+from __future__ import annotations
+
 from collections import namedtuple
 from unittest.mock import MagicMock
-from typing import Dict, List
 
 import pytest
 from xcffib.xproto import CreateNotifyEvent
@@ -23,7 +24,7 @@ if get_display_protocol() == DisplayProtocol.WAYLAND:
 
 
 def test_that_nonvisible_windows_are_not_queued_by_display_handler(
-    display_handler: DisplayHandler, monkeypatch: pytest.MonkeyPatch, windows: List[Window]
+    display_handler: DisplayHandler, monkeypatch: pytest.MonkeyPatch, windows: list[Window]
 ) -> None:
     null_fake_event = MagicMock(spec=CreateNotifyEvent)
     null_fake_event.window = 0
@@ -37,7 +38,7 @@ def test_that_nonvisible_windows_are_not_queued_by_display_handler(
         def __init__(self) -> None:
             self.i = 0
 
-    def wait_for_event(counter: Dict = {"i": 0}) -> MagicMock:  # noqa: B006
+    def wait_for_event(counter: dict = {"i": 0}) -> MagicMock:  # noqa: B006
         counter["i"] += 1
         if counter["i"] == 1:
             return visible_fake_event
@@ -75,7 +76,7 @@ def test_that_nonvisible_windows_are_not_queued_by_display_handler(
         (dict(), True),
     ],
 )
-def test_rule_matching(window: Window, rule: Dict[str, str], should_match: bool) -> None:
+def test_rule_matching(window: Window, rule: dict[str, str], should_match: bool) -> None:
     assert window.match(rule) == should_match
 
 
@@ -83,7 +84,7 @@ def test_properties(window: Window) -> None:
     assert window.properties == {"window_id": "window_0_1", "window_class": "Window_0_1"}
 
 
-def test_list_mapped_windows(windows: List[Window]) -> None:
+def test_list_mapped_windows(windows: list[Window]) -> None:
     assert list_mapped_windows(0) == windows
     assert list_mapped_windows(2) == list()
 

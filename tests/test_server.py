@@ -2,8 +2,8 @@
 
 Most of the functionality in flashfocus.router is also tested here.
 """
+from __future__ import annotations
 from time import sleep
-from typing import List
 from unittest.mock import MagicMock, call
 
 import pytest
@@ -31,9 +31,9 @@ from tests.helpers import (
 )
 def test_event_loop(
     flash_server: FlashServer,
-    windows: List[Window],
-    focus_indices: List[int],
-    flash_indices: List[int],
+    windows: list[Window],
+    focus_indices: list[int],
+    flash_indices: list[int],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     focus_shifts = [windows[i] for i in focus_indices]
@@ -57,7 +57,7 @@ def test_event_loop(
 
 
 def test_second_consecutive_focus_requests_ignored(
-    flash_server: FlashServer, windows: List[Window]
+    flash_server: FlashServer, windows: list[Window]
 ) -> None:
     expected_calls = [call(WMEvent(window=windows[1], event_type=WMEventType.FOCUS_SHIFT))] * 2
     flash_server.router.route_request = MagicMock()  # type: ignore[assignment]
@@ -75,7 +75,7 @@ def test_second_consecutive_focus_requests_ignored(
 
 
 def test_window_opacity_set_to_default_on_startup(
-    mult_opacity_server: FlashServer, list_only_test_windows: None, windows: List[Window]
+    mult_opacity_server: FlashServer, list_only_test_windows: None, windows: list[Window]
 ) -> None:
     with server_running(mult_opacity_server):
         assert windows[0].opacity == pytest.approx(0.2)
@@ -83,7 +83,7 @@ def test_window_opacity_set_to_default_on_startup(
 
 
 def test_window_opacity_unset_on_shutdown(
-    mult_opacity_server: FlashServer, list_only_test_windows: None, windows: List[Window]
+    mult_opacity_server: FlashServer, list_only_test_windows: None, windows: list[Window]
 ) -> None:
     with server_running(mult_opacity_server):
         pass
@@ -107,7 +107,7 @@ def test_server_handles_nonexistant_window(flash_server: FlashServer) -> None:
 
 
 def test_per_window_opacity_settings_handled_correctly_by_server(
-    mult_flash_opacity_server: FlashServer, windows: List[Window]
+    mult_flash_opacity_server: FlashServer, windows: list[Window]
 ) -> None:
     with watching_windows(windows) as watchers:
         with server_running(mult_flash_opacity_server):

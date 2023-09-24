@@ -1,7 +1,9 @@
 """Unit test fixtures."""
+from __future__ import annotations
+
 import socket
 from queue import Queue
-from typing import Dict, Generator, List, Tuple
+from collections.abc import Generator
 
 import pytest
 from factory import Factory
@@ -23,7 +25,7 @@ from tests.helpers import (
 
 
 @pytest.fixture
-def windows() -> Generator[List[Window], None, None]:
+def windows() -> Generator[list[Window], None, None]:
     """Display session with multiple open windows."""
     window_session = WindowSession({0: 3})
     window_session.setup()
@@ -179,19 +181,19 @@ def stub_server(server_socket: socket.socket) -> StubServer:
 
 
 @pytest.fixture
-def list_only_test_windows(monkeypatch: pytest.MonkeyPatch, windows: List[Window]) -> None:
+def list_only_test_windows(monkeypatch: pytest.MonkeyPatch, windows: list[Window]) -> None:
     """Only list test window ids."""
     monkeypatch.setattr("flashfocus.compat.list_mapped_windows", lambda: windows)
 
 
 @pytest.fixture
-def valid_config_types() -> Dict[str, List[type]]:
+def valid_config_types() -> dict[str, list[type]]:
     return {key: val["type"] for key, val in default_flash_param().items()}
 
 
 @pytest.fixture
-def blank_cli_options() -> Dict:
-    cli_options: Dict = dict()
+def blank_cli_options() -> dict:
+    cli_options: dict = dict()
     for key, val in default_flash_param().items():
         if val["location"] == "any":
             cli_options[key] = None
@@ -201,7 +203,7 @@ def blank_cli_options() -> Dict:
 
 
 @pytest.fixture
-def valid_bool() -> Tuple[str, str, str, str, str, str, bool, bool]:
+def valid_bool() -> tuple[str, str, str, str, str, str, bool, bool]:
     return "false", "False", "FALSE", "True", "true", "TRUE", True, False
 
 

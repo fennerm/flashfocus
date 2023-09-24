@@ -1,6 +1,7 @@
 """Test suite for flashfocus.flasher."""
+from __future__ import annotations
+
 from time import sleep
-from typing import List
 
 import pytest
 from pytest_mock import MockerFixture
@@ -54,7 +55,7 @@ def test_flash_conflicts_are_restarted(flasher: Flasher) -> None:
     ],
 )
 def test_compute_flash_series(
-    flash_opacity: float, default_opacity: float, ntimepoints: int, expected_result: List
+    flash_opacity: float, default_opacity: float, ntimepoints: int, expected_result: list
 ) -> None:
     flasher = Flasher(
         flash_opacity=flash_opacity,

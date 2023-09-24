@@ -1,6 +1,6 @@
 """Testsuite for flashfocus.xutil."""
+from __future__ import annotations
 import pytest
-from typing import List
 
 from flashfocus.compat import DisplayHandler, Window, get_workspace
 from flashfocus.display import WMEvent, WMEventType
@@ -21,7 +21,7 @@ def test_window_set_opacity(window: Window, opacity: float) -> None:
 
 
 def test_display_handler_handles_focus_shifts(
-    display_handler: DisplayHandler, windows: List[Window]
+    display_handler: DisplayHandler, windows: list[Window]
 ) -> None:
     with producer_running(display_handler):
         change_focus(windows[1])

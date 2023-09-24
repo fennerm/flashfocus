@@ -1,11 +1,14 @@
 """Helper functions/classes for unit tests."""
+from __future__ import annotations
+
 import copy
 import socket
 from contextlib import contextmanager
 from queue import Queue
 from threading import Thread
 from time import sleep
-from typing import Dict, Generator, List, Optional, Pattern
+from typing import Pattern
+from collections.abc import Generator
 
 from flashfocus.compat import (
     Window,
@@ -23,7 +26,7 @@ from tests.compat import (
 )
 
 
-def quick_conf() -> Dict:
+def quick_conf() -> dict:
     return dict(
         default_opacity=1,
         flash_opacity=0.8,
@@ -37,7 +40,7 @@ def quick_conf() -> Dict:
     )
 
 
-def default_flash_param() -> Dict:
+def default_flash_param() -> dict:
     return {
         "config": {"default": None, "type": [str], "location": "cli"},
         "verbosity": {"default": "INFO", "type": [str], "location": "cli"},
@@ -58,7 +61,7 @@ def default_flash_param() -> Dict:
 class WindowSession:
     """A session of blank windows for testing."""
 
-    def __init__(self, num_windows_by_workspace: Optional[Dict[int, int]] = None) -> None:
+    def __init__(self, num_windows_by_workspace: dict[int, int] | None = None) -> None:
         """
         Parameters
         ----------
@@ -67,7 +70,7 @@ class WindowSession:
             workspace
 
         """
-        self.windows: Dict[int, List[Window]] = {}
+        self.windows: dict[int, list[Window]] = {}
         self.num_windows_by_workspace = (
             num_windows_by_workspace if num_windows_by_workspace is not None else {0: 2}
         )
@@ -119,7 +122,7 @@ class WindowWatcher(Thread):
     def __init__(self, window: Window):
         super().__init__()
         self.window: Window = window
-        self.opacity_events: List[float] = [window.opacity]
+        self.opacity_events: list[float] = [window.opacity]
         self.keep_going: bool = True
         self.done: bool = False
 
@@ -156,14 +159,14 @@ class StubServer:
 
     def __init__(self, socket: socket.socket):
         self.socket = socket
-        self.data: List[bytes] = []
+        self.data: list[bytes] = []
 
     def await_data(self) -> None:
         """Wait for a single piece of data from a client and store it."""
         self.data.append(self.socket.recv(1))
 
 
-def queue_to_list(queue: Queue) -> List:
+def queue_to_list(queue: Queue) -> list:
     """Convert a Queue to a list."""
     result = []
     while queue.qsize() != 0:
@@ -187,7 +190,7 @@ def server_running(server: FlashServer) -> Generator:
 
 
 @contextmanager
-def watching_windows(windows: List[Window]) -> Generator:
+def watching_windows(windows: list[Window]) -> Generator:
     watchers = [WindowWatcher(window) for window in windows]
     for watcher in watchers:
         watcher.start()
@@ -218,7 +221,7 @@ def new_watched_window() -> Generator:
 
 
 @contextmanager
-def new_window_session(num_windows_by_workspace: Dict[int, int]) -> Generator:
+def new_window_session(num_windows_by_workspace: dict[int, int]) -> Generator:
     """Context manager for creating a session of windows across multiple workspaces."""
     window_session = WindowSession(num_windows_by_workspace)
     window_session.setup()
@@ -236,7 +239,7 @@ def producer_running(producer: ProducerThread) -> Generator:
     producer.stop()
 
 
-def fill_in_rule(partial_rule: Dict) -> Dict:
+def fill_in_rule(partial_rule: dict) -> dict:
     """Fill in default param for a rule given a partial rule definition."""
     default_rules = {
         key: val["default"]
@@ -249,7 +252,7 @@ def fill_in_rule(partial_rule: Dict) -> Dict:
     return partial_rule
 
 
-def rekey(dic: Dict, new_vals: Dict) -> Dict:
+def rekey(dic: dict, new_vals: dict) -> dict:
     dic_copy = copy.deepcopy(dic)
     for key, val in new_vals.items():
         dic_copy[key] = val

@@ -1,8 +1,8 @@
 """Flash windows on focus."""
+from __future__ import annotations
 import logging
 from queue import Empty, Queue
 from signal import SIGINT, default_int_handler, signal
-from typing import Dict, List
 
 from flashfocus.client import ClientMonitor
 from flashfocus.compat import (
@@ -47,11 +47,11 @@ class FlashServer:
 
     """
 
-    def __init__(self, config: Dict) -> None:
+    def __init__(self, config: dict) -> None:
         self.config = config
         self.router = FlashRouter(config)
         self.events: Queue = Queue()
-        self.producers: List[ProducerThread] = [
+        self.producers: list[ProducerThread] = [
             ClientMonitor(self.events),
             DisplayHandler(self.events),
         ]

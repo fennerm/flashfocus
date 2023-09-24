@@ -1,6 +1,6 @@
 """Testsuite for flashfocus.config."""
+from __future__ import annotations
 from copy import deepcopy
-from typing import Dict, List
 
 import pytest
 from pytest_lazyfixture import lazy_fixture
@@ -21,12 +21,12 @@ from flashfocus.errors import ConfigLoadError
 
 
 @pytest.fixture
-def default_config() -> Dict:
+def default_config() -> dict:
     return load_config(get_default_config_file())
 
 
 @pytest.fixture
-def invalid_rules() -> List:
+def invalid_rules() -> list:
     rules = [
         # No window_class or window_id present
         [{"flash_on_focus": True}],
@@ -59,7 +59,7 @@ def invalid_rules() -> List:
 )
 @pytest.mark.parametrize("input_type", ["cli", "file"])
 def test_invalid_param(
-    option: str, values: List, input_type: str, blank_cli_options: Dict, default_config: Dict
+    option: str, values: list, input_type: str, blank_cli_options: dict, default_config: dict
 ) -> None:
     if input_type == "cli" and option == "rules":
         return
@@ -78,7 +78,7 @@ def test_invalid_param(
                 )
 
 
-def check_validated_config(config: Dict, expected_types: Dict[str, List[type]]) -> None:
+def check_validated_config(config: dict, expected_types: dict[str, list[type]]) -> None:
     for name, value in config.items():
         try:
             if expected_types[name] == [bool]:
@@ -105,11 +105,11 @@ def check_validated_config(config: Dict, expected_types: Dict[str, List[type]]) 
 @pytest.mark.parametrize("input_type", ["cli", "file"])
 def test_valid_param(
     option: str,
-    values: List,
+    values: list,
     input_type: str,
-    blank_cli_options: Dict,
-    default_config: Dict,
-    valid_config_types: Dict[str, List[type]],
+    blank_cli_options: dict,
+    default_config: dict,
+    valid_config_types: dict[str, list[type]],
 ) -> None:
     for value in values:
         blanks = deepcopy(blank_cli_options)
@@ -147,10 +147,10 @@ def test_valid_param(
     ],
 )
 def test_rules_validation(
-    rules: List[Dict],
-    blank_cli_options: Dict,
-    default_config: Dict,
-    valid_config_types: Dict[str, List[type]],
+    rules: list[dict],
+    blank_cli_options: dict,
+    default_config: dict,
+    valid_config_types: dict[str, list[type]],
 ) -> None:
     rules_dict = {"rules": rules}
     validated_config = merge_config_sources(default_config, rules_dict, blank_cli_options)
@@ -167,7 +167,7 @@ def test_rules_validation(
         (dict(), dict()),
     ],
 )
-def test_dehyphen(arg: Dict, expected: Dict) -> None:
+def test_dehyphen(arg: dict, expected: dict) -> None:
     dehyphen(arg)
     assert arg == expected
 
@@ -183,7 +183,7 @@ def test_dehyphen(arg: Dict, expected: Dict) -> None:
         ([{"a": 2}, {"a": 3}, {"a": 4}], {"a": 4}),
     ],
 )
-def test_hierarchical_merge(dicts: List[Dict], expected: Dict) -> None:
+def test_hierarchical_merge(dicts: list[dict], expected: dict) -> None:
     assert hierarchical_merge(dicts) == expected
 
 
@@ -196,7 +196,7 @@ def test_hierarchical_merge_returns_a_new_dict() -> None:
 
 
 def test_rule_defaults_inherited_from_global_param(
-    default_config: Dict, blank_cli_options: Dict
+    default_config: dict, blank_cli_options: dict
 ) -> None:
     user_config = {"rules": [{"window_class": "foo"}]}
     validated = merge_config_sources(
@@ -206,7 +206,7 @@ def test_rule_defaults_inherited_from_global_param(
 
 
 def test_rules_added_to_config_dict_if_not_present_in_config(
-    default_config: Dict, blank_cli_options: Dict
+    default_config: dict, blank_cli_options: dict
 ) -> None:
     validated = merge_config_sources(
         default_config=default_config, user_config=default_config, cli_options=blank_cli_options
@@ -218,7 +218,7 @@ def test_load_config(configfile) -> None:  # type: ignore[no-untyped-def]
     assert load_config(configfile) == {"default_opacity": 1, "flash_opacity": 0.5}
 
 
-def test_if_x11_wayland_rules_are_dropped_during_validation(default_config: Dict) -> None:
+def test_if_x11_wayland_rules_are_dropped_during_validation(default_config: dict) -> None:
     default_config["rules"] = [{"app_id": "foo", "default_opacity": 0.8}]
     config = validate_config(default_config)
     assert config["rules"] is None
@@ -254,14 +254,14 @@ def test_invalid_yaml_passed_to_load_config(invalid_yaml) -> None:  # type: igno
 
 
 def test_load_merged_config_with_no_custom_config(  # type: ignore[no-untyped-def]
-    monkeypatch: pytest.MonkeyPatch, blank_cli_options: Dict, configfile
+    monkeypatch: pytest.MonkeyPatch, blank_cli_options: dict, configfile
 ) -> None:
     conf = load_merged_config(config_file_path=configfile, cli_options=blank_cli_options)
     assert conf.get("flash_opacity") == 0.5
 
 
 def test_load_merged_config_with_custom_config(  # type: ignore[no-untyped-def]
-    monkeypatch: pytest.MonkeyPatch, blank_cli_options: Dict, configfile_with_02_flash_opacity
+    monkeypatch: pytest.MonkeyPatch, blank_cli_options: dict, configfile_with_02_flash_opacity
 ) -> None:
     conf = load_merged_config(
         config_file_path=configfile_with_02_flash_opacity, cli_options=blank_cli_options
