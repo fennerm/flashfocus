@@ -67,11 +67,13 @@ flashfocus = "flashfocus.cli:cli"
 flash_window = "flashfocus.client:client_request_flash"
 
 [tool.setuptools]
-packages = ["flashfocus"]
+# Note script-files is deprecated, long term we might not be able to include this 
+# script in the build
 script-files = ["bin/nc_flash_window"]
+packages.find.where = ["src"]
 
-[tool.setuptools_scm]
-version_file = "flashfocus/_version.py"
+[tool.setuptools.dynamic]
+version = {attr = "flashfocus.__version__"}
 
 [tool.black]
 line-length = 100

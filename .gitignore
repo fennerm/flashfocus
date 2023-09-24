@@ -18,4 +18,3 @@ __LAST__
 .envrc
 pip-wheel-metadata
 .venv/
-flashfocus/_version.py
