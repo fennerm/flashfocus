@@ -1,12 +1,13 @@
 # Installation
-Requires python >=3.8
-`make install_dev`
+* Requires python >=3.8
+* `make install_dev`
 
 # Running tests
-Running the tests requires docker.
-`make run_tests`
-
-Alternatively you can create a draft PR and the tests will run automatically.
+* Requires docker
+* `make run_tests`
+* Drop into debugger on failure: `make_run_tests_pdb`
+* Alternatively you can create a draft PR and the tests will run automatically.
 
 # Deploying to PyPI
-`make <patch_release/minor_release/major_release>`
+* Requires credentials. Currently handled by @fennerm
+* `make <patch_release/minor_release/major_release>`
