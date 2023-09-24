@@ -46,7 +46,7 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=61", "wheel", "fastentrypoints"]
 build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
