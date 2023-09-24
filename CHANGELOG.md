@@ -100,7 +100,7 @@ Added support for marshmallow v3 which is in prerelease
 - Fixed: Use marshmallow strict mode due to deprecation warning
 - Fixed: Updated pyaml version in requirements due to security vulnerability
 
-## [1.1.1] - Oct 13, 2018 
+## [1.1.1] - Oct 13, 2018
 - Added flash-lone-windows CLI option.
 
 ## [1.1.0] - Oct 13, 2018
@@ -164,4 +164,3 @@ Added support for marshmallow v3 which is in prerelease
 ### Fixed
 
 - Division error in the python2 version which lead to 1ms flashes by default.
-

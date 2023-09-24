@@ -7,7 +7,7 @@ define deploy_to_pypi
 	python3 -m build
 	twine upload dist/*
 endef
-	
+
 define deploy_to_github
 	git push origin master
 	git push --tags
@@ -27,6 +27,10 @@ define deploy
 	$(call deploy_to_pypi)
 	$(call deploy_to_github)
 endef
+
+install_dev:
+	python3 -m venv .venv
+	source .venv/bin/activate && pip install -e '.[dev]' && pre-commit install
 
 run_tests:
 	scripts/test

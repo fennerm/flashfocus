@@ -17,6 +17,7 @@ class ProducerThread(Thread):
         If this attribute is set to False the thread will attempt to shutdown.
 
     """
+
     def __init__(self, queue: Queue) -> None:
         super().__init__()
         # This is set to True when initialization of the thread is complete and its ready to begin
