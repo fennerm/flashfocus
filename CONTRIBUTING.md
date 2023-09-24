@@ -1,4 +1,5 @@
 # Installation
+Requires python >=3.8
 `make install_dev`
 
 # Running tests
