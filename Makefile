@@ -4,8 +4,7 @@ define deploy_to_pypi
 	set -euo pipefail
 	IFS=$$'\n\t'
 	rm -rf dist
-	python setup.py sdist
-	python setup.py bdist_wheel --universal
+	python3 -m build
 	twine upload dist/*
 endef
 	
@@ -22,18 +21,9 @@ endef
 
 define deploy
 	set -euo pipefail
-	scripts/test
-	$(call update_changelog)
-	bumpversion ${1}
 	$(call deploy_to_pypi)
 	$(call deploy_to_github)
 endef
-
-run_tests:
-	scripts/test
-
-run_tests_pdb:
-	scripts/test --pdb
 
 patch_release:
 	$(call deploy,"patch")

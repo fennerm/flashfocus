@@ -1,3 +1,78 @@
+[project]
+name = "flashfocus"
+description = "Simple focus animations for tiling window managers."
+dynamic = [
+ "version",
+]
+authors = [
+  { name = "Fenner Macrae", email="fmacrae.dev@gmail.com" }
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Development Status :: 6 - Mature",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Desktop Environment :: Window Managers",
+  "Topic :: Desktop Environment"
+]
+keywords=[
+  "xorg",
+  "x11",
+  "flash",
+  "focus",
+  "i3",
+  "sway",
+  "wlroots",
+  "bspwm",
+  "awesomewm",
+  "herbsluftwm"
+]
+requires-python = ">=3.8"
+dependencies = [
+  "xcffib>=0.6.0,<1.0",
+  "click>=6.7,<9.0",
+  "cffi>=1.11,<2.0",
+  "xpybutil>=0.0.6,<1.0",
+  "marshmallow>=2.15,<4.0",
+  "pyyaml>=5.1",
+  "i3ipc>=2.1.1,<3.0",
+]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+dev=[
+  "factory-boy>=3.0,<4.0",
+  "pytest>=7.4,<8.0",
+  "pytest-cov>=4.1,<5.0",
+  "pytest-factoryboy>=2.1,<3.0",
+  "pytest-lazy-fixture>=0.6,<1.0",
+  "pytest-mock>=3.7,<4.0",
+  "types-factory-boy",
+  "types-pytest-lazy-fixture",
+  "types-pyyaml",
+]
+
+[project.scripts]
+flashfocus = "flashfocus.cli:cli"
+flash_window = "flashfocus.client:client_request_flash"
+
+[tool.setuptools]
+packages = ["flashfocus"]
+script-files = ["bin/nc_flash_window"]
+
+[tool.setuptools_scm]
+version_file = "flashfocus/_version.py"
+
 [tool.black]
 line-length = 100
 
@@ -7,10 +82,10 @@ max-line-length = 100
 
 [tool.pylint."messages control"]
 disable = [
-    "missing-function-docstring",
-    "missing-module-docstring",
-    "missing-class-docstring",
-    "logging-fstring-interpolation" # readability > a couple of nanoseconds
+  "missing-function-docstring",
+  "missing-module-docstring",
+  "missing-class-docstring",
+  "logging-fstring-interpolation" # readability > a couple of nanoseconds
 ]
 
 [tool.pylint.basic]
@@ -21,9 +96,10 @@ variable-rgx = "[a-z_][a-z0-9_]*$"
 
 [tool.isort]
 profile = "black"
+line_length = 100
 
 [tool.mypy]
-python_version = "3.6"
+python_version = "3.8"
 files = ["flashfocus", "tests"]
 check_untyped_defs = true
 disallow_untyped_defs = true
@@ -33,11 +109,11 @@ warn_return_any = true
 
 [[tool.mypy.overrides]]
 module = [
-    "i3ipc",
-    "xpybutil",
-    "xpybutil.window",
-    "xpybutil.ewmh",
-    "xpybutil.icccm",
-    "xpybutil.util",
+  "i3ipc",
+  "xpybutil",
+  "xpybutil.window",
+  "xpybutil.ewmh",
+  "xpybutil.icccm",
+  "xpybutil.util",
 ]
 ignore_missing_imports = true

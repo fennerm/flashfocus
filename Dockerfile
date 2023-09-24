@@ -1,11 +1,12 @@
 FROM archlinux:base
 
-RUN pacman -Sy --noconfirm archlinux-keyring
+RUN pacman -Syyu --noconfirm
 RUN yes | pacman-key --init
 RUN yes | pacman-key --populate archlinux
-RUN pacman -Syyu --noconfirm
+RUN pacman -Sy --noconfirm archlinux-keyring
 RUN pacman -S --noconfirm \
         gcc \
+        git \
         glib2 \
         gtk3 \
         i3status \
@@ -23,17 +24,21 @@ RUN sed -i '/en_US.UTF-8/s/^#//g' /etc/locale.gen
 RUN locale-gen
 
 RUN useradd -m user
-WORKDIR /home/user
+ENV HOME_DIR=/home/user
+ENV APP_DIR="$HOME_DIR/flashfocus"
+
+WORKDIR "$HOME_DIR"
 USER user
 
-ENV PATH="/home/user/.local/bin:${PATH}"
+ENV VIRTUAL_ENV="$HOME_DIR/.venv"
+RUN python3 -m venv "$VIRTUAL_ENV"
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-COPY --chown=user requirements.txt requirements.txt
-RUN pip install --user -r requirements.txt
-
-COPY --chown=user . /home/user/flashfocus
-WORKDIR /home/user/flashfocus
-RUN pip3 install --no-deps --user -e .
+COPY --chown=user . "$APP_DIR"
+WORKDIR "$APP_DIR"
+# COPY --chown=user .git "$APP_DIR/.git"
+RUN pip3 install ".[dev]"
+RUN pip3 install --no-deps -e .
 
 ENV DISPLAY=":0"
 
