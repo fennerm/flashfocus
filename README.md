@@ -21,7 +21,7 @@ to be noticeable. If you don't have one setup already, I recommend
 
 ### Arch
 
-Install from the Arch User Repository: `flashfocus-git`
+Install from the Arch User Repository: `flashfocus`
 
 ### Ubuntu/Debian
 
