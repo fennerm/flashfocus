@@ -105,8 +105,8 @@ class DisplayHandler(ProducerThread):
         SWAY.main()
 
     def stop(self) -> None:
-        super().stop()
         SWAY.main_quit()
+        super().stop()
 
     def _handle_focus_shift(self, _: i3ipc.Connection, event: i3ipc.Event) -> None:
         if _is_mapped_window(event.container):
