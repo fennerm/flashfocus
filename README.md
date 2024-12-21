@@ -27,14 +27,14 @@ Install from the Arch User Repository: `flashfocus`
 
 ```
 sudo apt-get install libxcb-render0-dev libffi-dev python-dev python-cffi
-pip install flashfocus
+pipx install flashfocus
 ```
 
 ### Fedora
 
 ```
 dnf install libffi-devel python-devel python-cffi
-pip install flashfocus
+pipx install flashfocus
 ```
 
 ### openSUSE
@@ -107,4 +107,4 @@ The config file is searched for in the following locations:
 
 When flashfocus is first run it creates a default config file in 1. or 2. Documentation of all configuration options is present in the config file.
 
-See the [wiki](https://github.com/fennerm/flashfocus/wiki) for some extra docs.
+See the [wiki](https://github.com/fennerm/flashfocus/wiki) for extra docs and alternatives.
