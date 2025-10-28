@@ -19,6 +19,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Desktop Environment :: Window Managers",
   "Topic :: Desktop Environment"
 ]
@@ -36,9 +37,9 @@ keywords=[
 ]
 requires-python = ">=3.8"
 dependencies = [
-  "xcffib>=0.6.0,<1.0",
+  "xcffib>=0.6.0,<=1.11.2",
   "click>=6.7,<9.0",
-  "cffi>=1.11,<2.0",
+  "cffi>=1.11,<=2.0",
   "xpybutil>=0.0.6,<1.0",
   "marshmallow>=2.15,<4.0",
   "pyyaml>=5.1",
@@ -95,6 +96,11 @@ line-length = 100
 
 [tool.ruff.isort]
 combine-as-imports = true
+
+[dependency-groups]
+dev = [
+    "pre-commit>=3.5.0",
+]
 
 [[tool.mypy.overrides]]
 module = [
