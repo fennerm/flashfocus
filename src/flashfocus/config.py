@@ -88,10 +88,10 @@ class BaseSchema(Schema):
     flash rules.
     """
 
-    flash_opacity: fields.Number = fields.Number(validate=validate_decimal)
-    default_opacity: fields.Number = fields.Number(validate=validate_decimal)  # noqa: E704
+    flash_opacity: fields.Float = fields.Float(validate=validate_decimal)
+    default_opacity: fields.Float = fields.Float(validate=validate_decimal)  # noqa: E704
     simple: fields.Boolean = fields.Boolean()
-    time: fields.Number = fields.Number(validate=validate_positive_number)
+    time: fields.Float = fields.Float(validate=validate_positive_number)
     ntimepoints: fields.Integer = fields.Integer(validate=validate_positive_number)
     flash_on_focus: fields.Boolean = fields.Boolean()
     flash_lone_windows: fields.String = fields.String(validate=validate_flash_lone_windows)
