@@ -1,6 +1,6 @@
 # Changelog
 ## [2.5.0 - February 14th, 2025]
-- Bump marshmallow >= 4.0 (@Artturin)
+- Bump marshmallow >= 4.0  (@Artturin)
 
 ## [2.4.1 - September 24th, 2023]
 - fixed: Error when .config/flashfocus exists but no config file present
